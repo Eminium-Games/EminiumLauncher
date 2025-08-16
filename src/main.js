@@ -338,7 +338,7 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
 
     // Copy selected content to app dir (project root)
     const appDir = path.join(__dirname, '..');
-    const copyList = ['assets', 'src', 'package.json', 'package-lock.json'];
+    const copyList = ['assets', 'src', 'package.json', 'package-lock.json', 'node_modules'];
     const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch {} };
     const walkAndCopy = (src, dst) => {
       const st = fs.statSync(src);
