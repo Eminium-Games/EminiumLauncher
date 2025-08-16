@@ -640,6 +640,18 @@ btnLogin.addEventListener('click', async () => {
             return;
         }
 
+  // Visual fill for range inputs: accent (filled) + grey (unfilled)
+  function updateRangeFill(el){
+    if (!el) return;
+    const min = Number(el.min) || 0;
+    const max = Number(el.max) || 100;
+    let val = Number(el.value);
+    if (!Number.isFinite(val)) val = min;
+    const p = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    // Left: accent up to p%, right: subtle grey
+    el.style.background = `linear-gradient(90deg, var(--accent) 0% ${p}%, rgba(255,255,255,0.08) ${p}%, rgba(255,255,255,0.08) 100%)`;
+  }
+
         if (result?.status === 'error') {
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
             return;
@@ -993,6 +1005,7 @@ async function runUpdaterIfNeeded() {
 
   memSlider.addEventListener('input', async () => {
     updateMemLabel();
+    updateRangeFill(memSlider);
     try {
       const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : null);
       warnIfTooHigh(info?.totalMB);
@@ -1006,15 +1019,17 @@ async function runUpdaterIfNeeded() {
     if (unlimited) { fpsLabel.textContent = 'Illimité'; }
     else { fpsLabel.textContent = String(fps.value); }
   };
-  render.addEventListener('input', ()=> renderLabel.textContent = `${render.value} chunks`);
+  render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; updateRangeFill(render); });
   render.addEventListener('change', settingsDebouncedSave);
-  fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); });
+  fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); updateRangeFill(fps); });
   fps.addEventListener('change', settingsDebouncedSave);
-  fpsUnlimited.addEventListener('change', () => { syncFPS(); settingsDebouncedSave(); });
+  fpsUnlimited.addEventListener('change', () => { syncFPS(); updateRangeFill(fps); settingsDebouncedSave(); });
   // Initial labels
   renderLabel.textContent = `${render.value} chunks`;
   fpsLabel.textContent = String(fps.value);
   syncFPS();
+  // Initial fills
+  [memSlider, render, fps].forEach(updateRangeFill);
 
   // Settings load/save
   function readCurrentSettings() {
@@ -1034,6 +1049,8 @@ async function runUpdaterIfNeeded() {
     if (typeof s.vsync === 'boolean') { document.getElementById('vsync').checked = !!s.vsync; }
     if (typeof s.fpsUnlimited === 'boolean') { fpsUnlimited.checked = !!s.fpsUnlimited; }
     syncFPS();
+    // Refresh fills after programmatic updates
+    [memSlider, render, fps].forEach(updateRangeFill);
   }
   let _saveTimer = null;
   function settingsDebouncedSave() {
