@@ -221,11 +221,12 @@ input, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,2
 input:focus, select:focus { outline: none; box-shadow: var(--ring); }
 
 /* Sliders */
-input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: linear-gradient(90deg, rgba(245,158,11,0.6), rgba(245,158,11,0.2)); border: 1px solid rgba(255,255,255,0.1); display: block; width: 100%; margin-top: 8px; }
+input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.12); display: block; width: 100%; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
 /* Extra spacing when multiple sliders are stacked in same container */
 .panel input[type=range] ~ input[type=range] { margin-top: 18px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #f59e0b; box-shadow: 0 4px 12px rgba(245,158,11,0.5); border: 2px solid #fff3; cursor: pointer; }
-input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #f59e0b; border: 2px solid #fff3; box-shadow: 0 4px 12px rgba(245,158,11,0.5); cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); box-shadow: 0 4px 12px rgba(245,158,11,0.5), 0 0 0 3px rgba(245,158,11,0.18); border: 2px solid #fff3; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); border: 2px solid #fff3; box-shadow: 0 4px 12px rgba(245,158,11,0.5), 0 0 0 3px rgba(245,158,11,0.18); cursor: pointer; }
+input[type=range].dim::-webkit-slider-thumb, input[type=range].dim::-moz-range-thumb { box-shadow: 0 2px 6px rgba(0,0,0,0.25); filter: saturate(0.7) brightness(0.9); }
 
 /* Checkboxes */
 input[type=checkbox] { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); display: inline-grid; place-content: center; cursor: pointer; -webkit-appearance: none; appearance: none; transition: all .15s ease; }
@@ -294,6 +295,7 @@ html, body { overflow: hidden; }
 /* Slider styling */
 .slider-row { display:flex; gap:12px; align-items:center; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
+.range-grey { background: rgba(255,255,255,0.10) !important; }
 label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
 </style>
 </head>
@@ -984,8 +986,10 @@ async function runUpdaterIfNeeded() {
     let val = Number(el.value);
     if (!Number.isFinite(val)) val = min;
     const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-    // Utilise l'accent à gauche et un gris subtil à droite
-    el.style.background = `linear-gradient(90deg, var(--accent) 0% ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+    // Utilise un dégradé accent à gauche et un gris subtil à droite
+    const left = `linear-gradient(90deg, rgba(245,158,11,0.95), rgba(245,158,11,0.75))`;
+    const right = `rgba(255,255,255,0.10)`;
+    el.style.background = `linear-gradient(90deg, rgba(245,158,11,0.95) 0% ${pct}%, ${right} ${pct}%, ${right} 100%)`;
   }
 
   // Detect system RAM and adjust slider max to 85% of total (rounded to step)
@@ -1018,6 +1022,14 @@ async function runUpdaterIfNeeded() {
     fps.disabled = unlimited;
     if (unlimited) { fpsLabel.textContent = 'Illimité'; }
     else { fpsLabel.textContent = String(fps.value); }
+    // Visuel: si illimité, griser totalement la piste et atténuer le pouce
+    if (unlimited) {
+      fps.classList.add('dim');
+      fps.style.background = 'rgba(255,255,255,0.10)';
+    } else {
+      fps.classList.remove('dim');
+      updateRangeFill(fps);
+    }
   };
   render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; updateRangeFill(render); });
   render.addEventListener('change', settingsDebouncedSave);
