@@ -1,0 +1,54 @@
+{
+  "name": "eminium-launcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Launcheur pour le serveur Eminium - Installez et Jouez !",
+  "author": "Eminium",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "axios": "^1.7.2",
+    "azuriom-auth": "^1.0.1",
+    "electron-store": "^9.0.0",
+    "minecraft-launcher-core": "^3.18.2"
+  },
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "ovh.eminium.launcher",
+    "productName": "Eminium Launcher",
+    "files": [
+      "src/**/*",
+      "assets/**/*"
+    ],
+    "asar": false,
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "assets/icon/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon/icon.ico",
+      "uninstallerIcon": "assets/icon/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Eminium Launcher Setup ${version}.exe"
+    }
+  }
+}
