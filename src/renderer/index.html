@@ -171,6 +171,11 @@ html, body {
 /* Panels spacing */
 .panel { padding: 20px 22px; }
 .row { gap: 14px; }
+.row.fields-2 { gap: 28px; }
+.row.toggles { gap: 24px; align-items: center; }
+.row.toggles label { display: inline-flex; align-items: center; gap: 10px; }
+.field label { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.field input[type=range] { margin-top: 2px; }
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
@@ -331,7 +336,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         </div>
         <div class="panel" style="margin-top:12px;">
           <div class="muted" style="margin-bottom:8px;">Performances</div>
-          <div class="row">
+          <div class="row fields-2">
             <div class="field" style="flex:1;">
               <label>Distance de rendu <span class="hint" id="renderLabel">12 chunks</span></label>
               <input id="renderDist" type="range" min="2" max="32" step="1" value="12">
@@ -341,7 +346,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
               <input id="fpsCap" type="range" min="30" max="240" step="10" value="120">
             </div>
           </div>
-          <div class="row" style="margin-top:8px;">
+          <div class="row toggles" style="margin-top:8px;">
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="vsync"> VSync</label>
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
           </div>
