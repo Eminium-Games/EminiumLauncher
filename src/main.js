@@ -133,10 +133,10 @@ function getIconPath() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 980,
-    height: 620,
+    width: 1200,
+    height: 800,
     title: 'Eminium Launcher',
-    resizable: false,
+    resizable: true,
     backgroundColor: '#0b0f1a',
     icon: getIconPath(),
     webPreferences: {
@@ -147,6 +147,8 @@ function createWindow() {
   });
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  // Improve readability on standard displays
+  try { mainWindow.webContents.setZoomFactor(1.1); } catch {}
 
   // Relayer les événements de progression émis côté setup.js (globalThis.emitPlayProgress)
   global.emitPlayProgress = (data) => {

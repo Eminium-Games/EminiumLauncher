@@ -29,7 +29,7 @@ html, body {
 .wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:10px; box-sizing:border-box; }
 
 .card {
-  width:100%; max-width:900px; min-width:600px;
+  width:100%; max-width:1200px; min-width:720px;
   background: var(--card);
   border-radius: 24px;
   backdrop-filter: blur(12px);
@@ -54,7 +54,7 @@ html, body {
 
 @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
 
-h1 { font-size:28px; margin:0; font-weight:700; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+h1 { font-size:32px; margin:0; font-weight:700; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 .muted { color:var(--muted); font-size:13px; }
 
 .tabs { display:flex; border-bottom:1px solid #4e342e; margin-bottom:12px; gap:4px; }
@@ -123,7 +123,7 @@ button.btn.sec { background:transparent; color:var(--muted); border:1px solid #4
 /* Progress Modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
 .modal-backdrop.show { display: flex; }
-.modal { width: 560px; max-width: 92vw; background: var(--card); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 18px; border: 1px solid rgba(255,255,255,0.08); }
+.modal { width: 720px; max-width: 92vw; background: var(--card); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 18px; border: 1px solid rgba(255,255,255,0.08); }
 
 /* ===== Premium Visual Overhaul (non-breaking) ===== */
 :root {
@@ -147,7 +147,7 @@ html, body {
 .card { background: var(--card-strong); box-shadow: var(--elev-2); border: 1px solid rgba(255,255,255,0.06); }
 .card:hover { transform: translateY(-6px); box-shadow: 0 22px 70px rgba(0,0,0,0.65); }
 /* Grid layout: header spans, tabs left, content right */
-.card { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; column-gap: 28px; row-gap: 22px; padding: 18px; }
+.card { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; column-gap: 28px; row-gap: 22px; padding: 18px; }
 .header { grid-column: 1 / -1; }
 .tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding: 6px; gap: 10px; }
 .tab { border-radius: 12px; }
