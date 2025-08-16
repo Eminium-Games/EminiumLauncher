@@ -98,6 +98,18 @@ button.btn.sec { background:transparent; color:var(--muted); border:1px solid #4
 .profile-info { display:flex; flex-direction:column; }
 .profile-info span { font-size:14px; }
 .profile-info .uuid { font-size:12px; color:var(--muted); }
+/* Grade badge */
+.badge-grade {
+  display: none;
+  margin-top: 4px;
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245,158,11,0.18);
+  color: var(--accent);
+  border: 1px solid rgba(245,158,11,0.35);
+}
 
 .settings-modal { opacity: 0; transition: opacity 0.3s ease; }
 .settings-modal.show { display: flex; opacity: 1; }
@@ -137,6 +149,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
             <div class="profile-info">
               <span id="profileName">Pseudo</span>
               <span class="uuid" id="profileUUID">UUID</span>
+              <span class="badge-grade" id="profileGrade"></span>
             </div>
             <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;">Déconnexion</button>
           </div>
@@ -300,6 +313,9 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.getElementById('profileName').textContent = 'Pseudo';
       document.getElementById('profileUUID').textContent = 'UUID';
       document.getElementById('profileSkin').src = '';
+      // Clear grade badge
+      const gEl = document.getElementById('profileGrade');
+      gEl.textContent = ''; gEl.style.display = 'none';
       document.getElementById('btnLogout').style.display = 'none';
       // Revenir sur l'onglet Connexion
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -325,6 +341,11 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.getElementById('profileUUID').textContent = p.uuid;
       const skinUrl = `https://minotar.net/helm/${p.name}/64.png`;
       document.getElementById('profileSkin').src = `${skinUrl}?t=${Date.now()}`;
+      // Grade badge
+      const gEl = document.getElementById('profileGrade');
+      const grade = (p.role || p.grade || '').toString().trim();
+      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+      else { gEl.textContent = ''; gEl.style.display = 'none'; }
       document.getElementById('btnLogout').style.display = 'inline-block';
       // Ouvrir directement l'onglet Jouer
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -392,6 +413,11 @@ btnLogin.addEventListener('click', async () => {
             let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
             // cache-busting pour éviter le cache lors d'un changement de skin
             document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+            // Grade badge
+            const gEl = document.getElementById('profileGrade');
+            const grade = ((p.role || p.grade || '') + '').trim();
+            if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+            else { gEl.textContent = ''; gEl.style.display = 'none'; }
             code2faInput.parentElement.style.display = 'none';
             document.getElementById('btnLogout').style.display = 'inline-block';
             // Aller sur l'onglet Jouer automatiquement
