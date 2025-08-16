@@ -10,7 +10,10 @@ contextBridge.exposeInMainWorld('eminium', {
   logout: () => ipcRenderer.invoke('auth:logout'),
   ping: (host, port, timeout=3000) => ipcRenderer.invoke('launcher:ping', { host, port, timeout }),
   // System info helpers
-  getSystemRamMB: () => ipcRenderer.invoke('sys:ram:totalMB')
+  getSystemRamMB: () => ipcRenderer.invoke('sys:ram:totalMB'),
+  // Settings
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch)
 });
 
 // Progress event subscriptions

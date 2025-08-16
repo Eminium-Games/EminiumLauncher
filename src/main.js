@@ -71,6 +71,38 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
+// Settings storage (JSON under userData)
+function getSettingsPath() {
+  const dir = path.join(app.getPath('userData'));
+  try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+  return path.join(dir, 'settings.json');
+}
+function readSettings() {
+  try {
+    const p = getSettingsPath();
+    if (!fs.existsSync(p)) return {};
+    const raw = fs.readFileSync(p, 'utf8');
+    const obj = JSON.parse(raw);
+    return (obj && typeof obj === 'object') ? obj : {};
+  } catch { return {}; }
+}
+function writeSettings(patch) {
+  const current = readSettings();
+  const next = Object.assign({}, current, (patch && typeof patch === 'object') ? patch : {});
+  try {
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(next, null, 2), 'utf8');
+    return { ok: true, settings: next };
+  } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+}
+
+ipcMain.handle('settings:get', async () => {
+  try { return { ok: true, settings: readSettings() }; }
+  catch (e) { return { ok: false, error: e?.message || String(e) }; }
+});
+ipcMain.handle('settings:set', async (_evt, patch) => {
+  return writeSettings(patch);
+});
+
 // System info: total RAM in MB
 ipcMain.handle('sys:ram:totalMB', async () => {
   try {

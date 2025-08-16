@@ -733,6 +733,7 @@ async function runUpdaterIfNeeded() {
       const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : null);
       warnIfTooHigh(info?.totalMB);
     } catch {}
+    settingsDebouncedSave();
   });
 
   const syncFPS = () => {
@@ -742,12 +743,50 @@ async function runUpdaterIfNeeded() {
     else { fpsLabel.textContent = String(fps.value); }
   };
   render.addEventListener('input', ()=> renderLabel.textContent = `${render.value} chunks`);
+  render.addEventListener('change', settingsDebouncedSave);
   fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); });
-  fpsUnlimited.addEventListener('change', syncFPS);
+  fps.addEventListener('change', settingsDebouncedSave);
+  fpsUnlimited.addEventListener('change', () => { syncFPS(); settingsDebouncedSave(); });
   // Initial labels
   renderLabel.textContent = `${render.value} chunks`;
   fpsLabel.textContent = String(fps.value);
   syncFPS();
+
+  // Settings load/save
+  function readCurrentSettings() {
+    return {
+      memMB: parseInt(memSlider.value, 10) || 2048,
+      renderDist: parseInt(render.value, 10) || 12,
+      fpsCap: parseInt(fps.value, 10) || 120,
+      vsync: !!document.getElementById('vsync').checked,
+      fpsUnlimited: !!fpsUnlimited.checked
+    };
+  }
+  async function applySettings(s) {
+    if (!s || typeof s !== 'object') return;
+    if (typeof s.memMB === 'number') { memSlider.value = String(s.memMB); updateMemLabel(); }
+    if (typeof s.renderDist === 'number') { render.value = String(s.renderDist); renderLabel.textContent = `${render.value} chunks`; }
+    if (typeof s.fpsCap === 'number') { fps.value = String(s.fpsCap); if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); }
+    if (typeof s.vsync === 'boolean') { document.getElementById('vsync').checked = !!s.vsync; }
+    if (typeof s.fpsUnlimited === 'boolean') { fpsUnlimited.checked = !!s.fpsUnlimited; }
+    syncFPS();
+  }
+  let _saveTimer = null;
+  function settingsDebouncedSave() {
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(async () => {
+      try { await window.eminium.setSettings(readCurrentSettings()); } catch {}
+    }, 300);
+  }
+  // Save checkboxes immediately on toggle
+  document.getElementById('vsync').addEventListener('change', settingsDebouncedSave);
+  fpsUnlimited.addEventListener('change', settingsDebouncedSave);
+
+  // Load on startup
+  try {
+    const res = await (window.eminium?.getSettings ? window.eminium.getSettings() : null);
+    if (res && res.ok && res.settings) await applySettings(res.settings);
+  } catch {}
 })();
 
 </script>
