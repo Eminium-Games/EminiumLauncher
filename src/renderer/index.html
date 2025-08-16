@@ -236,14 +236,14 @@ input[type=checkbox]:checked { background: linear-gradient(180deg, #f59e0b, #d97
 input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,255,255,0.95); box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset; }
 
 /* Toggle switch variant (refined) */
-input.toggle { width: 44px; height: 24px; border-radius: 999px; position: relative; border: 1px solid rgba(255,255,255,0.16); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); vertical-align: middle; }
-input.toggle::after { content:""; position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); transition: left .18s ease, background .18s ease; }
+input.toggle { width: 44px; height: 26px; border-radius: 999px; position: relative; border: 1px solid rgba(255,255,255,0.16); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); vertical-align: middle; }
+input.toggle::after { content:""; position:absolute; left:2px; top:1px; width:22px; height:22px; border-radius:50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); transition: left .18s ease, background .18s ease; }
 input.toggle:hover { filter: brightness(1.03); }
 input.toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
 input.toggle:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.25); box-shadow: 0 6px 16px rgba(245,158,11,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
-input.toggle:checked::after { left:22px; background: #fffdf6; }
+input.toggle:checked::after { left:20px; background: #fffdf6; }
 /* Ensure label aligns with switch height */
-.row.toggles label { min-height: 24px; line-height: 24px; }
+.row.toggles label { min-height: 26px; line-height: 26px; }
 
 /* Logs */
 .log { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 8px 24px rgba(0,0,0,0.35); }
