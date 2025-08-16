@@ -117,10 +117,15 @@ ipcMain.handle('launcher:ensure', async () => {
   }
 });
 
-ipcMain.handle('updater:check', async () => {
+ipcMain.handle('updater:check', async (_evt, payload) => {
   try {
+    const force = !!(payload && payload.force);
     const commitApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${REPO_BRANCH}`;
-    const res = await axios.get(commitApi, { timeout: 15000, headers: { 'Accept': 'application/vnd.github+json' } });
+    const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
+    try {
+      if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    } catch {}
+    const res = await axios.get(commitApi, { timeout: 15000, headers });
     const sha = String(res?.data?.sha || '').trim();
     if (!sha) return { ok: false, error: 'SHA introuvable' };
     const storeDir = path.join(app.getPath('userData'), 'updates');
@@ -128,7 +133,7 @@ ipcMain.handle('updater:check', async () => {
     const lastFile = path.join(storeDir, 'last_sha.txt');
     let lastSha = '';
     try { lastSha = String(fs.readFileSync(lastFile, 'utf8')).trim(); } catch {}
-    const updateAvailable = sha && sha !== lastSha;
+    const updateAvailable = force || (sha && sha !== lastSha);
     const assetUrl = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/refs/heads/${REPO_BRANCH}`;
     return { ok: true, updateAvailable, latest: { tag: sha, assetUrl, name: `${REPO_NAME}-${REPO_BRANCH}.zip` } };
   } catch (e) {

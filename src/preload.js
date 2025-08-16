@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('eminiumProgress', {
 
 // Updater (branch-based)
 contextBridge.exposeInMainWorld('updater', {
-  check: () => ipcRenderer.invoke('updater:check'),
+  check: (opts) => ipcRenderer.invoke('updater:check', opts || {}),
   download: (info) => ipcRenderer.invoke('updater:download', info),
   apply: (info) => ipcRenderer.invoke('updater:apply', info),
   relaunch: () => ipcRenderer.invoke('app:relaunch'),

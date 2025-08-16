@@ -189,6 +189,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         </div>
         <div class="row" style="margin-top:12px;">
           <button class="btn sec" id="btnCheck">Installer / Mettre à jour</button>
+          <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et forçe le re-téléchargement si disponible">Forcer la mise à jour</button>
           <button class="btn" id="btnPlay">Jouer</button>
         </div>
       </div>
@@ -233,6 +234,51 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
   });
+});
+
+// Bouton: Forcer la mise à jour
+document.getElementById('btnForceUpdate').addEventListener('click', async () => {
+  if (!window.updater) { log('Updater indisponible.'); return; }
+  try {
+    progressUI.open('Mise à jour du launcher (forcée)');
+    progressUI.set(5);
+    progressUI.addLine('Préparation du téléchargement...');
+    window.updater.onProgress((data) => {
+      if (!data) return;
+      if (data.phase === 'downloading') {
+        const curr = data.currentFile || 1; const total = data.totalFiles || 1;
+        const p = typeof data.percent === 'number' ? data.percent : 0;
+        progressUI.set(Math.max(1, Math.min(100, p|0)));
+        progressUI.addLine(`Téléchargement des mises à jour ${curr}/${total}`);
+      } else if (data.phase === 'downloaded') {
+        progressUI.set(100);
+        progressUI.addLine('Téléchargement terminé. Application de la mise à jour...');
+      } else if (data.phase === 'applying') {
+        const curr = data.currentFile || 0; const total = data.totalFiles || 0;
+        if (total > 0) progressUI.set(Math.round((curr/total)*100));
+      } else if (data.phase === 'error') {
+        progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
+        progressUI.enableClose();
+      }
+    });
+    const res = await window.updater.check({ force: true });
+    if (!(res?.ok)) { progressUI.addLine('Erreur: ' + (res?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    if (!res.updateAvailable || !res.latest?.assetUrl || !res.latest?.tag) {
+      progressUI.addLine('Aucune mise à jour disponible.');
+      progressUI.enableClose();
+      return;
+    }
+    const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
+    if (!dl?.ok) { progressUI.addLine('Erreur téléchargement: ' + (dl?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    const ap = await window.updater.apply({ tag: res.latest.tag });
+    if (!ap?.ok) { progressUI.addLine('Erreur application: ' + (ap?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    progressUI.addLine('Mise à jour appliquée. Redémarrage...');
+    progressUI.set(100);
+    try { await window.updater.relaunch(); } catch {}
+  } catch (e) {
+    progressUI.addLine('Erreur: ' + (e?.message || e), 'err');
+    progressUI.enableClose();
+  }
 });
 
 // Helper: hide/show Connexion tab
