@@ -17,6 +17,86 @@ let rpcReady = false;
 // Shared Discord Application ID for all users. Replace the placeholder with your real Client ID.
 const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '1400888551486521454';
 
+// --- Discord Rich Presence helpers ---
+async function initDiscordRPC() {
+  try {
+    if (!DiscordRPC) {
+      console.warn('[RPC] discord-rpc non disponible');
+      return false;
+    }
+    const clientId = String(DISCORD_APP_ID_SHARED || '').trim();
+    if (!clientId) {
+      console.warn('[RPC] Client ID manquant');
+      return false;
+    }
+    if (rpcClient) {
+      try { rpcClient.destroy?.(); } catch {}
+      rpcClient = null;
+      rpcReady = false;
+    }
+    rpcClient = new DiscordRPC.Client({ transport: 'ipc' });
+    rpcClient.on('ready', () => {
+      rpcReady = true;
+      console.log('[RPC] prêt');
+      try { setPresenceIdle(); } catch {}
+    });
+    rpcClient.on('error', (e) => {
+      console.error('[RPC] erreur:', e?.message || String(e));
+      rpcReady = false;
+    });
+    try { await DiscordRPC.register(clientId); } catch {}
+    await rpcClient.login({ clientId });
+    console.log('[RPC] initialisation envoyée');
+    return true;
+  } catch (e) {
+    console.error('[RPC] init error:', e?.message || String(e));
+    return false;
+  }
+}
+
+function clearPresence() {
+  try { if (rpcClient && rpcReady) rpcClient.clearActivity().catch(() => {}); } catch {}
+}
+
+function setPresenceIdle() {
+  try {
+    if (!rpcClient || !rpcReady) return;
+    rpcClient.setActivity({
+      details: 'Dans le launcher — Navigation',
+      state: 'Eminium',
+      largeImageKey: 'eminium',
+      largeImageText: 'Eminium Launcher',
+      instance: false
+    }).catch(() => {});
+  } catch {}
+}
+
+function setPresencePreparing() {
+  try {
+    if (!rpcClient || !rpcReady) return;
+    rpcClient.setActivity({
+      details: 'Préparation du jeu',
+      state: 'Téléchargements et vérifications',
+      largeImageKey: 'eminium',
+      largeImageText: 'Préparation en cours…',
+      instance: false
+    }).catch(() => {});
+  } catch {}
+}
+
+function setPresencePlaying() {
+  try {
+    if (!rpcClient || !rpcReady) return;
+    rpcClient.setActivity({
+      details: 'En jeu sur Eminium',
+      state: 'Joue à Eminium',
+      largeImageKey: 'eminium',
+      largeImageText: 'Minecraft',
+      instance: true
+    }).catch(() => {});
+  } catch {}
+}
+
 const { loginEminium } = require('./setup.js');
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
   return await loginEminium(email, password, code);
@@ -112,6 +192,16 @@ ipcMain.handle('settings:get', async () => {
 });
 ipcMain.handle('settings:set', async (_evt, patch) => {
   return writeSettings(patch);
+});
+
+// Status handler used by renderer to know readiness / rpc state
+ipcMain.handle('launcher:status', async () => {
+  try {
+    const ready = await checkReady().catch(() => false);
+    return { ok: true, ready: !!ready, rpcReady: !!rpcReady };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e), ready: false, rpcReady: !!rpcReady };
+  }
 });
 
 // System info: total RAM in MB
