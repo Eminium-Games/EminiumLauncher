@@ -945,7 +945,39 @@ async function loginEminium(email, password, twoFactorCode) {
       return String(v);
     } catch { return null; }
   };
+  const normalizeHex = (c) => {
+    if (!c) return null;
+    let s = String(c).trim();
+    // Accept like #RRGGBB or RRGGBB
+    if (/^#?[0-9a-fA-F]{6}$/.test(s)) return s.startsWith('#') ? s : `#${s}`;
+    // Accept short #RGB
+    if (/^#?[0-9a-fA-F]{3}$/.test(s)) {
+      s = s.replace('#','');
+      const r = s[0]; const g = s[1]; const b = s[2];
+      return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    return null;
+  };
+  const pickGradeColor = (v) => {
+    try {
+      if (!v) return null;
+      if (typeof v === 'string') return null; // string roles don't carry color
+      if (Array.isArray(v)) {
+        for (const it of v) {
+          const c = pickGradeColor(it);
+          if (c) return c;
+        }
+        return null;
+      }
+      if (typeof v === 'object') {
+        const cand = v.color || v.colour || v.hex || v.primary_color || v.primaryColor || null;
+        return normalizeHex(cand);
+      }
+      return null;
+    } catch { return null; }
+  };
   const gradeName = pickGradeName(data.grade || data.role || null);
+  const gradeColor = pickGradeColor(data.role || data.grade || null);
 
   const profile = {
     id: data.id ?? null,
@@ -954,6 +986,7 @@ async function loginEminium(email, password, twoFactorCode) {
     email: data.email ?? null,
     role: data.role ?? null,
     grade: gradeName || null,
+    gradeColor: gradeColor || null,
     banned: !!data.banned,
     created_at: data.created_at ?? null,
     access_token: data.access_token || null,
