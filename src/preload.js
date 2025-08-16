@@ -8,13 +8,11 @@ contextBridge.exposeInMainWorld('eminium', {
   prepare: () => ipcRenderer.invoke('launcher:prepare'),
   getProfile: () => ipcRenderer.invoke('auth:profile:get'),
   logout: () => ipcRenderer.invoke('auth:logout'),
-  ping: (host, port, timeout=3000) => ipcRenderer.invoke('launcher:ping', { host, port, timeout })
+  ping: (host, port, timeout=3000) => ipcRenderer.invoke('launcher:ping', { host, port, timeout }),
+  // System info helpers
+  getSystemRamMB: () => ipcRenderer.invoke('sys:ram:totalMB')
 });
 
-
-contextBridge.exposeInMainWorld('auth', {
-  login: (email, password, code) => ipcRenderer.invoke('auth:login', { email, password, code })
-});
 // Progress event subscriptions
 contextBridge.exposeInMainWorld('eminiumProgress', {
   onEnsureProgress: (cb) => ipcRenderer.on('ensure:progress', (_evt, data) => cb?.(data)),
@@ -28,8 +26,4 @@ contextBridge.exposeInMainWorld('updater', {
   apply: (info) => ipcRenderer.invoke('updater:apply', info),
   relaunch: () => ipcRenderer.invoke('app:relaunch'),
   onProgress: (cb) => ipcRenderer.on('update:progress', (_evt, data) => cb?.(data))
-});
-
-contextBridge.exposeInMainWorld('auth', {
-  login: (email, password, code) => ipcRenderer.invoke('auth:login', { email, password, code })
 });

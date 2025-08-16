@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+
 const AdmZip = require('adm-zip');
 const axios = require('axios');
 const net = require('net');
@@ -67,6 +69,27 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+// System info: total RAM in MB
+ipcMain.handle('sys:ram:totalMB', async () => {
+  try {
+    const totalMB = Math.round(os.totalmem() / (1024 * 1024));
+    return { ok: true, totalMB };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
+
+// App relaunch handler for updater
+ipcMain.handle('app:relaunch', async () => {
+  try {
+    app.relaunch();
+    app.quit();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
 });
 
 // IPC handlers
