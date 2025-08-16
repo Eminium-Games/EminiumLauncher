@@ -147,18 +147,21 @@ html, body {
 .card { background: var(--card-strong); box-shadow: var(--elev-2); border: 1px solid rgba(255,255,255,0.06); }
 .card:hover { transform: translateY(-6px); box-shadow: 0 22px 70px rgba(0,0,0,0.65); }
 /* Grid layout: header spans, tabs left, content right */
-.card { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; column-gap: 18px; }
+.card { display: grid; grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; column-gap: 28px; row-gap: 22px; padding: 18px; }
 .header { grid-column: 1 / -1; }
-.tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding-right: 4px; }
+.tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding: 6px; gap: 10px; }
 .tab { border-radius: 12px; }
-.tab + .tab { margin-top: 8px; }
-.tab-content { grid-column: 2; grid-row: 2; }
+.tab + .tab { margin-top: 0; }
+.tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; }
+/* Panels spacing */
+.panel { padding: 20px 22px; }
+.row { gap: 14px; }
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
-  .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; }
+  .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
   .tab + .tab { margin-top: 0; }
   .tab { border-radius: 12px 12px 0 0; }
-  .tab-content { grid-column: 1; grid-row: 3; }
+  .tab-content { grid-column: 1; grid-row: 3; padding-right: 0; }
 }
 
 .logo { box-shadow: 0 0 34px rgba(245,158,11,0.55); }
@@ -218,11 +221,16 @@ input[type=checkbox] { width: 18px; height: 18px; accent-color: #f59e0b; }
 /* Layout helpers */
 .row { display:flex; gap:12px; align-items:flex-end; flex-wrap: wrap; }
 
-/* Global scrollbar styling */
-* { scrollbar-width: thin; scrollbar-color: var(--accent) var(--glass); }
-*::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #f59e0b, #d97706); border-radius: 10px; border: 2px solid #0003; }
-*::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+/* Hide scrollbars globally but keep scroll behavior */
+html, body, .wrap, .card, .tab-content, .panel, .log, .progress-log {
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+.wrap::-webkit-scrollbar, .card::-webkit-scrollbar,
+.tab-content::-webkit-scrollbar, .panel::-webkit-scrollbar,
+.log::-webkit-scrollbar, .progress-log::-webkit-scrollbar { display: none; }
+/* Prevent outer window scrollbar */
+html, body { overflow: hidden; }
 
 /* Skeleton loading */
 .skeleton { position: relative; color: transparent !important; }
