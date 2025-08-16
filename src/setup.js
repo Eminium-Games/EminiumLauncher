@@ -21,7 +21,7 @@ const appDataRoot = path.join(process.cwd(), '..'); // fallback when packaged
 const hiddenCore = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core');
 const bundledModpack = path.join(hiddenCore, 'modpack.zip');
 // Modpack distant (fourni par l'utilisateur)
-const MODPACK_URL = 'https://github.com/Fourty3000/get-zip-for-eminium-launcher/archive/refs/tags/ZIP4.zip';
+const MODPACK_URL = 'https://github.com/Fourty3000/get-zip-for-eminium-launcher/archive/refs/tags/ZIP.zip';
 
 // Dossier .eminium (options utilisateur visibles)
 const userHome = os.homedir();
