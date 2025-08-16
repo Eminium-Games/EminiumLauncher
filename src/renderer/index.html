@@ -742,10 +742,8 @@ let _pingTimer = null;
 let _lastUp = undefined;
 async function pingOnce() {
   try {
-    const hostEl = document.getElementById('host');
-    const portEl = document.getElementById('port');
-    const host = (hostEl && hostEl.value && hostEl.value.trim()) || 'play.eminium.ovh';
-    const port = (portEl && parseInt(portEl.value, 10)) || 25565;
+    const host = 'play.eminium.ovh';
+    const port = 25565;
     const btnPlay = document.getElementById('btnPlay');
     const res = await (window.eminium?.ping ? window.eminium.ping(host, port, 2500) : Promise.resolve({ ok: true, up: true }));
     const up = !!(res && res.up);
@@ -775,11 +773,7 @@ function startPing() {
   _pingTimer = setInterval(pingOnce, 5000);
 }
 
-// Redémarrer le ping si l'hôte/port change
-const _hostEl = document.getElementById('host');
-const _portEl = document.getElementById('port');
-if (_hostEl) _hostEl.addEventListener('input', startPing);
-if (_portEl) _portEl.addEventListener('input', startPing);
+// Hôte/port fixes → pas d'écouteurs d'inputs nécessaires
 
 // Événements de progression depuis le main process (avec désinscription)
 let _offEnsure = null;
@@ -881,10 +875,8 @@ document.getElementById('btnCheck').addEventListener('click', async () => {
 
 document.getElementById('btnPlay').addEventListener('click', async () => {
   const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
-  const hEl = document.getElementById('host');
-  const pEl = document.getElementById('port');
-  const serverHost = (hEl && hEl.value && hEl.value.trim()) || 'play.eminium.ovh';
-  const serverPort = (pEl && parseInt(pEl.value, 10)) || 25565;
+  const serverHost = 'play.eminium.ovh';
+  const serverPort = 25565;
   try {
     progressUI.open('Lancement');
     progressUI.set(10);
