@@ -640,18 +640,6 @@ btnLogin.addEventListener('click', async () => {
             return;
         }
 
-  // Visual fill for range inputs: accent (filled) + grey (unfilled)
-  function updateRangeFill(el){
-    if (!el) return;
-    const min = Number(el.min) || 0;
-    const max = Number(el.max) || 100;
-    let val = Number(el.value);
-    if (!Number.isFinite(val)) val = min;
-    const p = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-    // Left: accent up to p%, right: subtle grey
-    el.style.background = `linear-gradient(90deg, var(--accent) 0% ${p}%, rgba(255,255,255,0.08) ${p}%, rgba(255,255,255,0.08) 100%)`;
-  }
-
         if (result?.status === 'error') {
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
             return;
@@ -986,6 +974,18 @@ async function runUpdaterIfNeeded() {
     } else {
       ramInfo.textContent = `RAM système: ${Math.round(totalMB/1024)} Go`;
     }
+  }
+
+  // Remplissage visuel des sliders: accent jusqu'à la valeur, gris après
+  function updateRangeFill(el) {
+    if (!el) return;
+    const min = Number(el.min) || 0;
+    const max = Number(el.max) || 100;
+    let val = Number(el.value);
+    if (!Number.isFinite(val)) val = min;
+    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    // Utilise l'accent à gauche et un gris subtil à droite
+    el.style.background = `linear-gradient(90deg, var(--accent) 0% ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
   }
 
   // Detect system RAM and adjust slider max to 85% of total (rounded to step)
