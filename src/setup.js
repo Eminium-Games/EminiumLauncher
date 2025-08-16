@@ -433,13 +433,6 @@ const axiosClient = axios.create({
   timeout: 45000,
   httpAgent,
   httpsAgent,
-  headers: {
-    // Some CDNs/Mirrors return 403 to unknown/non-browser clients. Spoof a sane UA.
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EminiumLauncher/1.0 (+https://eminium.ovh) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    'Accept': '*/*',
-    'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Referer': 'https://eminium.ovh/'
-  },
   maxContentLength: Infinity,
   maxBodyLength: Infinity,
   validateStatus: (s) => s >= 200 && s < 300
@@ -475,14 +468,7 @@ aSYNC_GET = async function(url, dest) {
       }
     } catch {}
 
-    let res;
-    try {
-      res = await axiosClient({ url, method: 'GET', responseType: 'stream' });
-    } catch (e) {
-      const status = e?.response?.status;
-      const msg = status ? `HTTP ${status} ${e?.response?.statusText || ''}`.trim() : (e?.message || 'Network error');
-      throw new Error(`${msg} while GET ${url}`);
-    }
+    const res = await axiosClient({ url, method: 'GET', responseType: 'stream' });
     await new Promise((resolve, reject) => {
       const writer = fs.createWriteStream(tmp);
       res.data.pipe(writer);
