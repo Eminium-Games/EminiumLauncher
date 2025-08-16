@@ -929,12 +929,31 @@ async function loginEminium(email, password, twoFactorCode) {
   const name = data.username || data.name || data.nickname || 'EminiumPlayer';
   const uuid = data.uuid || uuidFromName(name);
 
+  // Normalize grade from possible role/grade structures (string | object | array)
+  const pickGradeName = (v) => {
+    try {
+      if (!v) return null;
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v)) {
+        const parts = v.map(pickGradeName).filter(Boolean);
+        return parts.length ? parts.join(', ') : null;
+      }
+      if (typeof v === 'object') {
+        const cand = v.name || v.title || v.displayName || v.label || v.slug || v.role;
+        return cand ? String(cand) : null;
+      }
+      return String(v);
+    } catch { return null; }
+  };
+  const gradeName = pickGradeName(data.grade || data.role || null);
+
   const profile = {
     id: data.id ?? null,
     name,
     uuid,
     email: data.email ?? null,
     role: data.role ?? null,
+    grade: gradeName || null,
     banned: !!data.banned,
     created_at: data.created_at ?? null,
     access_token: data.access_token || null,

@@ -343,7 +343,7 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.getElementById('profileSkin').src = `${skinUrl}?t=${Date.now()}`;
       // Grade badge
       const gEl = document.getElementById('profileGrade');
-      const grade = (p.role || p.grade || '').toString().trim();
+      const grade = formatGrade(p.grade ?? p.role);
       if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
       else { gEl.textContent = ''; gEl.style.display = 'none'; }
       document.getElementById('btnLogout').style.display = 'inline-block';
@@ -362,6 +362,23 @@ function log(msg) {
     const logEl = document.getElementById('log');
     logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
     logEl.scrollTop = logEl.scrollHeight;
+}
+
+// Safely format grade text from possible shapes (string | object | array)
+function formatGrade(v) {
+  try {
+    if (!v) return '';
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)) {
+      const parts = v.map(formatGrade).filter(Boolean);
+      return parts.join(', ');
+    }
+    if (typeof v === 'object') {
+      const cand = v.name || v.title || v.displayName || v.label || v.slug || v.role || '';
+      return String(cand).trim();
+    }
+    return String(v).trim();
+  } catch { return ''; }
 }
 
 // Validation formulaire login
@@ -415,7 +432,7 @@ btnLogin.addEventListener('click', async () => {
             document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
             // Grade badge
             const gEl = document.getElementById('profileGrade');
-            const grade = ((p.role || p.grade || '') + '').trim();
+            const grade = formatGrade(p.grade ?? p.role);
             if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
             else { gEl.textContent = ''; gEl.style.display = 'none'; }
             code2faInput.parentElement.style.display = 'none';
