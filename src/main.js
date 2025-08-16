@@ -4,12 +4,18 @@ const fs = require('fs');
 const os = require('os');
 
 const AdmZip = require('adm-zip');
+let DiscordRPC;
+try { DiscordRPC = require('discord-rpc'); } catch {}
 const axios = require('axios');
 const net = require('net');
 const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
 
 let mainWindow;
 let windowIcon; // nativeImage pour l'icône
+let rpcClient = null;
+let rpcReady = false;
+// Shared Discord Application ID for all users. Replace the placeholder with your real Client ID.
+const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '1400888551486521454';
 
 const { loginEminium } = require('./setup.js');
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
@@ -62,6 +68,8 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   createWindow();
+  // Init Discord RPC if configured
+  try { await initDiscordRPC(); } catch {}
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -69,6 +77,9 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+app.on('before-quit', () => {
+  try { clearPresence(); } catch {}
 });
 
 // Settings storage (JSON under userData)
@@ -133,6 +144,7 @@ ipcMain.handle('auth:logout', async () => {
 });
 ipcMain.handle('launcher:ensure', async () => {
   try {
+    try { setPresencePreparing(); } catch {}
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('ensure:progress', { phase: 'start', message: 'Préparation en cours...' });
     }
@@ -140,6 +152,7 @@ ipcMain.handle('launcher:ensure', async () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('ensure:progress', { phase: 'done', message: 'Préparation terminée.' });
     }
+    try { setPresenceIdle(); } catch {}
     return res;
   } catch (e) {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -319,6 +332,7 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
       return { ok: false, error: msg };
     }
 
+    try { setPresencePreparing(); } catch {}
     const launcher = await launchMinecraft(userOpts);
     if (launcher && mainWindow && !mainWindow.isDestroyed()) {
       launcher.on('data', (buf) => {
@@ -331,25 +345,20 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
       launcher.on('error', (err) => {
         const msg = err?.message || String(err);
         mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+        try { setPresenceIdle(); } catch {}
       });
       // Capture process exit to help diagnose silent failures
       launcher.on('close', (code) => {
         const msg = `Processus Minecraft terminé avec le code ${code}`;
         mainWindow.webContents.send('play:progress', { type: code === 0 ? 'log' : 'error', line: msg });
+        try { setPresenceIdle(); } catch {}
       });
     }
+    try { setPresencePlaying(); } catch {}
     return { ok: true };
   } catch (e) {
     dialog.showErrorBox('Lancement Minecraft', e?.message || String(e));
-    return { ok: false, error: e?.message || String(e) };
-  }
-});
-
-// Readiness status (fichiers prêts ?)
-ipcMain.handle('launcher:status', async () => {
-  try {
-    return await checkReady();
-  } catch (e) {
+    try { setPresenceIdle(); } catch {}
     return { ok: false, error: e?.message || String(e) };
   }
 });
