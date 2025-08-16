@@ -965,6 +965,8 @@ async function runUpdaterIfNeeded() {
   const fps = document.getElementById('fpsCap');
   const fpsLabel = document.getElementById('fpsLabel');
   const fpsUnlimited = document.getElementById('fpsUnlimited');
+  // Cache RAM détectée pour éviter des appels répétés
+  let detectedRamMB = null;
 
   function updateMemLabel(){ memLabel.textContent = `${memSlider.value} Mo`; }
   function warnIfTooHigh(totalMB){
@@ -1010,6 +1012,7 @@ async function runUpdaterIfNeeded() {
   try {
     const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : Promise.resolve({ ok:true, totalMB: 8192 }));
     const total = info?.totalMB || 8192;
+    detectedRamMB = total;
     const maxAlloc = Math.max(1024, Math.floor((total * 0.85) / 256) * 256);
     memSlider.max = String(maxAlloc);
     if (parseInt(memSlider.value,10) > maxAlloc) memSlider.value = String(Math.min(maxAlloc, 4096));
@@ -1017,6 +1020,7 @@ async function runUpdaterIfNeeded() {
     warnIfTooHigh(total);
     ramInfo.title = `Total détecté: ${total} Mo`;
   } catch {
+    detectedRamMB = null;
     updateMemLabel();
     ramInfo.textContent = 'Impossible de détecter la RAM système';
   }
@@ -1024,10 +1028,7 @@ async function runUpdaterIfNeeded() {
   memSlider.addEventListener('input', async () => {
     updateMemLabel();
     updateRangeFill(memSlider);
-    try {
-      const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : null);
-      warnIfTooHigh(info?.totalMB);
-    } catch {}
+    warnIfTooHigh(detectedRamMB);
     settingsDebouncedSave();
   });
 
@@ -1085,6 +1086,7 @@ async function runUpdaterIfNeeded() {
     syncFPS();
     // Refresh fills after programmatic updates
     [memSlider, render, fps].forEach(updateRangeFill);
+    warnIfTooHigh(detectedRamMB);
   }
   let _saveTimer = null;
   function settingsDebouncedSave() {
