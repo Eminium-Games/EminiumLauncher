@@ -25,6 +25,8 @@ html, body {
   background:linear-gradient(135deg, #1a0b0b 0%, #3b1f1f 100%);
   color: var(--txt);
 }
+/* Global box-sizing to prevent accidental overflow */
+*, *::before, *::after { box-sizing: border-box; }
 
 .wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:24px; box-sizing:border-box; }
 
@@ -157,8 +159,8 @@ html, body {
 .card { background: var(--card-strong); box-shadow: var(--elev-2); border: 1px solid rgba(255,255,255,0.06); }
 .card:hover { transform: translateY(-6px); box-shadow: 0 22px 70px rgba(0,0,0,0.65); }
 /* Grid layout: header spans, tabs left, content right */
-.card { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; column-gap: 28px; row-gap: 22px; padding: 18px; }
-.header { grid-column: 1 / -1; }
+.card { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; column-gap: 32px; row-gap: 26px; padding: 18px; }
+.header { grid-column: 1 / -1; margin-bottom: 4px; }
 .tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding: 10px; gap: 10px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); overflow:hidden; z-index: 0; }
 .tab { border-radius: 12px; width:100%; }
 .tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
@@ -170,6 +172,8 @@ html, body {
 .tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; position: relative; z-index: 1; min-width: 0; }
 /* Panels spacing */
 .panel { padding: 20px 22px; }
+.panel + .panel { margin-top: 16px; }
+.panel .panel { border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28); }
 .row { gap: 14px; }
 .row.fields-2 { gap: 28px; }
 .row.toggles { gap: 24px; align-items: center; }
