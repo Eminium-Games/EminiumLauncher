@@ -134,14 +134,14 @@ function resolveJavaPath() {
   return undefined;
 }
 
-async function ensureBaseFolders() {
+function ensureBaseFolders() {
   Object.values(dirs).forEach(ensureDir);
   ensureDir(eminiumDir);
   ensureDir(jreRoot);
   setHiddenWindows(hiddenBase);
 }
 
-async function ensureUserOptions() {
+function ensureUserOptions() {
   const optionsTxt = path.join(eminiumDir, 'options.txt');
   if (!fs.existsSync(optionsTxt)) {
     fs.writeFileSync(optionsTxt, '# Eminium user options\n');
