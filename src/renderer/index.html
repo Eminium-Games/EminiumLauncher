@@ -578,23 +578,10 @@ async function checkAndAutoPrepare() {
     const res = await window.eminium.prepare();
     if (res?.ok) {
       setReadyUI(true);
-      // Auto-launch
-      const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
-      const hEl = document.getElementById('host');
-      const pEl = document.getElementById('port');
-      const serverHost = (hEl && hEl.value && hEl.value.trim()) || 'play.eminium.ovh';
-      const serverPort = (pEl && parseInt(pEl.value, 10)) || 25565;
-      progressUI.open('Téléchargements / Lancement');
-      progressUI.set(1);
-      log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${serverHost}:${serverPort})`);
-      const playRes = await window.eminium.play({ memoryMB, serverHost, serverPort });
-      if (playRes?.ok) {
-        log('Client lancé ✓');
-        progressUI.set(100); progressUI.addLine('Client lancé ✓'); progressUI.enableClose();
-      } else {
-        log('Échec du lancement: ' + (playRes?.error || 'inconnu'));
-        progressUI.addLine('Échec du lancement: ' + (playRes?.error || 'inconnu')); progressUI.enableClose();
-      }
+      // Ne pas lancer automatiquement. Informer l'utilisateur et laisser le bouton Jouer actif.
+      progressUI.addLine('Installation terminée. Cliquez sur "Jouer" pour lancer.');
+      progressUI.set(100);
+      progressUI.enableClose();
       return true;
     }
   } catch (e) {
