@@ -221,11 +221,11 @@ input, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,2
 input:focus, select:focus { outline: none; box-shadow: var(--ring); }
 
 /* Sliders */
-input[type=range] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.12); display: block; width: 100%; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
+input[type=range] { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.09); display: block; width: 100%; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.10); background-clip: padding-box; }
 /* Extra spacing when multiple sliders are stacked in same container */
 .panel input[type=range] ~ input[type=range] { margin-top: 18px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); box-shadow: 0 4px 12px rgba(245,158,11,0.5), 0 0 0 3px rgba(245,158,11,0.18); border: 2px solid #fff3; cursor: pointer; }
-input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); border: 2px solid #fff3; box-shadow: 0 4px 12px rgba(245,158,11,0.5), 0 0 0 3px rgba(245,158,11,0.18); cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); border: 2px solid #fff3; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); border: 2px solid #fff3; box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); cursor: pointer; }
 input[type=range].dim::-webkit-slider-thumb, input[type=range].dim::-moz-range-thumb { box-shadow: 0 2px 6px rgba(0,0,0,0.25); filter: saturate(0.7) brightness(0.9); }
 
 /* Checkboxes */
@@ -978,7 +978,7 @@ async function runUpdaterIfNeeded() {
     }
   }
 
-  // Remplissage visuel des sliders: accent jusqu'à la valeur, gris après, avec fondu qui se mêle au pouce
+  // Remplissage visuel des sliders: accent jusqu'à la valeur, fondu sous le pouce vers transparent, base grise + léger vernis
   function updateRangeFill(el) {
     if (!el) return;
     const min = Number(el.min) || 0;
@@ -986,17 +986,23 @@ async function runUpdaterIfNeeded() {
     let val = Number(el.value);
     if (!Number.isFinite(val)) val = min;
     const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-    // Calcule une lueur radiale centrée sous le pouce + un remplissage linéaire
-    const rect = el.getBoundingClientRect();
-    const thumbW = 18; // doit rester sync avec le CSS
-    const r1 = Math.round(thumbW * 0.7);
-    const r2 = Math.round(thumbW * 1.3);
-    const r3 = Math.round(thumbW * 2.2);
+    // Lueur + remplissage qui s'efface vers transparent près du pouce
+    const thumbW = 20; // doit rester en phase avec le CSS
+    const fade = Math.max(1.0, Math.min(5, (thumbW / (el.getBoundingClientRect()?.width || 200)) * 100 * 1.9));
+    const a0 = Math.max(0, pct - fade);  // fin du plein accent
+    const a1 = pct;                      // centre du pouce
     const grey = 'rgba(255,255,255,0.10)';
-    const fill = `linear-gradient(90deg, rgba(245,158,11,0.98) 0% ${pct}%, ${grey} ${pct}% 100%)`;
-    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(245,158,11,0.65) 0 ${r1}px, rgba(245,158,11,0.28) ${r1}px ${r2}px, rgba(245,158,11,0) ${r2}px ${r3}px)`;
+    const fill = `linear-gradient(90deg,
+      rgba(245,158,11,0.96) 0% ${a0}%,
+      rgba(245,158,11,0.55) ${a0}% calc(${a1}% - 0.1%),
+      rgba(245,158,11,0.00) ${a1}% 100%)`;
+    const r1 = Math.round(thumbW * 0.6);
+    const r2 = Math.round(thumbW * 1.2);
+    const r3 = Math.round(thumbW * 2.0);
+    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(245,158,11,0.45) 0 ${r1}px, rgba(245,158,11,0.18) ${r1}px ${r2}px, rgba(245,158,11,0) ${r2}px ${r3}px)`;
     const base = `linear-gradient(90deg, ${grey}, ${grey})`;
-    el.style.background = `${glow}, ${fill}, ${base}`;
+    const sheen = `linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, rgba(0,0,0,0.00) 100%)`;
+    el.style.background = `${glow}, ${fill}, ${base}, ${sheen}`;
     el.style.backgroundRepeat = 'no-repeat';
   }
 
@@ -1033,7 +1039,9 @@ async function runUpdaterIfNeeded() {
     // Visuel: si illimité, griser totalement la piste et atténuer le pouce
     if (unlimited) {
       fps.classList.add('dim');
-      fps.style.background = 'rgba(255,255,255,0.10)';
+      // base grise sans lueur/fill
+      fps.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10))';
+      fps.style.backgroundRepeat = 'no-repeat';
     } else {
       fps.classList.remove('dim');
       updateRangeFill(fps);
@@ -1044,6 +1052,12 @@ async function runUpdaterIfNeeded() {
   fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); updateRangeFill(fps); });
   fps.addEventListener('change', settingsDebouncedSave);
   fpsUnlimited.addEventListener('change', () => { syncFPS(); updateRangeFill(fps); settingsDebouncedSave(); });
+  // Recalcule le fondu au redimensionnement (évite de petits artefacts)
+  window.addEventListener('resize', () => {
+    updateRangeFill(memSlider);
+    updateRangeFill(render);
+    if (!fpsUnlimited.checked) updateRangeFill(fps);
+  });
   // Initial labels
   renderLabel.textContent = `${render.value} chunks`;
   fpsLabel.textContent = String(fps.value);
