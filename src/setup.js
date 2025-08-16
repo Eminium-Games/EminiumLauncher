@@ -218,14 +218,17 @@ async function syncModpackFromUrl(url, log) {
       if (globalThis.emitPlayProgress) try { globalThis.emitPlayProgress({ line: msg }); } catch {}
     } catch {}
 
-    // Chercher mods/config à travers plusieurs conventions d'archives
+    // Chercher mods/config/resourcepacks à travers plusieurs conventions d'archives
     const tryPaths = (base) => [
       path.join(base, 'mods'),
       path.join(base, 'config'),
+      path.join(base, 'resourcepacks'),
       path.join(base, 'overrides', 'mods'),
       path.join(base, 'overrides', 'config'),
+      path.join(base, 'overrides', 'resourcepacks'),
       path.join(base, '.minecraft', 'mods'),
       path.join(base, '.minecraft', 'config'),
+      path.join(base, '.minecraft', 'resourcepacks'),
       path.join(base, 'get-zip-for-eminium-launcher-ZIP4', 'mods')
     ];
     const existsDir = (p) => p && fs.existsSync(p) && fs.statSync(p).isDirectory();
@@ -250,6 +253,7 @@ async function syncModpackFromUrl(url, log) {
 
     let modsSrc = path.join(tmp, 'mods');
     let cfgSrc = path.join(tmp, 'config');
+    let rpSrc = path.join(tmp, 'resourcepacks');
 
     // Cas GitHub: un dossier parent unique
     if (!existsDir(modsSrc) && !existsDir(cfgSrc)) {
@@ -259,18 +263,21 @@ async function syncModpackFromUrl(url, log) {
         const candidates = tryPaths(base);
         const foundMods = candidates.find(p => p.endsWith(path.sep + 'mods') && existsDir(p)) || findDirByNameDepth(base, 'mods');
         const foundCfg = candidates.find(p => p.endsWith(path.sep + 'config') && existsDir(p)) || findDirByNameDepth(base, 'config');
+        const foundRp = candidates.find(p => p.endsWith(path.sep + 'resourcepacks') && existsDir(p)) || findDirByNameDepth(base, 'resourcepacks');
         if (foundMods) modsSrc = foundMods;
         if (foundCfg) cfgSrc = foundCfg;
+        if (foundRp) rpSrc = foundRp;
       }
     }
 
     // Dernière tentative: chercher n'importe quel dossier "mods"/"config" peu profond
     if (!existsDir(modsSrc)) modsSrc = findDirByNameDepth(tmp, 'mods') || modsSrc;
     if (!existsDir(cfgSrc)) cfgSrc = findDirByNameDepth(tmp, 'config') || cfgSrc;
+    if (!existsDir(rpSrc)) rpSrc = findDirByNameDepth(tmp, 'resourcepacks') || rpSrc;
 
     // Debug: chemins retenus
     try {
-      const dbg = `[Modpack] Chemins détectés -> modsSrc: ${existsDir(modsSrc)?modsSrc:'(introuvable)'} | configSrc: ${existsDir(cfgSrc)?cfgSrc:'(introuvable)'} `;
+      const dbg = `[Modpack] Chemins détectés -> modsSrc: ${existsDir(modsSrc)?modsSrc:'(introuvable)'} | configSrc: ${existsDir(cfgSrc)?cfgSrc:'(introuvable)'} | resourcepacks: ${existsDir(rpSrc)?rpSrc:'(introuvable)'} `;
       console.log(dbg);
       if (globalThis.emitPlayProgress) try { globalThis.emitPlayProgress({ line: dbg }); } catch {}
     } catch {}
@@ -338,6 +345,24 @@ async function syncModpackFromUrl(url, log) {
       copyDir(cfgSrc, cfgDst);
       log && log('[Modpack] Config synchronisée');
       try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `[Modpack] Config synchronisée` }); } catch {}
+    }
+    // Synchroniser resourcepacks (overwrite du dossier)
+    if (fs.existsSync(rpSrc)) {
+      const rpDst = path.join(hiddenBase, 'resourcepacks');
+      try { if (fs.existsSync(rpDst)) fs.rmSync(rpDst, { recursive: true, force: true }); } catch {}
+      ensureDir(rpDst);
+      copyDir(rpSrc, rpDst);
+      log && log('[Modpack] Resource packs synchronisés');
+      try {
+        if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `[Modpack] Resource packs synchronisés` });
+        // Lister quelques packs copiés
+        try {
+          const names = fs.readdirSync(rpDst, { withFileTypes: true })
+            .filter(e => e.isFile() || e.isDirectory())
+            .map(e => e.name);
+          globalThis.emitPlayProgress({ line: `[Modpack] Packs: ${names.slice(0,10).join(', ')}${names.length>10?` (+${names.length-10})`:''}` });
+        } catch {}
+      } catch {}
     }
     // Nettoyage
     try { fs.rmSync(tmp, { recursive: true, force: true }); } catch {}
