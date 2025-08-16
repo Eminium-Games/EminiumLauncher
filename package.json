@@ -2,7 +2,7 @@
   "name": "eminium-launcher",
   "version": "1.0.0",
   "private": true,
-  "description": "Launcheur pour le serveur Eminium - Installez et Jouez !",
+  "description": "Launcheur pour le serveur Eminium - Installez et Jouez ! v${version}",
   "author": "Eminium",
   "main": "src/main.js",
   "scripts": {
@@ -49,7 +49,7 @@
       "installerIcon": "assets/icon/icon.ico",
       "uninstallerIcon": "assets/icon/icon.ico",
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Eminium Launcher Setup ${version}.exe"
+      "artifactName": "Eminium Launcher Setup.exe"
     }
   }
 }
