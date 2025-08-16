@@ -18,8 +18,16 @@ contextBridge.exposeInMainWorld('eminium', {
 
 // Progress event subscriptions
 contextBridge.exposeInMainWorld('eminiumProgress', {
-  onEnsureProgress: (cb) => ipcRenderer.on('ensure:progress', (_evt, data) => cb?.(data)),
-  onPlayProgress: (cb) => ipcRenderer.on('play:progress', (_evt, data) => cb?.(data))
+  onEnsureProgress: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('ensure:progress', handler);
+    return () => ipcRenderer.removeListener('ensure:progress', handler);
+  },
+  onPlayProgress: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('play:progress', handler);
+    return () => ipcRenderer.removeListener('play:progress', handler);
+  }
 });
 
 // Updater (branch-based)
@@ -28,5 +36,10 @@ contextBridge.exposeInMainWorld('updater', {
   download: (info) => ipcRenderer.invoke('updater:download', info),
   apply: (info) => ipcRenderer.invoke('updater:apply', info),
   relaunch: () => ipcRenderer.invoke('app:relaunch'),
-  onProgress: (cb) => ipcRenderer.on('update:progress', (_evt, data) => cb?.(data))
+  onProgress: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('update:progress', handler);
+    return () => ipcRenderer.removeListener('update:progress', handler);
+  },
+  offProgress: () => ipcRenderer.removeAllListeners('update:progress')
 });

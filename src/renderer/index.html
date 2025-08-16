@@ -243,7 +243,7 @@ document.getElementById('btnForceUpdate').addEventListener('click', async () => 
     progressUI.open('Mise à jour du launcher (forcée)');
     progressUI.set(5);
     progressUI.addLine('Préparation du téléchargement...');
-    window.updater.onProgress((data) => {
+    const off = window.updater.onProgress((data) => {
       if (!data) return;
       if (data.phase === 'downloading') {
         const curr = data.currentFile || 1; const total = data.totalFiles || 1;
@@ -259,6 +259,7 @@ document.getElementById('btnForceUpdate').addEventListener('click', async () => 
       } else if (data.phase === 'error') {
         progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
         progressUI.enableClose();
+        try { off && off(); } catch {}
       }
     });
     const res = await window.updater.check({ force: true });
@@ -266,6 +267,7 @@ document.getElementById('btnForceUpdate').addEventListener('click', async () => 
     if (!res.updateAvailable || !res.latest?.assetUrl || !res.latest?.tag) {
       progressUI.addLine('Aucune mise à jour disponible.');
       progressUI.enableClose();
+      try { off && off(); } catch {}
       return;
     }
     const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
@@ -275,9 +277,11 @@ document.getElementById('btnForceUpdate').addEventListener('click', async () => 
     progressUI.addLine('Mise à jour appliquée. Redémarrage...');
     progressUI.set(100);
     try { await window.updater.relaunch(); } catch {}
+    try { off && off(); } catch {}
   } catch (e) {
     progressUI.addLine('Erreur: ' + (e?.message || e), 'err');
     progressUI.enableClose();
+    try { window.updater.offProgress && window.updater.offProgress(); } catch {}
   }
 });
 
@@ -507,15 +511,17 @@ const _portEl = document.getElementById('port');
 if (_hostEl) _hostEl.addEventListener('input', startPing);
 if (_portEl) _portEl.addEventListener('input', startPing);
 
-// Événements de progression depuis le main process
+// Événements de progression depuis le main process (avec désinscription)
+let _offEnsure = null;
+let _offPlay = null;
 if (window.eminiumProgress) {
-  window.eminiumProgress.onEnsureProgress((data) => {
+  _offEnsure = window.eminiumProgress.onEnsureProgress((data) => {
     if (!progressUI.isOpen()) progressUI.open('Préparation du launcher');
     if (data?.phase === 'start') { progressUI.set(10); progressUI.addLine('Préparation en cours...'); }
     else if (data?.phase === 'done') { progressUI.set(100); progressUI.addLine('Préparation terminée.'); progressUI.enableClose(); }
     else if (data?.phase === 'error') { progressUI.addLine('Erreur: ' + (data.message || 'inconnue')); progressUI.enableClose(); }
   });
-  window.eminiumProgress.onPlayProgress((data) => {
+  _offPlay = window.eminiumProgress.onPlayProgress((data) => {
     if (!progressUI.isOpen()) progressUI.open('Téléchargements / Lancement');
     if (data?.type === 'error') {
       document.getElementById('progressBar').classList.add('error');
@@ -544,6 +550,13 @@ if (window.eminiumProgress) {
     if (data?.line) { progressUI.addLine(String(data.line)); progressUI.bump(); }
   });
 }
+
+// Nettoyage global sur déchargement de la page
+window.addEventListener('beforeunload', () => {
+  try { _offEnsure && _offEnsure(); } catch {}
+  try { _offPlay && _offPlay(); } catch {}
+  try { if (_pingTimer) clearInterval(_pingTimer); } catch {}
+});
 
 // Helpers readiness UI + auto prepare
 function setReadyUI(ready) {
@@ -633,7 +646,7 @@ async function runUpdaterIfNeeded() {
       progressUI.open('Mise à jour du launcher');
       progressUI.set(5);
       progressUI.addLine('Préparation du téléchargement...');
-      window.updater.onProgress((data) => {
+      const off = window.updater.onProgress((data) => {
         if (!data) return;
         if (data.phase === 'downloading') {
           const curr = data.currentFile || 1; const total = data.totalFiles || 1;
@@ -649,6 +662,7 @@ async function runUpdaterIfNeeded() {
         } else if (data.phase === 'error') {
           progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
           progressUI.enableClose();
+          try { off && off(); } catch {}
         }
       });
       const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
@@ -658,6 +672,7 @@ async function runUpdaterIfNeeded() {
       progressUI.addLine('Mise à jour appliquée. Redémarrage...');
       progressUI.set(100);
       try { await window.updater.relaunch(); } catch {}
+      try { off && off(); } catch {}
       return true; // updater engaged; app will restart
     }
   } catch (_) {}

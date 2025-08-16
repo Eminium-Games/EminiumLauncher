@@ -58,6 +58,18 @@ function clearPresence() {
   try { if (rpcClient && rpcReady) rpcClient.clearActivity().catch(() => {}); } catch {}
 }
 
+function destroyDiscordRPC() {
+  try {
+    rpcReady = false;
+    if (rpcClient) {
+      try { rpcClient.clearActivity?.().catch(() => {}); } catch {}
+      try { rpcClient.removeAllListeners?.(); } catch {}
+      try { rpcClient.destroy?.(); } catch {}
+    }
+  } catch {}
+  rpcClient = null;
+}
+
 function setPresenceIdle() {
   try {
     if (!rpcClient || !rpcReady) return;
@@ -144,6 +156,12 @@ function createWindow() {
       }
     } catch {}
   };
+
+  // Cleanup on window closed
+  mainWindow.on('closed', () => {
+    try { global.emitPlayProgress = () => {}; } catch {}
+    mainWindow = null;
+  });
 }
 
 app.whenReady().then(async () => {
@@ -160,6 +178,8 @@ app.on('window-all-closed', () => {
 });
 app.on('before-quit', () => {
   try { clearPresence(); } catch {}
+  try { destroyDiscordRPC(); } catch {}
+  try { global.emitPlayProgress = () => {}; } catch {}
 });
 
 // Settings storage (JSON under userData)
