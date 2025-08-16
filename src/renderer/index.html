@@ -26,10 +26,10 @@ html, body {
   color: var(--txt);
 }
 
-.wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:10px; box-sizing:border-box; }
+.wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:24px; box-sizing:border-box; }
 
 .card {
-  width:100%; max-width:1200px; min-width:720px;
+  width:100%; max-width:1100px; min-width:720px;
   background: var(--card);
   border-radius: 24px;
   backdrop-filter: blur(12px);
@@ -73,7 +73,7 @@ h1 { font-size:32px; margin:0; font-weight:700; text-shadow: 0 2px 8px rgba(0,0,
   background: var(--glass); border-radius: 18px; padding:20px; margin-bottom:12px;
   backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.1);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 26px rgba(0,0,0,0.32);
-  position: relative; z-index: 1;
+  position: relative; z-index: 1; overflow: hidden;
 }
 
 input[type=text], input[type=password], input[type=number] {
@@ -167,7 +167,7 @@ html, body {
 .tab.active::before { transform: translateY(-50%) scale(1.02); }
 .tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
 .tab + .tab { margin-top: 0; }
-.tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; position: relative; z-index: 1; }
+.tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; position: relative; z-index: 1; min-width: 0; }
 /* Panels spacing */
 .panel { padding: 20px 22px; }
 .row { gap: 14px; }
@@ -176,6 +176,8 @@ html, body {
 .row.toggles label { display: inline-flex; align-items: center; gap: 10px; }
 .field label { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .field input[type=range] { margin-top: 2px; }
+.field { min-width: 0; }
+.field .hint { margin-left: 8px; opacity: .9; white-space: nowrap; }
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
