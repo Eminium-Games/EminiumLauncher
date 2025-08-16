@@ -1,0 +1,40 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json.* # backups temporaires
+
+# Builds / distributions
+dist/
+build/
+out/
+release/
+*.tgz
+
+# Electron
+*.asar
+# caches locales (souvent générées à côté)
+*.map
+
+# Tests / couverture
+coverage/
+.nyc_output/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Env / secrets (si jamais utilisés)
+.env
+.env.local
+.env.*.local
+
+# Logs divers
+*.log
+logs/
+assets/core/jre/
