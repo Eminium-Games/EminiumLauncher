@@ -6,7 +6,7 @@
   "author": "Eminium",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --dev",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
