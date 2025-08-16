@@ -14,7 +14,7 @@ ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
   return await loginEminium(email, password, code);
 });
 
-const REPO_OWNER = 'Fourty3000';
+const REPO_OWNER = 'Eminium-Games';
 const REPO_NAME = 'EminiumLauncher';
 const REPO_BRANCH = 'main';
 const APP_VERSION = (() => {
