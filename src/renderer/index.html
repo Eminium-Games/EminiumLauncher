@@ -183,6 +183,17 @@ html, body {
 .field .hint { margin-left: 8px; opacity: .9; white-space: nowrap; }
 /* Spacing for login button under fields in Auth panel */
 #auth #btnLogin { margin-top: 16px; }
+/* Auth error message styling */
+.auth-error {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.35);
+  color: #fecaca;
+  font-size: 13px;
+}
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
@@ -336,6 +347,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
         <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
         <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter">Connexion</button>
+        <div id="authError" class="auth-error" role="alert" aria-live="polite"></div>
       </div>
     </div>
 
@@ -738,6 +750,28 @@ function validateLogin(email, pass, code2fa) {
 // Connexion
 const btnLogin = document.getElementById('btnLogin');
 const code2faInput = document.getElementById('code2fa');
+const authErrEl = document.getElementById('authError');
+function setAuthError(msg){ if(!authErrEl) return; authErrEl.textContent = msg || ''; authErrEl.style.display = msg ? 'block' : 'none'; }
+function mapLoginError(result, caught){
+  const r = result || {};
+  const reason = (r.code || r.reason || r.message || '').toString().toLowerCase();
+  if (!reason && caught) {
+    const m = (caught?.message || caught)?.toString().toLowerCase();
+    if (/network|offline|fetch|net::/i.test(m)) return "Erreur réseau. Vérifiez votre connexion Internet et réessayez.";
+  }
+  if (/invalid.*(credential|identifiant|password|mot de passe)/.test(reason) || /unauthoriz|401/.test(reason)) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
+  if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et réessayez.";
+  if (/2fa.*(invalid|incorrect)/.test(reason)) return "Code 2FA invalide. Réessayez avec un code valide.";
+  if (/ban|banni|suspend|suspens|lock/.test(reason)) return "Compte restreint (banni/suspendu/verrouillé). Contactez le support.";
+  if (/email.*not.*verif|mail.*non.*v[ée]rifi/.test(reason)) return "Adresse email non vérifiée. Vérifiez votre boîte mail pour valider votre compte.";
+  if (/rate.*limit|too.*many.*attempt|429/.test(reason)) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
+  if (/maintenance|service.*down|unavailable|503|404/.test(reason)) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  if (/forbidden|403/.test(reason)) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
+  if (/timeout|d[ée]lai.*d[ée]pass/.test(reason)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  if (/server|500|exception|internal/.test(reason)) return "Erreur serveur. Réessayez plus tard.";
+  if (/uuid|profile.*not.*found/.test(reason)) return "Profil introuvable. Vérifiez vos identifiants ou contactez le support.";
+  return r.message || r.reason || "Connexion échouée. Réessayez plus tard.";
+}
 
 // Masquer le 2FA par défaut
 code2faInput.parentElement.style.display = 'none';
@@ -748,21 +782,26 @@ btnLogin.addEventListener('click', async () => {
     const code2fa = code2faInput.value.trim();
 
     const err = validateLogin(email, pass, code2fa);
-    if(err){ log(err); return; }
+    if(err){ setAuthError(err); log(err); return; }
 
     btnLogin.disabled = true;  // Désactive le bouton
     log('Connexion en cours...');
+    setAuthError('');
 
     try {
         const result = await window.eminium.login(email, pass, code2fa || undefined);
 
         if (result?.status === 'pending' && result?.reason === '2fa') {
             code2faInput.parentElement.style.display = 'block';
+            const msg = 'Double authentification requise. Entrez votre code et recliquez sur Connexion.';
+            setAuthError(msg);
             log('2FA requis : entrez votre code et recliquez sur Connexion.');
             return;
         }
 
         if (result?.status === 'error') {
+            const friendly = mapLoginError(result);
+            setAuthError(friendly);
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
             return;
         }
@@ -770,6 +809,7 @@ btnLogin.addEventListener('click', async () => {
         if (result?.status === 'success') {
           const p = result.profile || {};
           log('Connecté ! Profil enregistré.');
+          setAuthError('');
           document.getElementById('profileName').textContent = p.name || 'Pseudo';
           document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
           // Définir l'avatar (tête du skin)
@@ -800,6 +840,8 @@ btnLogin.addEventListener('click', async () => {
 
         log('Réponse inconnue du login.');
     } catch(e){
+        const friendly = mapLoginError(null, e);
+        setAuthError(friendly);
         log('Erreur IPC : '+ (e?.message || e));
     } finally {
         btnLogin.disabled = false; // Réactive le bouton
