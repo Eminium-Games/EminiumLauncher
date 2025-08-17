@@ -33,14 +33,6 @@ contextBridge.exposeInMainWorld('eminiumProgress', {
 });
 
 // Policy reminders (e.g., VPN/Proxy forbidden)
-contextBridge.exposeInMainWorld('eminiumPolicy', {
-  onReminder: (cb) => {
-    const handler = (_evt, data) => cb?.(data);
-    ipcRenderer.on('policy:reminder', handler);
-    return () => ipcRenderer.removeListener('policy:reminder', handler);
-  }
-});
-
 // Broadcast remote maintenance changes
 contextBridge.exposeInMainWorld('eminiumMaintenance', {
   onChanged: (cb) => {
