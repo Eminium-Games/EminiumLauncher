@@ -803,7 +803,7 @@ btnLogin.addEventListener('click', async () => {
             const friendly = mapLoginError(result);
             setAuthError(friendly);
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
-            return;
+            throw new Error(result.message || result.reason || friendly || 'Connexion échouée');
         }
 
         if (result?.status === 'success') {
@@ -843,6 +843,7 @@ btnLogin.addEventListener('click', async () => {
         const friendly = mapLoginError(null, e);
         setAuthError(friendly);
         log('Erreur IPC : '+ (e?.message || e));
+        throw e;
     } finally {
         btnLogin.disabled = false; // Réactive le bouton
     }
