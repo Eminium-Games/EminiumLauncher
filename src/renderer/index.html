@@ -807,7 +807,7 @@ function mapLoginError(result, caught){
   if (/timeout|d[ée]lai.*d[ée]pass/.test(reason)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
   if (/server|500|exception|internal/.test(reason)) return "Erreur serveur. Réessayez plus tard.";
   if (/uuid|profile.*not.*found/.test(reason)) return "Profil introuvable. Vérifiez vos identifiants ou contactez le support.";
-  //return r.message || r.reason || "Connexion échouée. Réessayez plus tard.";
+  return r.message || r.reason || "Connexion échouée. Réessayez plus tard.";
 }
 
 // Masquer le 2FA par défaut
