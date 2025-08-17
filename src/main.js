@@ -16,6 +16,9 @@ let mainWindow;
 let windowIcon; // nativeImage pour l'icône
 let rpcClient = null;
 let rpcReady = false;
+// When true, app stays alive in background even if all windows are closed (used when closing on play)
+let keepAliveBackground = false;
+let isGameRunning = false;
 // Shared Discord Application ID for all users. Replace the placeholder with your real Client ID.
 const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '1400888551486521454';
 
@@ -295,6 +298,8 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
+  // Do not quit if we intentionally keep the app alive while the game is running
+  if (keepAliveBackground) return;
   if (process.platform !== 'darwin') app.quit();
 });
 app.on('before-quit', () => {
@@ -613,27 +618,51 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
 
     try { setPresencePreparing(); } catch {}
     const launcher = await launchMinecraft(userOpts);
-    if (launcher && mainWindow && !mainWindow.isDestroyed()) {
+    if (launcher) {
       launcher.on('data', (buf) => {
         const line = buf?.toString ? buf.toString() : String(buf);
-        mainWindow.webContents.send('play:progress', { type: 'log', line });
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'log', line }); } catch {}
       });
       launcher.on('debug', (msg) => {
-        mainWindow.webContents.send('play:progress', { type: 'debug', line: String(msg) });
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'debug', line: String(msg) }); } catch {}
       });
       launcher.on('error', (err) => {
         const msg = err?.message || String(err);
-        mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'error', line: msg }); } catch {}
         try { setPresenceIdle(); } catch {}
       });
       // Capture process exit to help diagnose silent failures
       launcher.on('close', (code) => {
         const msg = `Processus Minecraft terminé avec le code ${code}`;
-        mainWindow.webContents.send('play:progress', { type: code === 0 ? 'log' : 'error', line: msg });
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: code === 0 ? 'log' : 'error', line: msg }); } catch {}
         try { setPresenceIdle(); } catch {}
+        isGameRunning = false;
+        // If we closed the window for gameplay, exit the app when the game ends
+        if (keepAliveBackground) {
+          keepAliveBackground = false;
+          // If no window is open, quit the app to fully stop background
+          if (BrowserWindow.getAllWindows().length === 0 && process.platform !== 'darwin') {
+            try { app.quit(); } catch {}
+          }
+        }
       });
     }
     try { setPresencePlaying(); } catch {}
+    // Option: close launcher window when the game starts, keeping RPC alive
+    try {
+      const settings = readSettings();
+      const closeOnPlay = !!settings.closeOnPlay;
+      if (closeOnPlay) {
+        isGameRunning = true;
+        keepAliveBackground = true;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          // Close the window; window-all-closed will not quit while keepAliveBackground is true
+          try { mainWindow.close(); } catch {}
+        }
+      } else {
+        isGameRunning = true;
+      }
+    } catch { isGameRunning = true; }
     return { ok: true };
   } catch (e) {
     dialog.showErrorBox('Lancement Minecraft', e?.message || String(e));

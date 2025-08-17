@@ -387,6 +387,11 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         <div id="maintenanceBanner" class="panel" style="display:none; margin-top:12px; border:1px solid #f59e0b; background:rgba(245,158,11,0.12); color:#fce8c3;">
           <strong>Maintenance en cours.</strong> L'accès au jeu est temporairement limité.
         </div>
+        <div class="row toggles" style="margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
+          </label>
+        </div>
         <div class="row" style="margin-top:12px;">
           <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
           <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
@@ -539,6 +544,26 @@ async function refreshMaintenanceUI() {
       log(on ? 'Maintenance activée.' : 'Maintenance désactivée.');
     });
   }
+})();
+
+// Play options: close launcher on game start
+async function refreshPlayOptionsUI() {
+  try {
+    const set = await loadSettings();
+    const chk = document.getElementById('closeOnPlayToggle');
+    if (chk) chk.checked = !!set.closeOnPlay;
+  } catch {}
+}
+(() => {
+  const chk = document.getElementById('closeOnPlayToggle');
+  if (chk) {
+    chk.addEventListener('change', async (e) => {
+      const on = !!e.target.checked;
+      await saveSettings({ closeOnPlay: on });
+    });
+  }
+  // Initial sync
+  refreshPlayOptionsUI();
 })();
 
 // Bouton: Forcer la mise à jour
