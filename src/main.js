@@ -45,14 +45,8 @@ function getAzuriomAuthHeaders() {
 }
 
 async function fetchRemoteMaintenance() {
-  try {
-    const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
-    const res = await axios.get(url, { timeout: 8000, headers: getAzuriomAuthHeaders() });
-    const val = !!(res?.data?.maintenance);
-    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e) };
-  }
+  // Maintenance désactivée côté launcher (toujours OFF)
+  return { ok: true, maintenance: false, updatedAt: null };
 }
 
 async function setRemoteMaintenance(on) {
