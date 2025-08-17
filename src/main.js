@@ -701,11 +701,24 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
       maintenance = !!settings.maintenanceEnabled;
     }
     if (maintenance) {
-      const msg = 'Maintenance activée — accès restreint.';
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+      // Allow admins to play during maintenance, but notify them
+      let isAdmin = false;
+      try {
+        const profile = readUserProfile && readUserProfile();
+        isAdmin = !!(profile && typeof isAdminProfile === 'function' ? isAdminProfile(profile) : false);
+      } catch {}
+      if (!isAdmin) {
+        const msg = 'Maintenance activée — accès restreint.';
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+        }
+        return { ok: false, error: msg };
+      } else {
+        const warn = 'Maintenance activée — accès administrateur autorisé. Le serveur peut être indisponible.';
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('play:progress', { type: 'log', line: warn });
+        }
       }
-      return { ok: false, error: msg };
     }
 
     // Enforce server availability before launching
