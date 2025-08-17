@@ -45,7 +45,6 @@ function getAzuriomAuthHeaders() {
 }
 
 async function fetchRemoteMaintenance() {
-  // Maintenance désactivée côté launcher (toujours OFF)
   return { ok: true, maintenance: false, updatedAt: null };
 }
 
