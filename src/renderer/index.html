@@ -762,6 +762,33 @@ function setAuthError(msg){ if(!authErrEl) return; authErrEl.textContent = msg |
 function mapLoginError(result, caught){
   const r = result || {};
   const reason = (r.code || r.reason || r.message || '').toString().toLowerCase();
+  // 1) Prefer explicit server-provided message if present
+  const pick = (...vals) => vals.find(v => typeof v === 'string' && v.trim());
+  const serverMsg = pick(
+    r.userMessage,
+    r.hint,
+    r.detail,
+    r.details,
+    r.description,
+    r.error_description,
+    r.errorMessage,
+    r.error?.message,
+    r.data?.message,
+    r.data?.error,
+    r.message // keep last, often Axios text; will be overridden by status mapping below if applicable
+  ) || pick(
+    caught?.response?.data?.userMessage,
+    caught?.response?.data?.hint,
+    caught?.response?.data?.detail,
+    caught?.response?.data?.details,
+    caught?.response?.data?.description,
+    caught?.response?.data?.error_description,
+    caught?.response?.data?.error,
+    caught?.response?.data?.message
+  );
+  if (serverMsg && !/request failed with status code/i.test(serverMsg)) {
+    return serverMsg.trim();
+  }
   // Try to derive status/code from result or caught (Axios/IPC)
   let status = undefined;
   if (typeof r.status === 'number') status = r.status;
@@ -807,7 +834,9 @@ function mapLoginError(result, caught){
   if (/timeout|d[ée]lai.*d[ée]pass/.test(reason)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
   if (/server|500|exception|internal/.test(reason)) return "Erreur serveur. Réessayez plus tard.";
   if (/uuid|profile.*not.*found/.test(reason)) return "Profil introuvable. Vérifiez vos identifiants ou contactez le support.";
-  return r.message || r.reason || "Connexion échouée. Réessayez plus tard.";
+  // Show a meaningful reason if any remains
+  if (reason) return reason.charAt(0).toUpperCase() + reason.slice(1);
+  return "Connexion échouée. Réessayez plus tard.";
 }
 
 // Masquer le 2FA par défaut
