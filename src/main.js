@@ -179,7 +179,9 @@ app.whenReady().then(async () => {
   // Auto-check on startup: if remote version differs, force reinstall
   try {
     const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
-    try { if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+    try {
+      if (process.env.GITHUB_TOKEN) headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
+    } catch {}
     // Read remote package.json via API for private repos
     const pkgApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/package.json?ref=${REPO_BRANCH}`;
     const pkgRes = await axios.get(pkgApi, { timeout: 15000, headers });
@@ -200,7 +202,7 @@ app.whenReady().then(async () => {
       const assetUrl = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/refs/heads/${REPO_BRANCH}`;
       // Reuse download/apply flows to show progress in renderer if open
       const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
-      try { if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+      try { if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch {}
       const updatesBase = path.join(app.getPath('userData'), 'updates', tag.replace(/[^a-zA-Z0-9._-]/g, '_'));
       try { fs.mkdirSync(updatesBase, { recursive: true }); } catch {}
       const destZip = path.join(updatesBase, 'launcher.zip');
@@ -411,7 +413,7 @@ ipcMain.handle('updater:check', async (_evt, payload) => {
     const commitApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${REPO_BRANCH}`;
     const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
     try {
-      if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+      if (process.env.GITHUB_TOKEN) headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
     } catch {}
     const res = await axios.get(commitApi, { timeout: 15000, headers });
     const sha = String(res?.data?.sha || '').trim();
@@ -426,7 +428,7 @@ ipcMain.handle('updater:check', async (_evt, payload) => {
     try {
       const pkgUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/package.json`;
       const pkgHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
-      try { if (process.env.GITHUB_TOKEN) pkgHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+      try { if (process.env.GITHUB_TOKEN) pkgHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch {}
       const pkgRes = await axios.get(pkgUrl, { timeout: 10000, headers: pkgHeaders });
       const remotePkg = (pkgRes && pkgRes.data) ? (typeof pkgRes.data === 'string' ? JSON.parse(pkgRes.data) : pkgRes.data) : null;
       if (remotePkg && typeof remotePkg.version === 'string') remoteVersion = remotePkg.version.trim();
@@ -457,7 +459,7 @@ ipcMain.handle('updater:download', async (_evt, payload) => {
     // Stream download with progress
     const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
     try {
-      if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+      if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`;
     } catch {}
     const resp = await axios.get(assetUrl, { responseType: 'stream', timeout: 60000, maxContentLength: Infinity, maxBodyLength: Infinity, headers: dlHeaders });
     const total = Number(resp.headers['content-length'] || 0);
