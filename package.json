@@ -28,7 +28,9 @@
     "productName": "Eminium Launcher",
     "files": [
       "src/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "!src/.env",
+      "!src/.env.*"
     ],
     "asar": false,
     "extraResources": [

@@ -175,6 +175,121 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // Auto-check on startup: if remote version differs, force reinstall
+  try {
+    const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
+    try { if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+    // Read remote package.json via API for private repos
+    const pkgApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/package.json?ref=${REPO_BRANCH}`;
+    const pkgRes = await axios.get(pkgApi, { timeout: 15000, headers });
+    let remoteVersion = '';
+    try {
+      const content = pkgRes?.data?.content; // base64
+      if (content) {
+        const json = JSON.parse(Buffer.from(String(content), 'base64').toString('utf8'));
+        if (json && typeof json.version === 'string') remoteVersion = json.version.trim();
+      }
+    } catch {}
+    if (remoteVersion && remoteVersion !== APP_VERSION) {
+      // Fetch latest commit sha for tag and asset URL
+      const commitApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${REPO_BRANCH}`;
+      const cres = await axios.get(commitApi, { timeout: 15000, headers });
+      const sha = String(cres?.data?.sha || '').trim();
+      const tag = sha || `v-${Date.now()}`;
+      const assetUrl = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/refs/heads/${REPO_BRANCH}`;
+      // Reuse download/apply flows to show progress in renderer if open
+      const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
+      try { if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+      const updatesBase = path.join(app.getPath('userData'), 'updates', tag.replace(/[^a-zA-Z0-9._-]/g, '_'));
+      try { fs.mkdirSync(updatesBase, { recursive: true }); } catch {}
+      const destZip = path.join(updatesBase, 'launcher.zip');
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update:progress', { phase: 'start', currentFile: 0, totalFiles: 1, label: 'Préparation du téléchargement' });
+      }
+      const resp = await axios.get(assetUrl, { responseType: 'stream', timeout: 60000, maxContentLength: Infinity, maxBodyLength: Infinity, headers: dlHeaders });
+      const total = Number(resp.headers['content-length'] || 0);
+      let downloaded = 0;
+      await new Promise((resolve, reject) => {
+        const ws = fs.createWriteStream(destZip);
+        resp.data.on('data', (chunk) => {
+          downloaded += chunk.length;
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            const percent = total ? Math.round((downloaded / total) * 100) : Math.min(99, Math.round(downloaded / (1024 * 1024)));
+            mainWindow.webContents.send('update:progress', { phase: 'downloading', currentFile: 1, totalFiles: 1, percent });
+          }
+        });
+        resp.data.on('error', reject);
+        ws.on('error', reject);
+        ws.on('finish', resolve);
+        resp.data.pipe(ws);
+      });
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update:progress', { phase: 'downloaded', message: 'Téléchargement terminé.' });
+      }
+      // Apply
+      const zip = new AdmZip(destZip);
+      const staging = path.join(updatesBase, 'staging');
+      try { fs.rmSync(staging, { recursive: true, force: true }); } catch {}
+      fs.mkdirSync(staging, { recursive: true });
+      zip.extractAllTo(staging, true);
+      const entryNames = fs.readdirSync(staging, { withFileTypes: true });
+      const rootName = entryNames.find(e => e.isDirectory())?.name;
+      const root = rootName ? path.join(staging, rootName) : staging;
+      const appDir = path.join(__dirname, '..');
+      const copyList = ['assets', 'src', 'package.json', 'package-lock.json', 'node_modules'];
+      const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch {} };
+      const listFiles = (dir) => {
+        let n = 0; const st = fs.statSync(dir);
+        if (st.isFile()) return 1;
+        for (const name of fs.readdirSync(dir)) {
+          const p = path.join(dir, name);
+          const s = fs.statSync(p);
+          n += s.isDirectory() ? listFiles(p) : 1;
+        }
+        return n;
+      };
+      let totalFiles = 0;
+      for (const item of copyList) {
+        const p = path.join(root, item);
+        if (fs.existsSync(p)) totalFiles += listFiles(p);
+      }
+      let currentFile = 0;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update:progress', { phase: 'applying', currentFile, totalFiles, label: 'Application de la mise à jour' });
+      }
+      const applyOne = (src, dst) => {
+        const st = fs.statSync(src);
+        if (st.isDirectory()) {
+          ensureDir(dst);
+          for (const name of fs.readdirSync(src)) applyOne(path.join(src, name), path.join(dst, name));
+        } else if (st.isFile()) {
+          ensureDir(path.dirname(dst));
+          fs.copyFileSync(src, dst);
+          currentFile++;
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('update:progress', { phase: 'applying', currentFile, totalFiles });
+          }
+        }
+      };
+      for (const item of copyList) {
+        const srcPath = path.join(root, item);
+        if (fs.existsSync(srcPath)) applyOne(srcPath, path.join(appDir, item));
+      }
+      const storeDir = path.join(app.getPath('userData'), 'updates');
+      try { fs.mkdirSync(storeDir, { recursive: true }); } catch {}
+      const lastFile = path.join(storeDir, 'last_sha.txt');
+      try { fs.writeFileSync(lastFile, tag); } catch {}
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update:progress', { phase: 'done', message: 'Mise à jour appliquée. Redémarrage...' });
+      }
+      // Relaunch
+      app.relaunch();
+      app.quit();
+    }
+  } catch (e) {
+    // Silencieux: on n'empêche pas l'app de démarrer
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -306,9 +421,23 @@ ipcMain.handle('updater:check', async (_evt, payload) => {
     const lastFile = path.join(storeDir, 'last_sha.txt');
     let lastSha = '';
     try { lastSha = String(fs.readFileSync(lastFile, 'utf8')).trim(); } catch {}
-    const updateAvailable = force || (sha && sha !== lastSha);
+    // Fetch remote package.json to compare version
+    let remoteVersion = '';
+    try {
+      const pkgUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/package.json`;
+      const pkgHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
+      try { if (process.env.GITHUB_TOKEN) pkgHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`; } catch {}
+      const pkgRes = await axios.get(pkgUrl, { timeout: 10000, headers: pkgHeaders });
+      const remotePkg = (pkgRes && pkgRes.data) ? (typeof pkgRes.data === 'string' ? JSON.parse(pkgRes.data) : pkgRes.data) : null;
+      if (remotePkg && typeof remotePkg.version === 'string') remoteVersion = remotePkg.version.trim();
+    } catch (e) {
+      // Non bloquant: si on ne peut pas lire le package.json distant, on continue avec le SHA
+    }
+
+    const requireReinstall = !!(remoteVersion && remoteVersion !== APP_VERSION);
+    const updateAvailable = force || requireReinstall || (sha && sha !== lastSha);
     const assetUrl = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/refs/heads/${REPO_BRANCH}`;
-    return { ok: true, updateAvailable, latest: { tag: sha, assetUrl, name: `${REPO_NAME}-${REPO_BRANCH}.zip` } };
+    return { ok: true, updateAvailable, requireReinstall, remoteVersion, currentVersion: APP_VERSION, latest: { tag: sha, assetUrl, name: `${REPO_NAME}-${REPO_BRANCH}.zip` } };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
