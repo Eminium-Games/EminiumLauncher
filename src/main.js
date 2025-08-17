@@ -48,6 +48,29 @@ async function fetchRemoteMaintenance() {
   return { ok: true, maintenance: true, updatedAt: null };
 }
 
+// Simple VPN/proxy/TOR/hosting detection using ipwho.is (no API key required)
+async function detectVpnOrProxy() {
+  try {
+    const res = await axios.get('https://ipwho.is/', { timeout: 6000, headers: { 'Accept': 'application/json' } });
+    const data = res?.data || {};
+    const sec = data?.security || {};
+    // Fields documented by ipwho.is: vpn, proxy, tor, hosting, relay
+    const flags = {
+      vpn: !!sec.vpn,
+      proxy: !!sec.proxy,
+      tor: !!sec.tor,
+      hosting: !!sec.hosting,
+      relay: !!sec.relay,
+    };
+    const any = flags.vpn || flags.proxy || flags.tor || flags.hosting || flags.relay;
+    const ip = data?.ip || null;
+    const isp = data?.connection?.isp || data?.connection?.asn || data?.isp || null;
+    return { ok: true, any, flags, ip, isp };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
 async function setRemoteMaintenance(on) {
   try {
     const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
@@ -720,6 +743,19 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
         }
       }
     }
+
+    // VPN/proxy/TOR/hosting reminder (policy: forbidden)
+    try {
+      const vpn = await detectVpnOrProxy();
+      if (vpn?.ok && vpn.any) {
+        const reason = Object.entries(vpn.flags).filter(([k,v]) => v).map(([k]) => k).join(', ');
+        const ipTxt = vpn.ip ? ` (IP: ${vpn.ip})` : '';
+        const msg = `Attention: VPN/Proxy détecté (${reason})${ipTxt}. Son utilisation est interdite. Lisez le règlement: https://eminium.ovh/reglement-en-jeu`;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('play:progress', { type: 'log', line: msg });
+        }
+      }
+    } catch {}
 
     // Enforce server availability before launching
     const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : 'play.eminium.ovh';
