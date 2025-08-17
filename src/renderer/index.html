@@ -838,14 +838,11 @@ btnLogin.addEventListener('click', async () => {
 
         if (result?.status === 'error') {
             const friendly = mapLoginError(result);
-            // Compose UI message with technical details
-            let status = (typeof result.status === 'number' && result.status) || (typeof result.httpStatus === 'number' && result.httpStatus) || undefined;
-            let raw = (result.message || result.reason || '').toString();
-            const uiMsg = friendly + (status ? ` [${status}]` : '') + (raw && !friendly.toLowerCase().includes(raw.toLowerCase()) ? `\n${raw}` : '');
-            setAuthError(uiMsg);
+            // UI: single-line friendly message only
+            setAuthError(friendly);
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
             const err = new Error(friendly || 'Connexion échouée');
-            err.code = result.code || result.reason || status || undefined;
+            err.code = result.code || result.reason || undefined;
             throw err;
         }
 
@@ -884,15 +881,10 @@ btnLogin.addEventListener('click', async () => {
         log('Réponse inconnue du login.');
     } catch(e){
         const friendly = mapLoginError(null, e);
-        // Compose UI message with technical details
-        const status = (e && (e.status || (e.response && e.response.status))) || undefined;
-        const raw = (e?.message || e || '').toString();
-        const uiMsg = friendly + (status ? ` [${status}]` : '') + (raw && !friendly.toLowerCase().includes(raw.toLowerCase()) ? `\n${raw}` : '');
-        setAuthError(uiMsg);
+        setAuthError(friendly);
         log('Erreur IPC : '+ (e?.message || e));
         const err = new Error(friendly || (e?.message || 'Connexion échouée'));
-        //err.code = (e && (e.code || e.status)) || undefined;
-        err.code = (e.code || e.status) || undefined;
+        err.code = (e && (e.code || e.status)) || undefined;
         throw err;
     } finally {
         btnLogin.disabled = false; // Réactive le bouton
