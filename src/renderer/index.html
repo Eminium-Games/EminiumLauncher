@@ -554,6 +554,54 @@ async function refreshMaintenanceUI() {
   refreshMaintenanceUI();
 })();
 
+// VPN policy reminder banner (dismissible, persisted in settings)
+function ensurePolicyBanner() {
+  let el = document.getElementById('policyVpnBanner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'policyVpnBanner';
+    el.style.cssText = 'display:none; margin:10px 0; padding:10px; border-radius:6px; background:#fff3cd; color:#664d03; border:1px solid #ffecb5;';
+    el.innerHTML = '<div style="display:flex; align-items:center; gap:8px;">\
+      <span style="font-weight:600;">Rappel règlement</span>\
+      <span id="policyVpnText">L\'utilisation de VPN/Proxy est interdite. Lisez le règlement: <a href="https://eminium.ovh/reglement-en-jeu" target="_blank">eminium.ovh/reglement-en-jeu</a></span>\
+      <button id="policyVpnClose" class="btn sec" style="margin-left:auto;">Ne plus afficher</button>\
+    </div>';
+    const container = document.querySelector('#play .panel') || document.body;
+    container.prepend(el);
+    const closeBtn = el.querySelector('#policyVpnClose');
+    closeBtn?.addEventListener('click', async () => {
+      try { await saveSettings({ dismissedPolicyVpn: true }); } catch {}
+      el.style.display = 'none';
+    });
+  }
+  return el;
+}
+
+async function maybeShowPolicyBanner(message) {
+  try {
+    const set = await loadSettings();
+    if (set && set.dismissedPolicyVpn) return; // user chose to hide
+  } catch {}
+  const el = ensurePolicyBanner();
+  if (message) {
+    const txt = el.querySelector('#policyVpnText');
+    if (txt) txt.innerText = message + ' — Voir: https://eminium.ovh/reglement-en-jeu';
+  }
+  el.style.display = '';
+}
+
+// Subscribe to policy reminders from main
+(() => {
+  try {
+    if (window.eminiumPolicy?.onReminder) {
+      window.eminiumPolicy.onReminder((data) => {
+        const m = (data && data.message) ? String(data.message) : null;
+        maybeShowPolicyBanner(m);
+      });
+    }
+  } catch {}
+})();
+
 // Play options: close launcher on game start
 async function refreshPlayOptionsUI() {
   try {

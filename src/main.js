@@ -48,24 +48,51 @@ async function fetchRemoteMaintenance() {
   return { ok: true, maintenance: true, updatedAt: null };
 }
 
-// Simple VPN/proxy/TOR/hosting detection using ipwho.is (no API key required)
+// Robust-ish VPN/proxy/TOR/hosting detection using public endpoints + heuristics
 async function detectVpnOrProxy() {
+  const result = { ok: false, any: false, flags: {}, ip: null, isp: null, sources: [] };
   try {
-    const res = await axios.get('https://ipwho.is/', { timeout: 6000, headers: { 'Accept': 'application/json' } });
-    const data = res?.data || {};
-    const sec = data?.security || {};
-    // Fields documented by ipwho.is: vpn, proxy, tor, hosting, relay
-    const flags = {
-      vpn: !!sec.vpn,
-      proxy: !!sec.proxy,
-      tor: !!sec.tor,
-      hosting: !!sec.hosting,
-      relay: !!sec.relay,
-    };
-    const any = flags.vpn || flags.proxy || flags.tor || flags.hosting || flags.relay;
-    const ip = data?.ip || null;
-    const isp = data?.connection?.isp || data?.connection?.asn || data?.isp || null;
-    return { ok: true, any, flags, ip, isp };
+    // Source 1: ipwho.is (security.* flags)
+    try {
+      const res = await axios.get('https://ipwho.is/', { timeout: 6000, headers: { 'Accept': 'application/json' } });
+      const data = res?.data || {};
+      const sec = data?.security || {};
+      const flags = {
+        vpn: !!sec.vpn,
+        proxy: !!sec.proxy,
+        tor: !!sec.tor,
+        hosting: !!sec.hosting,
+        relay: !!sec.relay,
+      };
+      const ip = data?.ip || null;
+      const isp = data?.connection?.isp || data?.isp || null;
+      const any1 = Object.values(flags).some(Boolean);
+      result.sources.push({ name: 'ipwho.is', ok: true, any: any1, flags, ip, isp });
+      // Merge
+      result.ip = result.ip || ip;
+      result.isp = result.isp || isp;
+      result.flags = Object.assign({}, result.flags, flags);
+      result.any = result.any || any1;
+      result.ok = true;
+    } catch (e) {
+      result.sources.push({ name: 'ipwho.is', ok: false, error: e?.message || String(e) });
+    }
+
+    // Source 2: ipinfo.io for org/ASN heuristics (no key: rate-limited)
+    try {
+      const res2 = await axios.get('https://ipinfo.io/json', { timeout: 6000, headers: { 'Accept': 'application/json' } });
+      const org = String(res2?.data?.org || '').toLowerCase();
+      const hostname = String(res2?.data?.hostname || '').toLowerCase();
+      const suspected = ['vpn', 'vpngate', 'm247', 'ovh', 'online.net', 'soyoustart', 'kimsufi', 'scaleway', 'aws', 'amazon', 'google', 'digitalocean', 'hetzner', 'contabo', 'azure', 'linode', 'vultr', 'cloud', 'host', 'hosting', 'datacenter', 'data center'];
+      const hit = suspected.some(s => org.includes(s) || hostname.includes(s));
+      result.sources.push({ name: 'ipinfo.io', ok: true, any: !!hit, org, hostname });
+      if (hit) { result.any = true; result.flags.hosting = true; }
+      result.ok = true;
+    } catch (e) {
+      result.sources.push({ name: 'ipinfo.io', ok: false, error: e?.message || String(e) });
+    }
+
+    return result;
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
@@ -747,13 +774,14 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     // VPN/proxy/TOR/hosting reminder (policy: forbidden)
     try {
       const vpn = await detectVpnOrProxy();
-      if (vpn?.ok && vpn.any) {
-        const reason = Object.entries(vpn.flags).filter(([k,v]) => v).map(([k]) => k).join(', ');
-        const ipTxt = vpn.ip ? ` (IP: ${vpn.ip})` : '';
-        const msg = `Attention: VPN/Proxy détecté (${reason})${ipTxt}. Son utilisation est interdite. Lisez le règlement: https://eminium.ovh/reglement-en-jeu`;
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('play:progress', { type: 'log', line: msg });
-        }
+      const shouldRemind = !vpn?.ok || vpn.any;
+      if (shouldRemind && mainWindow && !mainWindow.isDestroyed()) {
+        const reason = vpn?.ok ? (Object.entries(vpn.flags).filter(([k,v]) => v).map(([k]) => k).join(', ') || 'suspect') : 'inconnue';
+        const ipTxt = vpn?.ip ? ` (IP: ${vpn.ip})` : '';
+        const msg = `Rappel: l\'utilisation de VPN/Proxy est interdite${ipTxt}. Règlement: https://eminium.ovh/reglement-en-jeu`;
+        // Send both a progress log and a dedicated reminder event so UI can show a dismissible banner
+        mainWindow.webContents.send('play:progress', { type: 'log', line: `[POLICY] ${msg}` });
+        mainWindow.webContents.send('policy:reminder', { kind: 'vpn', reason, ip: vpn?.ip || null, message: msg });
       }
     } catch {}
 
