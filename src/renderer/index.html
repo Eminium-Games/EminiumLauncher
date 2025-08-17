@@ -306,7 +306,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         <div class="logo"><img src="https://eminium.ovh/storage/img/eminium-logo.png" alt=""></div>
         <div>
           <h1>Eminium Launcher</h1>
-          <div class="profile-card" id="profileCard">
+          <div class="profile-card" id="profileCard" style="display:none;">
             <img id="profileSkin" src="" alt="Skin" class="skeleton">
             <div class="profile-info">
               <span id="profileName" class="skeleton">Pseudo</span>
@@ -419,6 +419,11 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     if (tab.style.display === 'none') return; // ignore hidden tabs
+    if (!IS_LOGGED && tab.dataset.tab !== 'auth') {
+      // Bloque l'accès aux onglets tant que non connecté
+      log('Veuillez vous connecter pour accéder à cet onglet.');
+      return;
+    }
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     tab.classList.add('active');
@@ -434,10 +439,16 @@ function setTabsForAuth(logged, isAdmin=false) {
   const tabPlay = document.getElementById('tabPlay');
   const tabLog = document.getElementById('tabLog');
   const tabAdmin = document.getElementById('tabAdmin');
+  const profileCard = document.getElementById('profileCard');
   if (tabAuth) tabAuth.style.display = logged ? 'none' : '';
   if (tabPlay) tabPlay.style.display = logged ? '' : 'none';
   if (tabLog) tabLog.style.display = logged ? '' : 'none';
   if (tabAdmin) tabAdmin.style.display = (logged && isAdmin) ? '' : 'none';
+  if (profileCard) profileCard.style.display = logged ? '' : 'none';
+  // Tooltips
+  if (tabPlay) tabPlay.title = logged ? '' : 'Connectez-vous pour accéder';
+  if (tabLog) tabLog.title = logged ? '' : 'Connectez-vous pour accéder';
+  if (tabAdmin) tabAdmin.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
   // Activate a sensible tab
   const activeTab = document.querySelector('.tab.active');
   if (!logged) {
