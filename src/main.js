@@ -1,5 +1,5 @@
 // Load .env early
-try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch {}
+try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch { }
 const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -7,7 +7,7 @@ const os = require('os');
 
 const AdmZip = require('adm-zip');
 let DiscordRPC;
-try { DiscordRPC = require('discord-rpc'); } catch {}
+try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
 const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
@@ -34,18 +34,18 @@ function getAzuriomAuthHeaders() {
     // Priority 1: explicit API token from env (server token)
     const t = process.env.AZ_API_TOKEN || process.env.AZURIOM_API_TOKEN;
     if (t) { headers.Authorization = `Bearer ${t}`; return headers; }
-  } catch {}
+  } catch { }
   try {
     // Priority 2: token from logged-in user profile (best effort)
     const prof = readUserProfile && readUserProfile();
     const userToken = prof?.token || prof?.accessToken || prof?.apiToken || prof?.authToken;
     if (userToken) headers.Authorization = `Bearer ${userToken}`;
-  } catch {}
+  } catch { }
   return headers;
 }
 
 async function fetchRemoteMaintenance() {
-  return { ok: true, maintenance: false, updatedAt: null };
+  return { ok: true, maintenance: true, updatedAt: null };
 }
 
 async function setRemoteMaintenance(on) {
@@ -64,7 +64,7 @@ function broadcastMaintenance(val) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('maintenance:changed', { maintenance: !!val });
     }
-  } catch {}
+  } catch { }
 }
 
 // --- Discord Rich Presence helpers ---
@@ -80,7 +80,7 @@ async function initDiscordRPC() {
       return false;
     }
     if (rpcClient) {
-      try { rpcClient.destroy?.(); } catch {}
+      try { rpcClient.destroy?.(); } catch { }
       rpcClient = null;
       rpcReady = false;
     }
@@ -88,13 +88,13 @@ async function initDiscordRPC() {
     rpcClient.on('ready', () => {
       rpcReady = true;
       console.log('[RPC] prêt');
-      try { setPresenceIdle(); } catch {}
+      try { setPresenceIdle(); } catch { }
     });
     rpcClient.on('error', (e) => {
       console.error('[RPC] erreur:', e?.message || String(e));
       rpcReady = false;
     });
-    try { await DiscordRPC.register(clientId); } catch {}
+    try { await DiscordRPC.register(clientId); } catch { }
     await rpcClient.login({ clientId });
     console.log('[RPC] initialisation envoyée');
     return true;
@@ -105,18 +105,18 @@ async function initDiscordRPC() {
 }
 
 function clearPresence() {
-  try { if (rpcClient && rpcReady) rpcClient.clearActivity().catch(() => {}); } catch {}
+  try { if (rpcClient && rpcReady) rpcClient.clearActivity().catch(() => { }); } catch { }
 }
 
 function destroyDiscordRPC() {
   try {
     rpcReady = false;
     if (rpcClient) {
-      try { rpcClient.clearActivity?.().catch(() => {}); } catch {}
-      try { rpcClient.removeAllListeners?.(); } catch {}
-      try { rpcClient.destroy?.(); } catch {}
+      try { rpcClient.clearActivity?.().catch(() => { }); } catch { }
+      try { rpcClient.removeAllListeners?.(); } catch { }
+      try { rpcClient.destroy?.(); } catch { }
     }
-  } catch {}
+  } catch { }
   rpcClient = null;
 }
 
@@ -129,8 +129,8 @@ function setPresenceIdle() {
       largeImageKey: 'eminium',
       largeImageText: 'Eminium Launcher',
       instance: false
-    }).catch(() => {});
-  } catch {}
+    }).catch(() => { });
+  } catch { }
 }
 
 function setPresencePreparing() {
@@ -142,8 +142,8 @@ function setPresencePreparing() {
       largeImageKey: 'eminium',
       largeImageText: 'Préparation en cours…',
       instance: false
-    }).catch(() => {});
-  } catch {}
+    }).catch(() => { });
+  } catch { }
 }
 
 function setPresencePlaying() {
@@ -155,8 +155,8 @@ function setPresencePlaying() {
       largeImageKey: 'eminium',
       largeImageText: 'Minecraft',
       instance: true
-    }).catch(() => {});
-  } catch {}
+    }).catch(() => { });
+  } catch { }
 }
 
 const { loginEminium } = require('./setup.js');
@@ -198,7 +198,7 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   // Improve readability on standard displays
-  try { mainWindow.webContents.setZoomFactor(1.1); } catch {}
+  try { mainWindow.webContents.setZoomFactor(1.1); } catch { }
 
   // Relayer les événements de progression émis côté setup.js (globalThis.emitPlayProgress)
   global.emitPlayProgress = (data) => {
@@ -206,12 +206,12 @@ function createWindow() {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('play:progress', data);
       }
-    } catch {}
+    } catch { }
   };
 
   // Cleanup on window closed
   mainWindow.on('closed', () => {
-    try { global.emitPlayProgress = () => {}; } catch {}
+    try { global.emitPlayProgress = () => { }; } catch { }
     mainWindow = null;
   });
 }
@@ -219,7 +219,7 @@ function createWindow() {
 app.whenReady().then(async () => {
   createWindow();
   // Init Discord RPC if configured
-  try { await initDiscordRPC(); } catch {}
+  try { await initDiscordRPC(); } catch { }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -231,8 +231,8 @@ app.whenReady().then(async () => {
       remoteMaintenance = !!prime.maintenance;
       broadcastMaintenance(remoteMaintenance);
     }
-  } catch {}
-  try { if (maintenancePollTimer) clearInterval(maintenancePollTimer); } catch {}
+  } catch { }
+  try { if (maintenancePollTimer) clearInterval(maintenancePollTimer); } catch { }
   maintenancePollTimer = setInterval(async () => {
     try {
       const r = await fetchRemoteMaintenance();
@@ -243,7 +243,7 @@ app.whenReady().then(async () => {
           broadcastMaintenance(remoteMaintenance);
         }
       }
-    } catch {}
+    } catch { }
   }, 30000);
 
   // Auto-check on startup: if remote version differs, force reinstall
@@ -251,7 +251,7 @@ app.whenReady().then(async () => {
     const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
     try {
       if (process.env.GITHUB_TOKEN) headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
-    } catch {}
+    } catch { }
     // Read remote package.json via API for private repos
     const pkgApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/package.json?ref=${REPO_BRANCH}`;
     const pkgRes = await axios.get(pkgApi, { timeout: 15000, headers });
@@ -262,7 +262,7 @@ app.whenReady().then(async () => {
         const json = JSON.parse(Buffer.from(String(content), 'base64').toString('utf8'));
         if (json && typeof json.version === 'string') remoteVersion = json.version.trim();
       }
-    } catch {}
+    } catch { }
     if (remoteVersion && remoteVersion !== APP_VERSION) {
       // Fetch latest commit sha for tag and asset URL
       const commitApi = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${REPO_BRANCH}`;
@@ -272,9 +272,9 @@ app.whenReady().then(async () => {
       const assetUrl = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/zip/refs/heads/${REPO_BRANCH}`;
       // Reuse download/apply flows to show progress in renderer if open
       const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
-      try { if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch {}
+      try { if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch { }
       const updatesBase = path.join(app.getPath('userData'), 'updates', tag.replace(/[^a-zA-Z0-9._-]/g, '_'));
-      try { fs.mkdirSync(updatesBase, { recursive: true }); } catch {}
+      try { fs.mkdirSync(updatesBase, { recursive: true }); } catch { }
       const destZip = path.join(updatesBase, 'launcher.zip');
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('update:progress', { phase: 'start', currentFile: 0, totalFiles: 1, label: 'Préparation du téléchargement' });
@@ -302,7 +302,7 @@ app.whenReady().then(async () => {
       // Apply
       const zip = new AdmZip(destZip);
       const staging = path.join(updatesBase, 'staging');
-      try { fs.rmSync(staging, { recursive: true, force: true }); } catch {}
+      try { fs.rmSync(staging, { recursive: true, force: true }); } catch { }
       fs.mkdirSync(staging, { recursive: true });
       zip.extractAllTo(staging, true);
       const entryNames = fs.readdirSync(staging, { withFileTypes: true });
@@ -310,7 +310,7 @@ app.whenReady().then(async () => {
       const root = rootName ? path.join(staging, rootName) : staging;
       const appDir = path.join(__dirname, '..');
       const copyList = ['assets', 'src', 'package.json', 'package-lock.json', 'node_modules'];
-      const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch {} };
+      const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch { } };
       const listFiles = (dir) => {
         let n = 0; const st = fs.statSync(dir);
         if (st.isFile()) return 1;
@@ -349,9 +349,9 @@ app.whenReady().then(async () => {
         if (fs.existsSync(srcPath)) applyOne(srcPath, path.join(appDir, item));
       }
       const storeDir = path.join(app.getPath('userData'), 'updates');
-      try { fs.mkdirSync(storeDir, { recursive: true }); } catch {}
+      try { fs.mkdirSync(storeDir, { recursive: true }); } catch { }
       const lastFile = path.join(storeDir, 'last_sha.txt');
-      try { fs.writeFileSync(lastFile, tag); } catch {}
+      try { fs.writeFileSync(lastFile, tag); } catch { }
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('update:progress', { phase: 'done', message: 'Mise à jour appliquée. Redémarrage...' });
       }
@@ -370,15 +370,15 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 app.on('before-quit', () => {
-  try { clearPresence(); } catch {}
-  try { destroyDiscordRPC(); } catch {}
-  try { global.emitPlayProgress = () => {}; } catch {}
+  try { clearPresence(); } catch { }
+  try { destroyDiscordRPC(); } catch { }
+  try { global.emitPlayProgress = () => { }; } catch { }
 });
 
 // Settings storage (JSON under userData)
 function getSettingsPath() {
   const dir = path.join(app.getPath('userData'));
-  try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { }
   return path.join(dir, 'settings.json');
 }
 function readSettings() {
@@ -440,7 +440,7 @@ ipcMain.handle('maintenance:get', async () => {
           broadcastMaintenance(remoteMaintenance);
         }
       }
-    }).catch(() => {});
+    }).catch(() => { });
     if (cached !== null) return { ok: true, maintenance: !!cached };
     // No cache yet, do a blocking fetch
     const r = await fetchRemoteMaintenance();
@@ -495,7 +495,7 @@ ipcMain.handle('auth:logout', async () => {
 });
 ipcMain.handle('launcher:ensure', async () => {
   try {
-    try { setPresencePreparing(); } catch {}
+    try { setPresencePreparing(); } catch { }
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('ensure:progress', { phase: 'start', message: 'Préparation en cours...' });
     }
@@ -503,7 +503,7 @@ ipcMain.handle('launcher:ensure', async () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('ensure:progress', { phase: 'done', message: 'Préparation terminée.' });
     }
-    try { setPresenceIdle(); } catch {}
+    try { setPresenceIdle(); } catch { }
     return res;
   } catch (e) {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -520,21 +520,21 @@ ipcMain.handle('updater:check', async (_evt, payload) => {
     const headers = { 'Accept': 'application/vnd.github+json', 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
     try {
       if (process.env.GITHUB_TOKEN) headers.Authorization = `token ${process.env.GITHUB_TOKEN}`;
-    } catch {}
+    } catch { }
     const res = await axios.get(commitApi, { timeout: 15000, headers });
     const sha = String(res?.data?.sha || '').trim();
     if (!sha) return { ok: false, error: 'SHA introuvable' };
     const storeDir = path.join(app.getPath('userData'), 'updates');
-    try { fs.mkdirSync(storeDir, { recursive: true }); } catch {}
+    try { fs.mkdirSync(storeDir, { recursive: true }); } catch { }
     const lastFile = path.join(storeDir, 'last_sha.txt');
     let lastSha = '';
-    try { lastSha = String(fs.readFileSync(lastFile, 'utf8')).trim(); } catch {}
+    try { lastSha = String(fs.readFileSync(lastFile, 'utf8')).trim(); } catch { }
     // Fetch remote package.json to compare version
     let remoteVersion = '';
     try {
       const pkgUrl = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/package.json`;
       const pkgHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
-      try { if (process.env.GITHUB_TOKEN) pkgHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch {}
+      try { if (process.env.GITHUB_TOKEN) pkgHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`; } catch { }
       const pkgRes = await axios.get(pkgUrl, { timeout: 10000, headers: pkgHeaders });
       const remotePkg = (pkgRes && pkgRes.data) ? (typeof pkgRes.data === 'string' ? JSON.parse(pkgRes.data) : pkgRes.data) : null;
       if (remotePkg && typeof remotePkg.version === 'string') remoteVersion = remotePkg.version.trim();
@@ -566,7 +566,7 @@ ipcMain.handle('updater:download', async (_evt, payload) => {
     const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
     try {
       if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `token ${process.env.GITHUB_TOKEN}`;
-    } catch {}
+    } catch { }
     const resp = await axios.get(assetUrl, { responseType: 'stream', timeout: 60000, maxContentLength: Infinity, maxBodyLength: Infinity, headers: dlHeaders });
     const total = Number(resp.headers['content-length'] || 0);
     let downloaded = 0;
@@ -606,7 +606,7 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
     const zip = new AdmZip(destZip);
     // Extract to staging
     const staging = path.join(updatesBase, 'staging');
-    try { fs.rmSync(staging, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(staging, { recursive: true, force: true }); } catch { }
     fs.mkdirSync(staging, { recursive: true });
     zip.extractAllTo(staging, true);
 
@@ -618,7 +618,7 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
     // Copy selected content to app dir (project root)
     const appDir = path.join(__dirname, '..');
     const copyList = ['assets', 'src', 'package.json', 'package-lock.json', 'node_modules'];
-    const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch {} };
+    const ensureDir = (p) => { try { fs.mkdirSync(p, { recursive: true }); } catch { } };
     const walkAndCopy = (src, dst) => {
       const st = fs.statSync(src);
       if (st.isDirectory()) {
@@ -720,38 +720,38 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
       return { ok: false, error: msg };
     }
 
-    try { setPresencePreparing(); } catch {}
+    try { setPresencePreparing(); } catch { }
     const launcher = await launchMinecraft(userOpts);
     if (launcher) {
       launcher.on('data', (buf) => {
         const line = buf?.toString ? buf.toString() : String(buf);
-        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'log', line }); } catch {}
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'log', line }); } catch { }
       });
       launcher.on('debug', (msg) => {
-        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'debug', line: String(msg) }); } catch {}
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'debug', line: String(msg) }); } catch { }
       });
       launcher.on('error', (err) => {
         const msg = err?.message || String(err);
-        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'error', line: msg }); } catch {}
-        try { setPresenceIdle(); } catch {}
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'error', line: msg }); } catch { }
+        try { setPresenceIdle(); } catch { }
       });
       // Capture process exit to help diagnose silent failures
       launcher.on('close', (code) => {
         const msg = `Processus Minecraft terminé avec le code ${code}`;
-        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: code === 0 ? 'log' : 'error', line: msg }); } catch {}
-        try { setPresenceIdle(); } catch {}
+        try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: code === 0 ? 'log' : 'error', line: msg }); } catch { }
+        try { setPresenceIdle(); } catch { }
         isGameRunning = false;
         // If we closed the window for gameplay, exit the app when the game ends
         if (keepAliveBackground) {
           keepAliveBackground = false;
           // If no window is open, quit the app to fully stop background
           if (BrowserWindow.getAllWindows().length === 0 && process.platform !== 'darwin') {
-            try { app.quit(); } catch {}
+            try { app.quit(); } catch { }
           }
         }
       });
     }
-    try { setPresencePlaying(); } catch {}
+    try { setPresencePlaying(); } catch { }
     // Option: close launcher window when the game starts, keeping RPC alive
     try {
       const settings = readSettings();
@@ -761,7 +761,7 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
         keepAliveBackground = true;
         if (mainWindow && !mainWindow.isDestroyed()) {
           // Close the window; window-all-closed will not quit while keepAliveBackground is true
-          try { mainWindow.close(); } catch {}
+          try { mainWindow.close(); } catch { }
         }
       } else {
         isGameRunning = true;
@@ -770,7 +770,7 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     return { ok: true };
   } catch (e) {
     dialog.showErrorBox('Lancement Minecraft', e?.message || String(e));
-    try { setPresenceIdle(); } catch {}
+    try { setPresenceIdle(); } catch { }
     return { ok: false, error: e?.message || String(e) };
   }
 });
@@ -801,7 +801,7 @@ function tcpPing(host, port, timeout = 3000) {
     const finalize = (result) => {
       if (done) return;
       done = true;
-      try { socket.destroy(); } catch {}
+      try { socket.destroy(); } catch { }
       resolve(result);
     };
     socket.setTimeout(timeout);
