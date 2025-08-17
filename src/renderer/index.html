@@ -181,6 +181,8 @@ html, body {
 .field input[type=range] { margin-top: 2px; }
 .field { min-width: 0; }
 .field .hint { margin-left: 8px; opacity: .9; white-space: nowrap; }
+/* Spacing for login button under fields in Auth panel */
+#auth #btnLogin { margin-top: 10px; }
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
@@ -333,7 +335,6 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
         <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
         <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
         <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
-        <br><br>
         <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter">Connexion</button>
       </div>
     </div>
