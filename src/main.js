@@ -22,6 +22,58 @@ let isGameRunning = false;
 // Shared Discord Application ID for all users. Replace the placeholder with your real Client ID.
 const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '1400888551486521454';
 
+// --- Azuriom Maintenance Sync ---
+const AZ_BASE_URL = process.env.EMINIUM_BASE_URL || 'https://eminium.ovh';
+const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
+let remoteMaintenance = null; // null = inconnu, true/false = connu
+let maintenancePollTimer = null;
+
+function getAzuriomAuthHeaders() {
+  const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
+  try {
+    // Priority 1: explicit API token from env (server token)
+    const t = process.env.AZ_API_TOKEN || process.env.AZURIOM_API_TOKEN;
+    if (t) { headers.Authorization = `Bearer ${t}`; return headers; }
+  } catch {}
+  try {
+    // Priority 2: token from logged-in user profile (best effort)
+    const prof = readUserProfile && readUserProfile();
+    const userToken = prof?.token || prof?.accessToken || prof?.apiToken || prof?.authToken;
+    if (userToken) headers.Authorization = `Bearer ${userToken}`;
+  } catch {}
+  return headers;
+}
+
+async function fetchRemoteMaintenance() {
+  try {
+    const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
+    const res = await axios.get(url, { timeout: 8000, headers: getAzuriomAuthHeaders() });
+    const val = !!(res?.data?.maintenance);
+    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
+async function setRemoteMaintenance(on) {
+  try {
+    const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
+    const res = await axios.post(url, { maintenance: !!on }, { timeout: 8000, headers: getAzuriomAuthHeaders() });
+    const val = !!(res?.data?.maintenance ?? on);
+    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
+function broadcastMaintenance(val) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('maintenance:changed', { maintenance: !!val });
+    }
+  } catch {}
+}
+
 // --- Discord Rich Presence helpers ---
 async function initDiscordRPC() {
   try {
@@ -178,6 +230,28 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // Start maintenance polling
+  try {
+    const prime = await fetchRemoteMaintenance();
+    if (prime?.ok) {
+      remoteMaintenance = !!prime.maintenance;
+      broadcastMaintenance(remoteMaintenance);
+    }
+  } catch {}
+  try { if (maintenancePollTimer) clearInterval(maintenancePollTimer); } catch {}
+  maintenancePollTimer = setInterval(async () => {
+    try {
+      const r = await fetchRemoteMaintenance();
+      if (r?.ok) {
+        const val = !!r.maintenance;
+        if (remoteMaintenance !== val) {
+          remoteMaintenance = val;
+          broadcastMaintenance(remoteMaintenance);
+        }
+      }
+    } catch {}
+  }, 30000);
 
   // Auto-check on startup: if remote version differs, force reinstall
   try {
@@ -347,11 +421,62 @@ function isAdminProfile(p) {
 }
 
 ipcMain.handle('settings:get', async () => {
-  try { return { ok: true, settings: readSettings() }; }
+  try {
+    const base = readSettings();
+    // Override maintenance with remote value when known
+    if (remoteMaintenance !== null) base.maintenanceEnabled = !!remoteMaintenance;
+    return { ok: true, settings: base };
+  }
   catch (e) { return { ok: false, error: e?.message || String(e) }; }
 });
 ipcMain.handle('settings:set', async (_evt, patch) => {
   return writeSettings(patch);
+});
+
+// Maintenance (Azuriom): IPC endpoints
+ipcMain.handle('maintenance:get', async () => {
+  try {
+    // Prefer cached remote state; refresh in background
+    const cached = remoteMaintenance;
+    // Kick an async refresh but don't await to keep UI snappy
+    fetchRemoteMaintenance().then((r) => {
+      if (r?.ok) {
+        const v = !!r.maintenance;
+        if (remoteMaintenance !== v) {
+          remoteMaintenance = v;
+          broadcastMaintenance(remoteMaintenance);
+        }
+      }
+    }).catch(() => {});
+    if (cached !== null) return { ok: true, maintenance: !!cached };
+    // No cache yet, do a blocking fetch
+    const r = await fetchRemoteMaintenance();
+    if (r?.ok) {
+      remoteMaintenance = !!r.maintenance;
+      return { ok: true, maintenance: remoteMaintenance };
+    }
+    // Fallback to local setting
+    return { ok: true, maintenance: !!readSettings().maintenanceEnabled };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
+
+ipcMain.handle('maintenance:set', async () => ({ ok: false, error: 'payload manquant' }));
+ipcMain.removeHandler?.('maintenance:set');
+ipcMain.handle('maintenance:set', async (_evt, { maintenance }) => {
+  try {
+    const prof = readUserProfile();
+    if (!isAdminProfile(prof)) return { ok: false, error: 'Permission refusée' };
+    const r = await setRemoteMaintenance(!!maintenance);
+    if (!r?.ok) return { ok: false, error: r?.error || 'Échec API' };
+    const val = !!r.maintenance;
+    remoteMaintenance = val;
+    broadcastMaintenance(remoteMaintenance);
+    return { ok: true, maintenance: val };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
 });
 
 // Status handler used by renderer to know readiness / rpc state
@@ -589,8 +714,16 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
 ipcMain.handle('launcher:play', async (_evt, userOpts) => {
   try {
     // Maintenance/whitelist enforcement
-    const settings = readSettings();
-    const maintenance = !!settings.maintenanceEnabled;
+    let maintenance = remoteMaintenance;
+    if (maintenance === null) {
+      // Fallback to remote fetch, then settings
+      const r = await fetchRemoteMaintenance();
+      maintenance = r?.ok ? !!r.maintenance : null;
+    }
+    if (maintenance === null) {
+      const settings = readSettings();
+      maintenance = !!settings.maintenanceEnabled;
+    }
     if (maintenance) {
       const profile = readUserProfile();
       const isAdmin = isAdminProfile(profile);

@@ -512,8 +512,14 @@ async function loadSettings() {
 async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
 
 async function refreshMaintenanceUI() {
-  const set = await loadSettings();
-  const maintenanceOn = !!set.maintenanceEnabled;
+  let maintenanceOn = false;
+  try {
+    const res = await window.eminium.getMaintenance();
+    maintenanceOn = !!res?.maintenance;
+  } catch { /* fallback to local if remote unavailable */
+    const set = await loadSettings();
+    maintenanceOn = !!set.maintenanceEnabled;
+  }
   // Toggle state
   const toggle = document.getElementById('maintenanceToggle');
   if (toggle) toggle.checked = maintenanceOn;
@@ -533,17 +539,41 @@ async function refreshMaintenanceUI() {
   } catch {}
 }
 
-// Admin: toggle maintenance
+// Admin: toggle maintenance (remote)
 (() => {
   const toggle = document.getElementById('maintenanceToggle');
   if (toggle) {
     toggle.addEventListener('change', async (e) => {
       const on = !!e.target.checked;
-      await saveSettings({ maintenanceEnabled: on });
-      await refreshMaintenanceUI();
-      log(on ? 'Maintenance activée.' : 'Maintenance désactivée.');
+      try {
+        const res = await window.eminium.setMaintenance(on);
+        if (!(res?.ok)) {
+          log('Erreur API maintenance: ' + (res?.error || 'inconnue'));
+          // revert UI on failure
+          toggle.checked = !on;
+          return;
+        }
+        await refreshMaintenanceUI();
+        log(on ? 'Maintenance activée.' : 'Maintenance désactivée.');
+      } catch (err) {
+        log('Erreur: ' + (err?.message || err));
+        toggle.checked = !on;
+      }
     });
   }
+})();
+
+// Subscribe to remote maintenance changes
+(() => {
+  try {
+    if (window.eminiumMaintenance?.onChanged) {
+      window.eminiumMaintenance.onChanged(() => {
+        refreshMaintenanceUI();
+      });
+    }
+  } catch {}
+  // Initial UI sync
+  refreshMaintenanceUI();
 })();
 
 // Play options: close launcher on game start

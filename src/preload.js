@@ -13,7 +13,10 @@ contextBridge.exposeInMainWorld('eminium', {
   getSystemRamMB: () => ipcRenderer.invoke('sys:ram:totalMB'),
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
-  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch)
+  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+  // Maintenance (Azuriom)
+  getMaintenance: () => ipcRenderer.invoke('maintenance:get'),
+  setMaintenance: (on) => ipcRenderer.invoke('maintenance:set', { maintenance: !!on })
 });
 
 // Progress event subscriptions
@@ -27,6 +30,15 @@ contextBridge.exposeInMainWorld('eminiumProgress', {
     const handler = (_evt, data) => cb?.(data);
     ipcRenderer.on('play:progress', handler);
     return () => ipcRenderer.removeListener('play:progress', handler);
+  }
+});
+
+// Broadcast remote maintenance changes
+contextBridge.exposeInMainWorld('eminiumMaintenance', {
+  onChanged: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('maintenance:changed', handler);
+    return () => ipcRenderer.removeListener('maintenance:changed', handler);
   }
 });
 
