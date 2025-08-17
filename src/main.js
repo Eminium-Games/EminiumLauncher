@@ -1,3 +1,5 @@
+// Load .env early
+try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch {}
 const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -324,7 +326,11 @@ ipcMain.handle('updater:download', async (_evt, payload) => {
     const destZip = path.join(updatesBase, 'launcher.zip');
 
     // Stream download with progress
-    const resp = await axios.get(assetUrl, { responseType: 'stream', timeout: 60000, maxContentLength: Infinity, maxBodyLength: Infinity });
+    const dlHeaders = { 'User-Agent': `EminiumLauncher/${APP_VERSION}` };
+    try {
+      if (process.env.GITHUB_TOKEN) dlHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    } catch {}
+    const resp = await axios.get(assetUrl, { responseType: 'stream', timeout: 60000, maxContentLength: Infinity, maxBodyLength: Infinity, headers: dlHeaders });
     const total = Number(resp.headers['content-length'] || 0);
     let downloaded = 0;
     await new Promise((resolve, reject) => {
