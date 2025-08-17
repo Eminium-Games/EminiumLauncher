@@ -1,6 +1,6 @@
 {
   "name": "eminium-launcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Launcheur pour le serveur Eminium - Installez et Jouez ! v${version}",
   "author": "Eminium",
