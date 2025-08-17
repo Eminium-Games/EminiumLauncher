@@ -762,8 +762,39 @@ function setAuthError(msg){ if(!authErrEl) return; authErrEl.textContent = msg |
 function mapLoginError(result, caught){
   const r = result || {};
   const reason = (r.code || r.reason || r.message || '').toString().toLowerCase();
-  // 1) Prefer explicit server-provided message if present
   const pick = (...vals) => vals.find(v => typeof v === 'string' && v.trim());
+  // 1) Derive status/code FIRST so HTTP codes override server generic text
+  let status = undefined;
+  if (typeof r.status === 'number') status = r.status;
+  else if (typeof r.httpStatus === 'number') status = r.httpStatus;
+  else if (typeof r.code === 'number') status = r.code;
+  if (!status && caught) {
+    const resp = caught?.response;
+    if (resp && typeof resp.status === 'number') status = resp.status;
+    else if (typeof caught.status === 'number') status = caught.status;
+  }
+  if (!status) {
+    const msg = (r.message || r.reason || caught?.message || '').toString();
+    const m = msg.match(/status\s*code\s*(\d{3})/i) || msg.match(/\b(4\d{2}|5\d{2})\b/);
+    if (m && m[1]) status = parseInt(m[1], 10);
+  }
+  // 2) Map by explicit status codes immediately
+  if (status === 400) return "Requête invalide. Vérifiez les informations saisies.";
+  if (status === 401) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
+  if (status === 403) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
+  if (status === 404) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  if (status === 408) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  if (status === 409) return "Conflit détecté. Réessayez ou contactez le support si le problème persiste.";
+  if (status === 423) return "Compte/verrouillage temporaire. Réessayez plus tard ou contactez le support.";
+  if (status === 429) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
+  if (status === 500 || status === 501 || status === 502 || status === 503 || status === 504) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  // 3) Network/offline detection from caught message
+  if (caught) {
+    const m = (caught?.message || caught)?.toString().toLowerCase();
+    if (/network|offline|fetch|net::|ecconnrefused|ecconnreset|enotfound|dns|ehostunreach/.test(m)) return "Erreur réseau. Vérifiez votre connexion Internet et réessayez.";
+    if (/timeout|etimedout|request.*timed.*out/.test(m)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  }
+  // 4) Prefer explicit server-provided message if present (and not the Axios generic)
   const serverMsg = pick(
     r.userMessage,
     r.hint,
@@ -775,7 +806,7 @@ function mapLoginError(result, caught){
     r.error?.message,
     r.data?.message,
     r.data?.error,
-    r.message // keep last, often Axios text; will be overridden by status mapping below if applicable
+    r.message
   ) || pick(
     caught?.response?.data?.userMessage,
     caught?.response?.data?.hint,
@@ -789,39 +820,6 @@ function mapLoginError(result, caught){
   if (serverMsg && !/request failed with status code/i.test(serverMsg)) {
     return serverMsg.trim();
   }
-  // Try to derive status/code from result or caught (Axios/IPC)
-  let status = undefined;
-  if (typeof r.status === 'number') status = r.status;
-  else if (typeof r.httpStatus === 'number') status = r.httpStatus;
-  else if (typeof r.code === 'number') status = r.code;
-  // From caught (Axios style or generic)
-  if (!status && caught) {
-    const resp = caught?.response;
-    if (resp && typeof resp.status === 'number') status = resp.status;
-    else if (typeof caught.status === 'number') status = caught.status;
-  }
-  // From message text
-  if (!status) {
-    const msg = (r.message || r.reason || caught?.message || '').toString();
-    const m = msg.match(/status\s*code\s*(\d{3})/i) || msg.match(/\b(4\d{2}|5\d{2})\b/);
-    if (m && m[1]) status = parseInt(m[1], 10);
-  }
-  // Network/offline detection from caught message
-  if (caught) {
-    const m = (caught?.message || caught)?.toString().toLowerCase();
-    if (/network|offline|fetch|net::|ecconnrefused|ecconnreset|enotfound|dns|ehostunreach/.test(m)) return "Erreur réseau. Vérifiez votre connexion Internet et réessayez.";
-    if (/timeout|etimedout|request.*timed.*out/.test(m)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
-  }
-  // Map by explicit status codes first
-  if (status === 400) return "Requête invalide. Vérifiez les informations saisies.";
-  if (status === 401) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
-  if (status === 403) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
-  if (status === 404) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
-  if (status === 408) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
-  if (status === 409) return "Conflit détecté. Réessayez ou contactez le support si le problème persiste.";
-  if (status === 423) return "Compte/verrouillage temporaire. Réessayez plus tard ou contactez le support.";
-  if (status === 429) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
-  if (status === 500 || status === 501 || status === 502 || status === 503 || status === 504) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
 
   if (/invalid.*(credential|identifiant|password|mot de passe)/.test(reason) || /unauthoriz|401/.test(reason)) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
   if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et réessayez.";
