@@ -492,7 +492,7 @@ async function refreshMaintenanceUI() {
       btn.title = allowed ? 'Lancer le jeu' : 'Maintenance activée — accès restreint';
     }
     const banner = document.getElementById('maintenanceBanner');
-    if (banner) banner.style.display = maintenanceOn ? '' : 'none';
+    if (banner) banner.style.display = (maintenanceOn && IS_LOGGED) ? '' : 'none';
   } catch {}
 }
 
