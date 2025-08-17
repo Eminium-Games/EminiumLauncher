@@ -208,6 +208,20 @@ function writeSettings(patch) {
   } catch (e) { return { ok: false, error: e?.message || String(e) }; }
 }
 
+// Helper: detect if saved profile represents an admin
+function isAdminProfile(p) {
+  try {
+    if (!p) return false;
+    const parts = [];
+    if (typeof p.role === 'string') parts.push(p.role);
+    if (typeof p.grade === 'string') parts.push(p.grade);
+    if (p.role && typeof p.role === 'object' && p.role.name) parts.push(p.role.name);
+    if (p.grade && typeof p.grade === 'object' && p.grade.name) parts.push(p.grade.name);
+    const s = parts.join(' ').toLowerCase();
+    return /\b(admin|owner|propri[eé]taire)\b/.test(s);
+  } catch { return false; }
+}
+
 ipcMain.handle('settings:get', async () => {
   try { return { ok: true, settings: readSettings() }; }
   catch (e) { return { ok: false, error: e?.message || String(e) }; }
@@ -432,6 +446,22 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
 
 ipcMain.handle('launcher:play', async (_evt, userOpts) => {
   try {
+    // Maintenance/whitelist enforcement
+    const settings = readSettings();
+    const maintenance = !!settings.maintenanceEnabled;
+    if (maintenance) {
+      const profile = readUserProfile();
+      const isAdmin = isAdminProfile(profile);
+      const allowed = isAdmin; // Whitelist disabled: only Admins can play
+      if (!allowed) {
+        const msg = 'Maintenance activée — accès réservé aux administrateurs.';
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+        }
+        return { ok: false, error: msg };
+      }
+    }
+
     // Enforce server availability before launching
     const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : 'play.eminium.ovh';
     const port = (userOpts && userOpts.serverPort) ? Number(userOpts.serverPort) : 25565;

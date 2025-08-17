@@ -18,7 +18,6 @@
   --txt: #fff8e1;
   --glass: rgba(255,255,255,0.05);
 }
-
 html, body {
   margin:0; padding:0; height:100%;
   font-family: 'Inter', sans-serif;
@@ -325,6 +324,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
       <div class="tab active" data-tab="auth" data-ico="🔐">Connexion</div>
       <div class="tab" data-tab="play" data-ico="🎮">Jouer</div>
       <div class="tab" data-tab="log" data-ico="📜">Logs</div>
+      <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
     </div>
 
     <!-- Contenus -->
@@ -363,6 +363,9 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
           </div>
         </div>
+        <div id="maintenanceBanner" class="panel" style="display:none; margin-top:12px; border:1px solid #f59e0b; background:rgba(245,158,11,0.12); color:#fce8c3;">
+          <strong>Maintenance en cours.</strong> L'accès au jeu est temporairement limité.
+        </div>
         <div class="row" style="margin-top:12px;">
           <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
           <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
@@ -375,6 +378,16 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
       <div class="panel">
         <div class="muted" style="margin-bottom:8px;">Log</div>
         <div class="log" id="log"></div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="admin">
+      <div class="panel">
+        <div class="muted" style="margin-bottom:8px;">Administration</div>
+        <div class="row toggles">
+          <label><input type="checkbox" class="toggle" id="maintenanceToggle"> Activer la maintenance (seuls les Admins peuvent jouer)</label>
+        </div>
+        <div class="muted" style="margin-top:10px; font-size:12px;">Astuce: en maintenance, seul un compte Admin peut lancer le jeu.</div>
       </div>
     </div>
   </div>
@@ -411,6 +424,60 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById(tab.dataset.tab).classList.add('active');
   });
 });
+
+// Admin helpers (renderer)
+function isAdminClient(profile) {
+  try {
+    if (!profile) return false;
+    const parts = [];
+    if (typeof profile.role === 'string') parts.push(profile.role);
+    if (typeof profile.grade === 'string') parts.push(profile.grade);
+    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
+    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
+    const s = parts.join(' ').toLowerCase();
+    return /\b(admin|owner|propri[eé]taire)\b/.test(s);
+  } catch { return false; }
+}
+
+async function loadSettings() {
+  try { const res = await window.eminium.getSettings(); return res?.settings || {}; } catch { return {}; }
+}
+async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
+
+async function refreshMaintenanceUI() {
+  const set = await loadSettings();
+  const maintenanceOn = !!set.maintenanceEnabled;
+  // Toggle state
+  const toggle = document.getElementById('maintenanceToggle');
+  if (toggle) toggle.checked = maintenanceOn;
+  // Disable Play if needed for current user
+  try {
+    const profRes = await window.eminium.getProfile();
+    const p = profRes?.profile || {};
+    const isAdmin = isAdminClient(p);
+    const allowed = !maintenanceOn || isAdmin;
+    const btn = document.getElementById('btnPlay');
+    if (btn) {
+      btn.disabled = !allowed;
+      btn.title = allowed ? 'Lancer le jeu' : 'Maintenance activée — accès restreint';
+    }
+    const banner = document.getElementById('maintenanceBanner');
+    if (banner) banner.style.display = maintenanceOn ? '' : 'none';
+  } catch {}
+}
+
+// Admin: toggle maintenance
+(() => {
+  const toggle = document.getElementById('maintenanceToggle');
+  if (toggle) {
+    toggle.addEventListener('change', async (e) => {
+      const on = !!e.target.checked;
+      await saveSettings({ maintenanceEnabled: on });
+      await refreshMaintenanceUI();
+      log(on ? 'Maintenance activée.' : 'Maintenance désactivée.');
+    });
+  }
+})();
 
 // Bouton: Forcer la mise à jour
 document.getElementById('btnForceUpdate').addEventListener('click', async () => {
@@ -519,9 +586,15 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.querySelector('.tab[data-tab="play"]').classList.add('active');
       document.getElementById('play').classList.add('active');
       setAuthTabHidden(true);
+      // Reveal Admin if needed and refresh maintenance state
+      if (isAdminClient(p)) { document.getElementById('tabAdmin').style.display = ''; }
+      await refreshMaintenanceUI();
     }
   } catch {}
 })();
+
+// Also refresh maintenance UI on load (before login) to set initial Play state
+refreshMaintenanceUI();
 
 // Logger
 function log(msg) {
@@ -648,31 +721,34 @@ btnLogin.addEventListener('click', async () => {
         }
 
         if (result?.status === 'success') {
-            const p = result.profile || {};
-            log('Connecté ! Profil enregistré.');
-            document.getElementById('profileName').textContent = p.name || 'Pseudo';
-            document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
-            // Définir l'avatar (tête du skin)
-            // 1) Minotar par nom (fonctionne même si UUID Mojang inconnu → fallback Steve/Alex)
-            let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
-            // cache-busting pour éviter le cache lors d'un changement de skin
-            document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
-            // Grade badge
-            const gEl = document.getElementById('profileGrade');
-            const grade = formatGrade(p.grade ?? p.role);
-            if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
-            else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
-            applyGradeStyle(gEl, p.gradeColor || null, grade);
-            code2faInput.parentElement.style.display = 'none';
-            document.getElementById('btnLogout').style.display = 'inline-block';
-            setProfileSkeleton(false);
-            // Aller sur l'onglet Jouer automatiquement
-            document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
-            document.getElementById('auth').classList.remove('active');
-            document.querySelector('.tab[data-tab="play"]').classList.add('active');
-            document.getElementById('play').classList.add('active');
-            setAuthTabHidden(true);
-            return;
+          const p = result.profile || {};
+          log('Connecté ! Profil enregistré.');
+          document.getElementById('profileName').textContent = p.name || 'Pseudo';
+          document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+          // Définir l'avatar (tête du skin)
+          // 1) Minotar par nom (fonctionne même si UUID Mojang inconnu → fallback Steve/Alex)
+          let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+          // cache-busting pour éviter le cache lors d'un changement de skin
+          document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+          // Grade badge
+          const gEl = document.getElementById('profileGrade');
+          const grade = formatGrade(p.grade ?? p.role);
+          if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+          else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+          applyGradeStyle(gEl, p.gradeColor || null, grade);
+          code2faInput.parentElement.style.display = 'none';
+          document.getElementById('btnLogout').style.display = 'inline-block';
+          setProfileSkeleton(false);
+          // Aller sur l'onglet Jouer automatiquement
+          document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+          document.getElementById('auth').classList.remove('active');
+          document.querySelector('.tab[data-tab="play"]').classList.add('active');
+          document.getElementById('play').classList.add('active');
+          setAuthTabHidden(true);
+          // Reveal Admin if needed and refresh maintenance state
+          if (isAdminClient(p)) { document.getElementById('tabAdmin').style.display = ''; }
+          await refreshMaintenanceUI();
+          return;
         }
 
         log('Réponse inconnue du login.');
