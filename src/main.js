@@ -433,7 +433,7 @@ ipcMain.handle('settings:set', async (_evt, patch) => {
   return writeSettings(patch);
 });
 
-// Maintenance (Azuriom): IPC endpoints
+// Maintenance (Azuriom): IPC endpoints (read-only)
 ipcMain.handle('maintenance:get', async () => {
   try {
     // Prefer cached remote state; refresh in background
@@ -457,23 +457,6 @@ ipcMain.handle('maintenance:get', async () => {
     }
     // Fallback to local setting
     return { ok: true, maintenance: !!readSettings().maintenanceEnabled };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e) };
-  }
-});
-
-ipcMain.handle('maintenance:set', async () => ({ ok: false, error: 'payload manquant' }));
-ipcMain.removeHandler?.('maintenance:set');
-ipcMain.handle('maintenance:set', async (_evt, { maintenance }) => {
-  try {
-    const prof = readUserProfile();
-    if (!isAdminProfile(prof)) return { ok: false, error: 'Permission refusée' };
-    const r = await setRemoteMaintenance(!!maintenance);
-    if (!r?.ok) return { ok: false, error: r?.error || 'Échec API' };
-    const val = !!r.maintenance;
-    remoteMaintenance = val;
-    broadcastMaintenance(remoteMaintenance);
-    return { ok: true, maintenance: val };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
@@ -725,16 +708,11 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
       maintenance = !!settings.maintenanceEnabled;
     }
     if (maintenance) {
-      const profile = readUserProfile();
-      const isAdmin = isAdminProfile(profile);
-      const allowed = isAdmin; // Whitelist disabled: only Admins can play
-      if (!allowed) {
-        const msg = 'Maintenance activée — accès réservé aux administrateurs.';
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
-        }
-        return { ok: false, error: msg };
+      const msg = 'Maintenance activée — accès restreint.';
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
       }
+      return { ok: false, error: msg };
     }
 
     // Enforce server availability before launching

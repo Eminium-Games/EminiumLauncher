@@ -15,8 +15,7 @@ contextBridge.exposeInMainWorld('eminium', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
   // Maintenance (Azuriom)
-  getMaintenance: () => ipcRenderer.invoke('maintenance:get'),
-  setMaintenance: (on) => ipcRenderer.invoke('maintenance:set', { maintenance: !!on })
+  getMaintenance: () => ipcRenderer.invoke('maintenance:get')
 });
 
 // Progress event subscriptions

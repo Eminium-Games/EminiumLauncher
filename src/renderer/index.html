@@ -411,9 +411,9 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
       <div class="panel">
         <div class="muted" style="margin-bottom:8px;">Administration</div>
         <div class="row toggles">
-          <label><input type="checkbox" class="toggle" id="maintenanceToggle"> Activer la maintenance (seuls les Admins peuvent jouer)</label>
+          <label><input type="checkbox" class="toggle" id="maintenanceToggle" disabled> Statut maintenance (contrôlé côté serveur)</label>
         </div>
-        <div class="muted" style="margin-top:10px; font-size:12px;">Astuce: en maintenance, seul un compte Admin peut lancer le jeu.</div>
+        <div class="muted" style="margin-top:10px; font-size:12px;">Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.</div>
       </div>
     </div>
   </div>
@@ -539,29 +539,7 @@ async function refreshMaintenanceUI() {
   } catch {}
 }
 
-// Admin: toggle maintenance (remote)
-(() => {
-  const toggle = document.getElementById('maintenanceToggle');
-  if (toggle) {
-    toggle.addEventListener('change', async (e) => {
-      const on = !!e.target.checked;
-      try {
-        const res = await window.eminium.setMaintenance(on);
-        if (!(res?.ok)) {
-          log('Erreur API maintenance: ' + (res?.error || 'inconnue'));
-          // revert UI on failure
-          toggle.checked = !on;
-          return;
-        }
-        await refreshMaintenanceUI();
-        log(on ? 'Maintenance activée.' : 'Maintenance désactivée.');
-      } catch (err) {
-        log('Erreur: ' + (err?.message || err));
-        toggle.checked = !on;
-      }
-    });
-  }
-})();
+// Maintenance: lecture seule (aucun gestion côté launcher)
 
 // Subscribe to remote maintenance changes
 (() => {
