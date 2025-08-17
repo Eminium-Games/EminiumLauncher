@@ -193,12 +193,19 @@ html, body {
   border: 1px solid rgba(239,68,68,0.35);
   color: #fecaca;
   font-size: 13px;
+  white-space: pre-line; /* allow line breaks for extra technical info */
 }
 @media (max-width: 880px) {
   .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
   .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
   .tab + .tab { margin-top: 0; }
   .tab { border-radius: 12px 12px 0 0; }
+  .tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+  .tab:hover { filter: brightness(1.05); }
+  .tab.active { border-color: rgba(245,158,11,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 14px rgba(245,158,11,0.18); }
+  .tab.active::before { transform: translateY(-50%) scale(1.02); }
+  .tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
+  .tab + .tab { margin-top: 0; }
   .tab-content { grid-column: 1; grid-row: 3; padding-right: 0; }
 }
 
@@ -831,10 +838,14 @@ btnLogin.addEventListener('click', async () => {
 
         if (result?.status === 'error') {
             const friendly = mapLoginError(result);
-            setAuthError(friendly);
+            // Compose UI message with technical details
+            let status = (typeof result.status === 'number' && result.status) || (typeof result.httpStatus === 'number' && result.httpStatus) || undefined;
+            let raw = (result.message || result.reason || '').toString();
+            const uiMsg = friendly + (status ? ` [${status}]` : '') + (raw && !friendly.toLowerCase().includes(raw.toLowerCase()) ? `\n${raw}` : '');
+            setAuthError(uiMsg);
             log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
             const err = new Error(friendly || 'Connexion échouée');
-            err.code = result.code || result.reason || undefined;
+            err.code = result.code || result.reason || status || undefined;
             throw err;
         }
 
@@ -873,7 +884,11 @@ btnLogin.addEventListener('click', async () => {
         log('Réponse inconnue du login.');
     } catch(e){
         const friendly = mapLoginError(null, e);
-        setAuthError(friendly);
+        // Compose UI message with technical details
+        const status = (e && (e.status || (e.response && e.response.status))) || undefined;
+        const raw = (e?.message || e || '').toString();
+        const uiMsg = friendly + (status ? ` [${status}]` : '') + (raw && !friendly.toLowerCase().includes(raw.toLowerCase()) ? `\n${raw}` : '');
+        setAuthError(uiMsg);
         log('Erreur IPC : '+ (e?.message || e));
         const err = new Error(friendly || (e?.message || 'Connexion échouée'));
         err.code = (e && (e.code || e.status)) || undefined;
