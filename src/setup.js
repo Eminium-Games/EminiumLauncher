@@ -563,25 +563,29 @@ const BMCL = {
     const o = asArray(MIRROR_OVERRIDES.assetObj?.replace?.('{sub}', sub)?.replace?.('{hash}', hash)
       || MIRROR_OVERRIDES.assetObj?.map?.(u => u.replace('{sub}', sub).replace('{hash}', hash)) || []);
     const def = [
-      `https://bmclapi2.bangbang93.com/assets/${sub}/${hash}`,
-      // Fallback officiel Mojang (héberge les assets)
-      `https://resources.download.minecraft.net/${sub}/${hash}`
+      // Official Mojang assets CDN (primary)
+      `https://resources.download.minecraft.net/${sub}/${hash}`,
+      // BMCL mirror as fallback
+      `https://bmclapi2.bangbang93.com/assets/${sub}/${hash}`
     ];
     return MIRRORS_DISABLE_DEFAULTS && o.length ? o : [...o, ...def];
   },
   manifest: () => {
     const o = asArray(MIRROR_OVERRIDES.manifest || []);
     const def = [
+      // Mojang piston-meta v2 (official)
+      'https://piston-meta.mojang.com/mc/game/version_manifest_v2.json',
+      // BMCL mirror as fallback
       'https://bmclapi2.bangbang93.com/mc/game/version_manifest.json'
     ];
     return MIRRORS_DISABLE_DEFAULTS && o.length ? o : [...o, ...def];
   },
   maven: (pathPart) => {
     const list = [];
-    // Primary BMCL mirror
-    list.push(`https://bmclapi2.bangbang93.com/maven/${pathPart}`);
-    // Mojang official libraries CDN
+    // Prefer Mojang official libraries CDN
     list.push(`https://libraries.minecraft.net/${pathPart}`);
+    // BMCL mirror as fallback
+    list.push(`https://bmclapi2.bangbang93.com/maven/${pathPart}`);
     // Forge official maven for forge artifacts
     if (/^(net\/minecraftforge\/|cpw\/mods\/|org\/spongepowered\/|io\/github\/zekerzhayard\/|it\/.+\/fastutil)/.test(pathPart)) {
       list.push(`https://maven.minecraftforge.net/${pathPart}`);
@@ -645,8 +649,15 @@ async function ensureVersionFilesBMCL(mcVersion, log) {
   }
 
   if (!fs.existsSync(vJarPath)) {
-    log && log(`[BMCL] Téléchargement client.jar ${mcVersion}`);
-    await fetchWithFallback(BMCL.clientJar(mcVersion), vJarPath, `client jar ${mcVersion}`);
+    log && log(`[DL] Téléchargement client.jar ${mcVersion}`);
+    // Prefer official Mojang URL from version JSON if available, then fall back to BMCL mirror
+    const clientUrls = [];
+    try {
+      const u = vJson?.downloads?.client?.url;
+      if (u) clientUrls.push(u);
+    } catch {}
+    const fallbacks = BMCL.clientJar(mcVersion);
+    await fetchWithFallback([...clientUrls, ...fallbacks], vJarPath, `client jar ${mcVersion}`);
   }
 
   // Assets index
@@ -664,18 +675,12 @@ async function ensureVersionFilesBMCL(mcVersion, log) {
       }
     } catch {}
     if (!fs.existsSync(idxPath)) {
-      log && log(`[BMCL] Téléchargement assets index ${assetsId}`);
-      try {
-        await fetchWithFallback(BMCL.assetsIndex(assetsId), idxPath, `assets index ${assetsId}`);
-      } catch (e) {
-        // Fallback: URL fournie par le JSON de version
-        if (vJson?.assetIndex?.url) {
-          log && log(`[BMCL] Fallback via assetIndex.url`);
-          await fetchWithFallback(vJson.assetIndex.url, idxPath, `assets index ${assetsId} (direct)`);
-        } else {
-          throw e;
-        }
-      }
+      log && log(`[DL] Téléchargement assets index ${assetsId}`);
+      // Prefer the direct Mojang URL from version JSON, then fall back to BMCL mirror
+      const idxUrls = [];
+      if (vJson?.assetIndex?.url) idxUrls.push(vJson.assetIndex.url);
+      const bmclIdx = BMCL.assetsIndex(assetsId);
+      await fetchWithFallback([...idxUrls, ...bmclIdx], idxPath, `assets index ${assetsId}`);
     }
     // Assets objects
     let idxJsonRaw = '';
@@ -684,17 +689,13 @@ async function ensureVersionFilesBMCL(mcVersion, log) {
       idxJsonRaw = fs.readFileSync(idxPath, 'utf-8');
       idxJson = JSON.parse(idxJsonRaw);
     } catch (e) {
-      log && log(`[BMCL] Index d'assets corrompu, nouvel essai...`);
+      log && log(`[DL] Index d'assets corrompu, nouvel essai...`);
       try { fs.unlinkSync(idxPath); } catch {}
-      try {
-        await fetchWithFallback(BMCL.assetsIndex(assetsId), idxPath, `assets index ${assetsId} (retry)`);
-      } catch (e2) {
-        if (vJson?.assetIndex?.url) {
-          log && log(`[BMCL] Fallback via assetIndex.url`);
-          await fetchWithFallback(vJson.assetIndex.url, idxPath, `assets index ${assetsId} (direct)`);
-        } else {
-          throw e2;
-        }
+      {
+        const idxUrls = [];
+        if (vJson?.assetIndex?.url) idxUrls.push(vJson.assetIndex.url);
+        const bmclIdx = BMCL.assetsIndex(assetsId);
+        await fetchWithFallback([...idxUrls, ...bmclIdx], idxPath, `assets index ${assetsId} (retry)`);
       }
       idxJsonRaw = fs.readFileSync(idxPath, 'utf-8');
       idxJson = JSON.parse(idxJsonRaw);
