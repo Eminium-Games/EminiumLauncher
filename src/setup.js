@@ -23,12 +23,14 @@ const bundledModpack = path.join(hiddenCore, 'modpack.zip');
 // Modpack distant (fourni par l'utilisateur)
 const MODPACK_URL = 'https://github.com/Fourty3000/get-zip-for-eminium-launcher/archive/refs/tags/ZIP.zip';
 
-// Dossier .eminium (options utilisateur visibles)
+// Dossier .eminium (options utilisateur visibles) -> sous AppData (roaming)
 const userHome = os.homedir();
-const eminiumDir = path.join(userHome, '.eminium');
+const eminiumDir = path.join(app.getPath('appData'), '.eminium');
 
-// Dossier de travail (caché/opaque au joueur)
-const hiddenBase = path.join(os.homedir(), '.eminium-core'); // . prefix hide on unix; on Windows we mark Hidden
+// Dossier de travail (caché/opaque au joueur) -> désormais même que .eminium (fusion)
+const OLD_HIDDEN_BASE = path.join(os.homedir(), '.eminium-core');
+const OLD_EMINIUM_HOME = path.join(os.homedir(), '.eminium');
+const hiddenBase = eminiumDir; // unifier tout sous ~/.eminium
 const dirs = {
   hiddenBase,
   versions: path.join(hiddenBase, 'versions'),
@@ -60,6 +62,45 @@ function ensureDir(p) {
     // Last resort: try to recreate
     try { fs.mkdirSync(p, { recursive: true }); } catch {}
   }
+}
+
+// Migration: déplacer l'ancien contenu de ~/.eminium-core vers ~/.eminium
+function migrateFromOldHiddenBase(log) {
+  try {
+    ensureDir(hiddenBase);
+
+    const moveAll = (srcBase, label) => {
+      if (!srcBase || srcBase === hiddenBase) return;
+      if (!fs.existsSync(srcBase)) return;
+      const entries = fs.readdirSync(srcBase, { withFileTypes: true });
+      for (const e of entries) {
+        const src = path.join(srcBase, e.name);
+        const dst = path.join(hiddenBase, e.name);
+        try {
+          if (e.isDirectory()) {
+            try { fs.renameSync(src, dst); }
+            catch {
+              copyDir(src, dst);
+              try { fs.rmSync(src, { recursive: true, force: true }); } catch {}
+            }
+          } else if (e.isFile()) {
+            ensureDir(path.dirname(dst));
+            try { fs.renameSync(src, dst); }
+            catch { try { fs.copyFileSync(src, dst); fs.unlinkSync(src); } catch {} }
+          }
+        } catch {}
+      }
+      // cleanup if empty
+      try { fs.rmdirSync(srcBase); } catch {}
+      try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `[Migration] Données déplacées de ${label} vers AppData/.eminium` }); } catch {}
+      log && log(`[Migration] Terminé ${label} -> AppData/.eminium`);
+    };
+
+    // Migrer depuis l'ancien ~/.eminium-core
+    moveAll(OLD_HIDDEN_BASE, '.eminium-core');
+    // Migrer depuis l'ancien ~/.eminium (home) si différent d'AppData
+    if (OLD_EMINIUM_HOME !== eminiumDir) moveAll(OLD_EMINIUM_HOME, 'home/.eminium');
+  } catch {}
 }
 
 // Fallback: récupérer l'URL du JSON de version via le manifest
@@ -135,6 +176,8 @@ function resolveJavaPath() {
 }
 
 function ensureBaseFolders() {
+  // Exécuter la migration avant de créer les dossiers
+  try { migrateFromOldHiddenBase(); } catch {}
   Object.values(dirs).forEach(ensureDir);
   ensureDir(eminiumDir);
   ensureDir(jreRoot);
