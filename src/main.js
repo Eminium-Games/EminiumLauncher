@@ -25,19 +25,9 @@ const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '140088855148
 // --- Azuriom Maintenance Sync ---
 const AZ_BASE_URL = process.env.EMINIUM_BASE_URL || 'https://eminium.ovh';
 const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
-// Shop endpoints (best-effort defaults; adjust on server side as needed)
-const SHOP_CATALOG_ENDPOINT = process.env.SHOP_CATALOG_ENDPOINT || '/api/launcher/shop/catalog';
-const SHOP_POINTS_ENDPOINT = process.env.SHOP_POINTS_ENDPOINT || '/api/launcher/shop/points';
-const SHOP_PURCHASE_ENDPOINT = process.env.SHOP_PURCHASE_ENDPOINT || '/api/launcher/shop/purchase';
-// Payments notifications endpoint (pattern provided by server; id is optional)
-const SHOP_PAYMENT_NOTIFY_ENDPOINT = process.env.SHOP_PAYMENT_NOTIFY_ENDPOINT || '/api/shop/payments/{gateway}/notification/{id?}';
+// (shop endpoints removed)
 let remoteMaintenance = null; // null = inconnu, true/false = connu
 let maintenancePollTimer = null;
-
-// --- Payments: admin-only polling state ---
-let paymentsPollTimer = null;
-let paymentsLastHash = '';
-const SHOP_PAYMENT_FEED_URL = process.env.SHOP_PAYMENT_FEED_URL || '';
 
 function getAzuriomAuthHeaders() {
   const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
@@ -177,61 +167,7 @@ ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
   return await loginEminium(email, password, code);
 });
 
-// --- Payments notifications: helpers ---
-let paymentsSeenIds = new Set();
-function extractPaymentId(it) {
-  try {
-    if (!it || typeof it !== 'object') return String(it).slice(0, 120);
-    const cand = it.id || it.uuid || it._id || it.reference || it.ref || it.tx || it.txid || it.txId || it.orderId || it.paymentId;
-    if (cand) return String(cand);
-    // fallback to a stable slice
-    return JSON.stringify(it).slice(0, 200);
-  } catch { return String(it).slice(0, 120); }
-}
-
-function canPollPayments() {
-  try {
-    if (!SHOP_PAYMENT_FEED_URL) return false;
-    const p = readUserProfile && readUserProfile();
-    return !!(p && isAdminProfile && isAdminProfile(p));
-  } catch { return false; }
-}
-
-async function pollPaymentsOnce() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  if (!canPollPayments()) return;
-  try {
-    const url = SHOP_PAYMENT_FEED_URL;
-    const res = await axios.get(url, { timeout: 8000, headers: getAzuriomAuthHeaders() });
-    const data = res?.data;
-    const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : (data ? [data] : []));
-    for (const it of list) {
-      const id = extractPaymentId(it);
-      if (id && !paymentsSeenIds.has(id)) {
-        paymentsSeenIds.add(id);
-        try { mainWindow.webContents.send('payments:notification', { item: it, id, ts: Date.now() }); } catch {}
-      }
-    }
-  } catch (e) {
-    // Silent errors to avoid UI noise; could emit a diagnostic event if needed
-  }
-}
-
-function startPaymentsPolling() {
-  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
-  paymentsSeenIds = new Set();
-  if (!canPollPayments()) return { ok: false, error: 'not_admin_or_unconfigured' };
-  // Immediate tick then interval
-  pollPaymentsOnce();
-  paymentsPollTimer = setInterval(pollPaymentsOnce, 7000);
-  return { ok: true };
-}
-
-function stopPaymentsPolling() {
-  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
-  paymentsPollTimer = null;
-  return { ok: true };
-}
+// (payments notifications removed)
 
 const REPO_OWNER = 'Eminium-Games';
 const REPO_NAME = 'EminiumLauncher';
@@ -457,47 +393,7 @@ app.whenReady().then(async () => {
   }
 });
 
-// --- Shop: catalog, points, purchase ---
-ipcMain.handle('shop:catalog', async () => {
-  try {
-    const url = AZ_BASE_URL.replace(/\/$/, '') + SHOP_CATALOG_ENDPOINT;
-    const res = await axios.get(url, { timeout: 10000, headers: getAzuriomAuthHeaders() });
-    const items = Array.isArray(res?.data?.items) ? res.data.items : (Array.isArray(res?.data) ? res.data : []);
-    return { ok: true, items };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e), items: [] };
-  }
-});
-
-ipcMain.handle('shop:points:get', async () => {
-  try {
-    const url = AZ_BASE_URL.replace(/\/$/, '') + SHOP_POINTS_ENDPOINT;
-    const res = await axios.get(url, { timeout: 8000, headers: getAzuriomAuthHeaders() });
-    // Accept various shapes: { points }, { balance }, { data: { points } }, number
-    const pick = (...vals) => vals.find(v => typeof v === 'number');
-    const raw = res?.data;
-    const points = pick(raw?.points, raw?.balance, raw?.data?.points, Number(raw)) || 0;
-    return { ok: true, points };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e), points: 0 };
-  }
-});
-
-ipcMain.handle('shop:purchase', async (_evt, payload) => {
-  try {
-    const { itemId, quantity } = payload || {};
-    if (!itemId) return { ok: false, error: 'itemId manquant' };
-    const url = AZ_BASE_URL.replace(/\/$/, '') + SHOP_PURCHASE_ENDPOINT;
-    const res = await axios.post(url, { itemId, quantity: Number(quantity) || 1 }, { timeout: 12000, headers: getAzuriomAuthHeaders() });
-    // Expect { ok, points, message } or analogous
-    const ok = !!(res?.data?.ok ?? true);
-    const newPoints = typeof res?.data?.points === 'number' ? res.data.points : undefined;
-    const message = res?.data?.message || null;
-    return { ok, points: newPoints, message };
-  } catch (e) {
-    return { ok: false, error: e?.response?.data?.message || e?.message || String(e) };
-  }
-});
+// (shop IPC handlers removed)
 
 app.on('window-all-closed', () => {
   // Do not quit if we intentionally keep the app alive while the game is running
@@ -508,7 +404,6 @@ app.on('before-quit', () => {
   try { clearPresence(); } catch { }
   try { destroyDiscordRPC(); } catch { }
   try { global.emitPlayProgress = () => { }; } catch { }
-  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
 });
 
 // Settings storage (JSON under userData)
@@ -627,14 +522,7 @@ ipcMain.handle('auth:profile:get', async () => {
   try { return { ok: true, profile: readUserProfile() }; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
 });
 ipcMain.handle('auth:logout', async () => {
-  try { if (paymentsPollTimer) { clearInterval(paymentsPollTimer); paymentsPollTimer = null; } } catch {}
   return logoutEminium();
-});
-ipcMain.handle('payments:subscribe', async () => {
-  try { return startPaymentsPolling(); } catch (e) { return { ok: false, error: e?.message || String(e) }; }
-});
-ipcMain.handle('payments:unsubscribe', async () => {
-  try { return stopPaymentsPolling(); } catch (e) { return { ok: false, error: e?.message || String(e) }; }
 });
 ipcMain.handle('launcher:ensure', async () => {
   try {

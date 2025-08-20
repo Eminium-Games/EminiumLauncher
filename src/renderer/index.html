@@ -224,27 +224,18 @@ h1 { letter-spacing: 0.3px; }
 .tab.active { box-shadow: 0 10px 26px rgba(245,158,11,0.35); border-color: rgba(255,255,255,0.12); }
 
 .tab-content { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; box-shadow: var(--elev-1); padding: 18px; }
-/* Shop UI */
-.shop-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-.points-chip { font-size:13px; padding:6px 10px; border-radius:999px; background: rgba(6,182,212,0.15); color:#bff3fb; border:1px solid rgba(6,182,212,0.28); display:inline-flex; align-items:center; gap:6px; }
-.shop-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
-.shop-card { background: var(--glass); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 18px rgba(0,0,0,0.28); }
-.shop-card .title { font-weight:700; }
-.shop-card .desc { font-size:12px; color: var(--muted); min-height: 32px; }
-.shop-card .price { display:flex; align-items:center; justify-content:space-between; }
-.shop-card .price .amount { font-weight:700; color:#ffd89a; }
-.shop-card button { align-self:flex-end; }
 
 .btn {
   background: linear-gradient(180deg, #fbbf24, #f59e0b);
   color: #3e1f0f; border: none;
   box-shadow: 0 10px 24px rgba(245,158,11,0.35);
-  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
-.btn:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(245,158,11,0.45); filter: brightness(1.03); }
-.btn:active { transform: translateY(0); box-shadow: 0 8px 18px rgba(245,158,11,0.35); }
-.btn.sec { background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04)); color: var(--txt); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-.btn.sec:hover { filter: brightness(1.08); }
+
+/* Slider styling */
+.slider-row { display:flex; gap:12px; align-items:center; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.range-grey { background: rgba(255,255,255,0.10) !important; }
+label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
 
 /* Inputs */
 input, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--txt); border-radius: 12px; padding: 10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
@@ -322,36 +313,7 @@ html, body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
-/* Slider styling */
-.slider-row { display:flex; gap:12px; align-items:center; }
-input[type=range] { width: 100%; accent-color: var(--accent); }
-.range-grey { background: rgba(255,255,255,0.10) !important; }
-label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
-/* Points badge */
-.badge-points {
-  display: none;
-  margin-top: 6px;
-  align-self: flex-start;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(6,182,212,0.18);
-  color: #06b6d4;
-  border: 1px solid rgba(6,182,212,0.35);
-}
-/* Shop styles */
-.shop-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.shop-points-chip { font-size:12px; padding:4px 10px; border-radius:999px; background:rgba(6,182,212,0.18); color:#06b6d4; border:1px solid rgba(6,182,212,0.35); }
-.shop-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; }
-.shop-card { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
-.shop-card img { width:100%; height:120px; object-fit:cover; border-radius:8px; background:rgba(0,0,0,0.2); }
-.shop-card .title { font-weight:600; }
-.shop-card .price { color: var(--accent); font-weight:600; }
-.shop-card .desc { color: var(--muted); font-size:12px; min-height: 28px; }
-.shop-card .actions { margin-top:auto; display:flex; justify-content:flex-end; }
-.skeleton-card { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px; height:210px; position:relative; overflow:hidden; }
-.skeleton-card::after { content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); animation: shimmer 1.6s infinite; }
-@keyframes shimmer { 0%{ transform: translateX(-100%);} 100%{ transform: translateX(100%);} }
+
 </style>
 </head>
 <body>
@@ -368,7 +330,6 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
               <span id="profileName" class="skeleton">Pseudo</span>
               <span class="uuid skeleton" id="profileUUID">UUID</span>
               <span class="badge-grade" id="profileGrade" aria-label="Grade" title=""></span>
-              <span class="badge-points" id="profilePoints" aria-label="Points boutique" title=""></span>
             </div>
             <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;" aria-label="Se déconnecter" title="Se déconnecter">Déconnexion</button>
           </div>
@@ -380,7 +341,6 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
     <div class="tabs">
       <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
       <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
-      <div class="tab" data-tab="shop" data-ico="🧾" id="tabShop">Achats</div>
       <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
       <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
     </div>
@@ -438,26 +398,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
       </div>
     </div>
 
-    <div class="tab-content" id="shop">
-      <div class="panel">
-        <div class="shop-header">
-          <div class="muted">Achats</div>
-          <div class="shop-points-chip" id="shopPointsChip" title="Points boutique">0 pts</div>
-        </div>
-        <div class="panel" style="margin-top:8px;">
-          <div class="muted" style="margin-bottom:6px;">Notifications des achats (admin)</div>
-          <div id="paymentsList" class="log" style="max-height:160px; overflow:auto;"></div>
-        </div>
-        <div class="shop-grid" id="shopGrid">
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-          <div class="skeleton-card"></div>
-        </div>
-      </div>
-    </div>
+    
 
     <div class="tab-content" id="log">
       <div class="panel">
@@ -513,13 +454,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
-    // Achats: charger boutique et s'abonner aux notifications quand l'onglet est actif
-    if (tab.dataset.tab === 'shop') {
-      try { loadShop(); } catch {}
-      try { window.payments?.subscribe?.(); } catch {}
-    } else {
-      try { window.payments?.unsubscribe?.(); } catch {}
-    }
+    // (no shop tab)
   });
 });
 
@@ -529,20 +464,16 @@ function setTabsForAuth(logged, isAdmin=false) {
   IS_LOGGED = !!logged;
   const tabAuth = document.getElementById('tabAuth');
   const tabPlay = document.getElementById('tabPlay');
-  const tabShop = document.getElementById('tabShop');
   const tabLog = document.getElementById('tabLog');
   const tabAdmin = document.getElementById('tabAdmin');
   const profileCard = document.getElementById('profileCard');
   if (tabAuth) tabAuth.style.display = logged ? 'none' : '';
   if (tabPlay) tabPlay.style.display = logged ? '' : 'none';
-  // Achats: onglet admin uniquement
-  if (tabShop) tabShop.style.display = (logged && isAdmin) ? '' : 'none';
   if (tabLog) tabLog.style.display = logged ? '' : 'none';
   if (tabAdmin) tabAdmin.style.display = (logged && isAdmin) ? '' : 'none';
   if (profileCard) profileCard.style.display = logged ? '' : 'none';
   // Tooltips
   if (tabPlay) tabPlay.title = logged ? '' : 'Connectez-vous pour accéder';
-  if (tabShop) tabShop.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
   if (tabLog) tabLog.title = logged ? '' : 'Connectez-vous pour accéder';
   if (tabAdmin) tabAdmin.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
   // Activate a sensible tab
@@ -553,105 +484,12 @@ function setTabsForAuth(logged, isAdmin=false) {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     if (tabAuth) tabAuth.classList.add('active');
     document.getElementById('auth').classList.add('active');
-    // Stop payments notifications on logout
-    try { window.payments?.unsubscribe?.(); } catch {}
   } else if (activeTab && activeTab.dataset.tab === 'auth') {
     // Switch to play when logging in
     activeTab.classList.remove('active');
     document.getElementById('auth').classList.remove('active');
     if (tabPlay) tabPlay.classList.add('active');
     document.getElementById('play').classList.add('active');
-  }
-}
-
-// ---- Boutique: rendu et interactions ----
-function formatPts(n){
-  const x = Number(n)||0; return `${x} pts`;
-}
-
-function updatePointsUI(points){
-  const chip = document.getElementById('shopPointsChip');
-  if (chip) chip.textContent = typeof points === 'number' ? formatPts(points) : '0 pts';
-  const pBadge = document.getElementById('profilePoints');
-  if (pBadge) {
-    if (typeof points === 'number') {
-      pBadge.textContent = `Points: ${points}`;
-      pBadge.title = `Points boutique: ${points}`;
-      pBadge.style.display = 'inline-block';
-    } else {
-      pBadge.textContent = '';
-      pBadge.title = '';
-      pBadge.style.display = 'none';
-    }
-  }
-}
-
-function renderShopItems(items){
-  const grid = document.getElementById('shopGrid');
-  if (!grid) return;
-  if (!Array.isArray(items) || items.length === 0){
-    grid.innerHTML = '<div class="muted">Aucun article disponible pour le moment.</div>';
-    return;
-  }
-  const frag = document.createDocumentFragment();
-  items.forEach(it => {
-    const card = document.createElement('div');
-    card.className = 'shop-card';
-    const img = document.createElement('img');
-    img.alt = it?.name || 'Article';
-    img.src = it?.image || 'https://via.placeholder.com/400x240?text=Boutique';
-    const title = document.createElement('div'); title.className='title'; title.textContent = it?.name || 'Article';
-    const desc = document.createElement('div'); desc.className='desc'; desc.textContent = it?.description || '';
-    const price = document.createElement('div'); price.className='price'; price.textContent = formatPts(it?.price || it?.points || 0);
-    const actions = document.createElement('div'); actions.className='actions';
-    const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Acheter';
-    btn.addEventListener('click', async () => {
-      try {
-        btn.disabled = true; btn.textContent = '...';
-        const id = it?.id ?? it?.slug ?? it?._id ?? it?.sku ?? it?.key ?? it?.name;
-        const res = await (window.shop?.purchase ? window.shop.purchase(id, 1) : Promise.resolve({ ok:false, error:'API indisponible' }));
-        if (res?.ok) {
-          log(`Achat réussi: ${it?.name || 'Article'}`);
-          if (typeof res?.points === 'number') updatePointsUI(res.points); else await fetchAndUpdatePoints();
-        } else {
-          log('Achat échoué: ' + (res?.error || 'inconnu'));
-        }
-      } catch(e){ log('Erreur achat: ' + (e?.message || e)); }
-      finally { btn.disabled = false; btn.textContent = 'Acheter'; }
-    });
-    actions.appendChild(btn);
-    card.appendChild(img);
-    card.appendChild(title);
-    card.appendChild(desc);
-    card.appendChild(price);
-    card.appendChild(actions);
-    frag.appendChild(card);
-  });
-  grid.innerHTML = '';
-  grid.appendChild(frag);
-}
-
-async function fetchAndUpdatePoints(){
-  try {
-    const r = await (window.shop?.getPoints ? window.shop.getPoints() : Promise.resolve({ ok:false }));
-    if (r?.ok) updatePointsUI(Number(r.points)||0);
-  } catch {}
-}
-
-async function loadShop(){
-  const grid = document.getElementById('shopGrid');
-  if (grid) {
-    grid.innerHTML = '<div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>';
-  }
-  try {
-    const [cat, pts] = await Promise.all([
-      window.shop?.getCatalog ? window.shop.getCatalog() : Promise.resolve({ ok:false, items:[] }),
-      window.shop?.getPoints ? window.shop.getPoints() : Promise.resolve({ ok:false })
-    ]);
-    if (pts?.ok) updatePointsUI(Number(pts.points)||0);
-    renderShopItems(cat?.items || []);
-  } catch (e) {
-    if (grid) grid.innerHTML = '<div class="muted">Erreur de chargement de la boutique.</div>';
   }
 }
 

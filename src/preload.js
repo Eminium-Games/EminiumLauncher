@@ -32,12 +32,7 @@ contextBridge.exposeInMainWorld('eminiumProgress', {
   }
 });
 
-// Shop API bridges
-contextBridge.exposeInMainWorld('shop', {
-  getCatalog: () => ipcRenderer.invoke('shop:catalog'),
-  getPoints: () => ipcRenderer.invoke('shop:points:get'),
-  purchase: (itemId, quantity = 1) => ipcRenderer.invoke('shop:purchase', { itemId, quantity })
-});
+// (shop bridges removed)
 
 // Policy reminders (e.g., VPN/Proxy forbidden)
 // Broadcast remote maintenance changes
@@ -49,18 +44,7 @@ contextBridge.exposeInMainWorld('eminiumMaintenance', {
   }
 });
 
-// Payments notifications (admin-only)
-contextBridge.exposeInMainWorld('payments', {
-  // Start/stop backend polling (no-op if not admin or feed disabled)
-  subscribe: () => ipcRenderer.invoke('payments:subscribe'),
-  unsubscribe: () => ipcRenderer.invoke('payments:unsubscribe'),
-  // Listen to individual notifications pushed by main process
-  onNotification: (cb) => {
-    const handler = (_evt, data) => cb?.(data);
-    ipcRenderer.on('payments:notification', handler);
-    return () => ipcRenderer.removeListener('payments:notification', handler);
-  }
-});
+// (payments notifications removed)
 
 // Updater (branch-based)
 contextBridge.exposeInMainWorld('updater', {
