@@ -32,6 +32,13 @@ contextBridge.exposeInMainWorld('eminiumProgress', {
   }
 });
 
+// Shop API bridges
+contextBridge.exposeInMainWorld('shop', {
+  getCatalog: () => ipcRenderer.invoke('shop:catalog'),
+  getPoints: () => ipcRenderer.invoke('shop:points:get'),
+  purchase: (itemId, quantity = 1) => ipcRenderer.invoke('shop:purchase', { itemId, quantity })
+});
+
 // Policy reminders (e.g., VPN/Proxy forbidden)
 // Broadcast remote maintenance changes
 contextBridge.exposeInMainWorld('eminiumMaintenance', {
