@@ -380,7 +380,7 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
     <div class="tabs">
       <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
       <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
-      <div class="tab" data-tab="shop" data-ico="🛒" id="tabShop">Boutique</div>
+      <div class="tab" data-tab="shop" data-ico="🧾" id="tabShop">Achats</div>
       <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
       <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
     </div>
@@ -441,8 +441,12 @@ label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
     <div class="tab-content" id="shop">
       <div class="panel">
         <div class="shop-header">
-          <div class="muted">Boutique</div>
+          <div class="muted">Achats</div>
           <div class="shop-points-chip" id="shopPointsChip" title="Points boutique">0 pts</div>
+        </div>
+        <div class="panel" style="margin-top:8px;">
+          <div class="muted" style="margin-bottom:6px;">Notifications des achats (admin)</div>
+          <div id="paymentsList" class="log" style="max-height:160px; overflow:auto;"></div>
         </div>
         <div class="shop-grid" id="shopGrid">
           <div class="skeleton-card"></div>
@@ -509,9 +513,12 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById(tab.dataset.tab).classList.add('active');
-    // Charger la boutique à l'ouverture de l'onglet
+    // Achats: charger boutique et s'abonner aux notifications quand l'onglet est actif
     if (tab.dataset.tab === 'shop') {
       try { loadShop(); } catch {}
+      try { window.payments?.subscribe?.(); } catch {}
+    } else {
+      try { window.payments?.unsubscribe?.(); } catch {}
     }
   });
 });
@@ -528,13 +535,14 @@ function setTabsForAuth(logged, isAdmin=false) {
   const profileCard = document.getElementById('profileCard');
   if (tabAuth) tabAuth.style.display = logged ? 'none' : '';
   if (tabPlay) tabPlay.style.display = logged ? '' : 'none';
-  if (tabShop) tabShop.style.display = logged ? '' : 'none';
+  // Achats: onglet admin uniquement
+  if (tabShop) tabShop.style.display = (logged && isAdmin) ? '' : 'none';
   if (tabLog) tabLog.style.display = logged ? '' : 'none';
   if (tabAdmin) tabAdmin.style.display = (logged && isAdmin) ? '' : 'none';
   if (profileCard) profileCard.style.display = logged ? '' : 'none';
   // Tooltips
   if (tabPlay) tabPlay.title = logged ? '' : 'Connectez-vous pour accéder';
-  if (tabShop) tabShop.title = logged ? '' : 'Connectez-vous pour accéder';
+  if (tabShop) tabShop.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
   if (tabLog) tabLog.title = logged ? '' : 'Connectez-vous pour accéder';
   if (tabAdmin) tabAdmin.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
   // Activate a sensible tab
@@ -545,6 +553,8 @@ function setTabsForAuth(logged, isAdmin=false) {
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     if (tabAuth) tabAuth.classList.add('active');
     document.getElementById('auth').classList.add('active');
+    // Stop payments notifications on logout
+    try { window.payments?.unsubscribe?.(); } catch {}
   } else if (activeTab && activeTab.dataset.tab === 'auth') {
     // Switch to play when logging in
     activeTab.classList.remove('active');

@@ -49,6 +49,19 @@ contextBridge.exposeInMainWorld('eminiumMaintenance', {
   }
 });
 
+// Payments notifications (admin-only)
+contextBridge.exposeInMainWorld('payments', {
+  // Start/stop backend polling (no-op if not admin or feed disabled)
+  subscribe: () => ipcRenderer.invoke('payments:subscribe'),
+  unsubscribe: () => ipcRenderer.invoke('payments:unsubscribe'),
+  // Listen to individual notifications pushed by main process
+  onNotification: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('payments:notification', handler);
+    return () => ipcRenderer.removeListener('payments:notification', handler);
+  }
+});
+
 // Updater (branch-based)
 contextBridge.exposeInMainWorld('updater', {
   check: (opts) => ipcRenderer.invoke('updater:check', opts || {}),

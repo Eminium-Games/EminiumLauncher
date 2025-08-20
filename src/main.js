@@ -29,8 +29,15 @@ const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
 const SHOP_CATALOG_ENDPOINT = process.env.SHOP_CATALOG_ENDPOINT || '/api/launcher/shop/catalog';
 const SHOP_POINTS_ENDPOINT = process.env.SHOP_POINTS_ENDPOINT || '/api/launcher/shop/points';
 const SHOP_PURCHASE_ENDPOINT = process.env.SHOP_PURCHASE_ENDPOINT || '/api/launcher/shop/purchase';
+// Payments notifications endpoint (pattern provided by server; id is optional)
+const SHOP_PAYMENT_NOTIFY_ENDPOINT = process.env.SHOP_PAYMENT_NOTIFY_ENDPOINT || '/api/shop/payments/{gateway}/notification/{id?}';
 let remoteMaintenance = null; // null = inconnu, true/false = connu
 let maintenancePollTimer = null;
+
+// --- Payments: admin-only polling state ---
+let paymentsPollTimer = null;
+let paymentsLastHash = '';
+const SHOP_PAYMENT_FEED_URL = process.env.SHOP_PAYMENT_FEED_URL || '';
 
 function getAzuriomAuthHeaders() {
   const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
@@ -169,6 +176,62 @@ const { loginEminium } = require('./setup.js');
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
   return await loginEminium(email, password, code);
 });
+
+// --- Payments notifications: helpers ---
+let paymentsSeenIds = new Set();
+function extractPaymentId(it) {
+  try {
+    if (!it || typeof it !== 'object') return String(it).slice(0, 120);
+    const cand = it.id || it.uuid || it._id || it.reference || it.ref || it.tx || it.txid || it.txId || it.orderId || it.paymentId;
+    if (cand) return String(cand);
+    // fallback to a stable slice
+    return JSON.stringify(it).slice(0, 200);
+  } catch { return String(it).slice(0, 120); }
+}
+
+function canPollPayments() {
+  try {
+    if (!SHOP_PAYMENT_FEED_URL) return false;
+    const p = readUserProfile && readUserProfile();
+    return !!(p && isAdminProfile && isAdminProfile(p));
+  } catch { return false; }
+}
+
+async function pollPaymentsOnce() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (!canPollPayments()) return;
+  try {
+    const url = SHOP_PAYMENT_FEED_URL;
+    const res = await axios.get(url, { timeout: 8000, headers: getAzuriomAuthHeaders() });
+    const data = res?.data;
+    const list = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : (data ? [data] : []));
+    for (const it of list) {
+      const id = extractPaymentId(it);
+      if (id && !paymentsSeenIds.has(id)) {
+        paymentsSeenIds.add(id);
+        try { mainWindow.webContents.send('payments:notification', { item: it, id, ts: Date.now() }); } catch {}
+      }
+    }
+  } catch (e) {
+    // Silent errors to avoid UI noise; could emit a diagnostic event if needed
+  }
+}
+
+function startPaymentsPolling() {
+  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
+  paymentsSeenIds = new Set();
+  if (!canPollPayments()) return { ok: false, error: 'not_admin_or_unconfigured' };
+  // Immediate tick then interval
+  pollPaymentsOnce();
+  paymentsPollTimer = setInterval(pollPaymentsOnce, 7000);
+  return { ok: true };
+}
+
+function stopPaymentsPolling() {
+  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
+  paymentsPollTimer = null;
+  return { ok: true };
+}
 
 const REPO_OWNER = 'Eminium-Games';
 const REPO_NAME = 'EminiumLauncher';
@@ -445,6 +508,7 @@ app.on('before-quit', () => {
   try { clearPresence(); } catch { }
   try { destroyDiscordRPC(); } catch { }
   try { global.emitPlayProgress = () => { }; } catch { }
+  try { if (paymentsPollTimer) clearInterval(paymentsPollTimer); } catch {}
 });
 
 // Settings storage (JSON under userData)
@@ -563,7 +627,14 @@ ipcMain.handle('auth:profile:get', async () => {
   try { return { ok: true, profile: readUserProfile() }; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
 });
 ipcMain.handle('auth:logout', async () => {
+  try { if (paymentsPollTimer) { clearInterval(paymentsPollTimer); paymentsPollTimer = null; } } catch {}
   return logoutEminium();
+});
+ipcMain.handle('payments:subscribe', async () => {
+  try { return startPaymentsPolling(); } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+});
+ipcMain.handle('payments:unsubscribe', async () => {
+  try { return stopPaymentsPolling(); } catch (e) { return { ok: false, error: e?.message || String(e) }; }
 });
 ipcMain.handle('launcher:ensure', async () => {
   try {
