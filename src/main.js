@@ -440,7 +440,7 @@ function isAdminProfile(p) {
     if (p.role && typeof p.role === 'object' && p.role.name) parts.push(p.role.name);
     if (p.grade && typeof p.grade === 'object' && p.grade.name) parts.push(p.grade.name);
     const s = parts.join(' ').toLowerCase();
-    return /\b(admin|owner|propri[eé]taire)\b/.test(s);
+    return /\b(administrateur|développeur|)\b/.test(s);
   } catch { return false; }
 }
 
