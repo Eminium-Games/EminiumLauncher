@@ -746,7 +746,7 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
         }
         return { ok: false, error: msg };
       } else {
-        const warn = `Maintenance activée — accès autorisé car ${isAdminProfile(profile) ? 'administrateur' : 'développeur'}. Le serveur peut être indisponible.`;
+        const warn = `Maintenance activée — accès autorisé. Le serveur peut être indisponible.`;
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('play:progress', { type: 'log', line: warn });
         }
