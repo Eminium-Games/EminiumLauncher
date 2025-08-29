@@ -563,6 +563,9 @@ function setPlayRestricted(restricted) {
   if (!ctx) return;
   ctx.orig.style.display = restricted ? 'none' : '';
   ctx.repl.style.display = restricted ? '' : 'none';
+  // Cacher/afficher la barre d'onglets pour les utilisateurs non privilégiés
+  const tabsBar = document.querySelector('.tabs');
+  if (tabsBar) tabsBar.style.display = restricted ? 'none' : '';
 }
 
 async function loadSettings() {
