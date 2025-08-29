@@ -507,6 +507,61 @@ function isAdminClient(profile) {
   } catch { return false; }
 }
 
+// Privileged access: Administrateur or Développeur
+function hasPrivilegedAccess(profile) {
+  try {
+    if (!profile) return false;
+    const parts = [];
+    if (typeof profile.role === 'string') parts.push(profile.role);
+    if (typeof profile.grade === 'string') parts.push(profile.grade);
+    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
+    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
+    const s = parts.join(' ').toLowerCase();
+    return /(administrateur|admin|d[eé]veloppeur|developpeur|dev)\b/.test(s);
+  } catch { return false; }
+}
+
+// Ensure we can toggle Play content with a replacement image
+function ensurePlayReplacement() {
+  const play = document.getElementById('play');
+  if (!play) return null;
+  let orig = document.getElementById('playOriginal');
+  let repl = document.getElementById('playReplacement');
+  if (!orig) {
+    orig = document.createElement('div');
+    orig.id = 'playOriginal';
+    while (play.firstChild) orig.appendChild(play.firstChild);
+    play.appendChild(orig);
+  }
+  if (!repl) {
+    repl = document.createElement('div');
+    repl.id = 'playReplacement';
+    repl.style.display = 'none';
+    repl.style.width = '100%';
+    repl.style.height = '100%';
+    repl.style.minHeight = '300px';
+    repl.style.borderRadius = '16px';
+    repl.style.overflow = 'hidden';
+    repl.style.border = '1px solid rgba(255,255,255,0.08)';
+    const img = document.createElement('img');
+    img.src = 'https://www.shutterstock.com/image-photo/calm-lake-bordered-by-lush-600nw-2666631969.jpg';
+    img.alt = 'Accès restreint';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    repl.appendChild(img);
+    play.appendChild(repl);
+  }
+  return { play, orig, repl };
+}
+
+function setPlayRestricted(restricted) {
+  const ctx = ensurePlayReplacement();
+  if (!ctx) return;
+  ctx.orig.style.display = restricted ? 'none' : '';
+  ctx.repl.style.display = restricted ? '' : 'none';
+}
+
 async function loadSettings() {
   try { const res = await window.eminium.getSettings(); return res?.settings || {}; } catch { return {}; }
 }
@@ -655,6 +710,8 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.getElementById('auth').classList.add('active');
       setAuthTabHidden(false);
       setTabsForAuth(false, false);
+      // Restore Play content
+      try { setPlayRestricted(false); } catch {}
     } else {
       log('Échec de déconnexion: ' + (res?.error || 'inconnu'));
     }
@@ -690,6 +747,8 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       // Show Admin tab if admin and adjust tabs visibility
       const admin = isAdminClient(p);
       setTabsForAuth(true, admin);
+      // Restrict Play content if not Administrateur/Développeur
+      setPlayRestricted(!hasPrivilegedAccess(p));
       await refreshMaintenanceUI();
       // Fetch points on init when already logged in
       try { await fetchAndUpdatePoints(); } catch {}
@@ -933,6 +992,8 @@ async function performLogin(email, pass, code2fa, options = {}) {
       document.getElementById('play').classList.add('active');
       setAuthTabHidden(true);
       setTabsForAuth(true, isAdminClient(p));
+      // Restrict Play content if not Administrateur/Développeur
+      setPlayRestricted(!hasPrivilegedAccess(p));
       await refreshMaintenanceUI();
       try { await fetchAndUpdatePoints(); } catch {}
       return { ok: true, profile: p };
