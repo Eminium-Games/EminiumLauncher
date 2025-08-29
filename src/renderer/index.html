@@ -880,85 +880,89 @@ function mapLoginError(result, caught){
 // Masquer le 2FA par défaut
 code2faInput.parentElement.style.display = 'none';
 
-btnLogin.addEventListener('click', async () => {
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    const code2fa = code2faInput.value.trim();
+// Action de connexion unifiée (réutilisable par un overlay)
+async function performLogin(email, pass, code2fa, options = {}) {
+  const triggerButton = options.triggerButton || null;
+  const err = validateLogin(email, pass, code2fa);
+  if (err) { setAuthError(err); log(err); return { ok: false, error: err }; }
 
-    const err = validateLogin(email, pass, code2fa);
-    if(err){ setAuthError(err); log(err); return; }
+  if (triggerButton) triggerButton.disabled = true; // Désactive le bouton source si fourni
+  log('Connexion en cours...');
+  setAuthError('');
 
-    btnLogin.disabled = true;  // Désactive le bouton
-    log('Connexion en cours...');
-    setAuthError('');
+  try {
+    const result = await window.eminium.login(email, pass, code2fa || undefined);
 
-    try {
-        const result = await window.eminium.login(email, pass, code2fa || undefined);
-
-        if (result?.status === 'pending' && result?.reason === '2fa') {
-            code2faInput.parentElement.style.display = 'block';
-            const msg = 'Double authentification requise. Entrez votre code et recliquez sur Connexion.';
-            setAuthError(msg);
-            log('2FA requis : entrez votre code et recliquez sur Connexion.');
-            return;
-        }
-
-        if (result?.status === 'error') {
-            const friendly = mapLoginError(result);
-            // UI: single-line friendly message only
-            setAuthError(friendly);
-            log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
-            const err = new Error(friendly || 'Connexion échouée');
-            err.code = result.code || result.reason || undefined;
-            throw err;
-        }
-
-        if (result?.status === 'success') {
-          const p = result.profile || {};
-          log('Connecté ! Profil enregistré.');
-          setAuthError('');
-          document.getElementById('profileName').textContent = p.name || 'Pseudo';
-          document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
-          // Définir l'avatar (tête du skin)
-          // 1) Minotar par nom (fonctionne même si UUID Mojang inconnu → fallback Steve/Alex)
-          let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
-          // cache-busting pour éviter le cache lors d'un changement de skin
-          document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
-          // Grade badge
-          const gEl = document.getElementById('profileGrade');
-          const grade = formatGrade(p.grade ?? p.role);
-          if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
-          else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
-          applyGradeStyle(gEl, p.gradeColor || null, grade);
-          code2faInput.parentElement.style.display = 'none';
-          document.getElementById('btnLogout').style.display = 'inline-block';
-          setProfileSkeleton(false);
-          // Aller sur l'onglet Jouer automatiquement
-          document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
-          document.getElementById('auth').classList.remove('active');
-          document.querySelector('.tab[data-tab="play"]').classList.add('active');
-          document.getElementById('play').classList.add('active');
-          setAuthTabHidden(true);
-          // Tabs visibility according to role
-          setTabsForAuth(true, isAdminClient(p));
-          await refreshMaintenanceUI();
-          // Fetch points after login
-          try { await fetchAndUpdatePoints(); } catch {}
-          return;
-        }
-
-        log('Réponse inconnue du login.');
-    } catch(e){
-        const friendly = mapLoginError(null, e);
-        setAuthError(friendly);
-        log('Erreur IPC : '+ (e?.message || e));
-        const err = new Error(friendly || (e?.message || 'Connexion échouée'));
-        err.code = (e && (e.code || e.status)) || undefined;
-        throw err;
-    } finally {
-        btnLogin.disabled = false; // Réactive le bouton
+    if (result?.status === 'pending' && result?.reason === '2fa') {
+      code2faInput.parentElement.style.display = 'block';
+      const msg = 'Double authentification requise. Entrez votre code et recliquez sur Connexion.';
+      setAuthError(msg);
+      log('2FA requis : entrez votre code et recliquez sur Connexion.');
+      return { ok: false, pending: true, reason: '2fa' };
     }
+
+    if (result?.status === 'error') {
+      const friendly = mapLoginError(result);
+      setAuthError(friendly);
+      log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
+      const err = new Error(friendly || 'Connexion échouée');
+      err.code = result.code || result.reason || undefined;
+      throw err;
+    }
+
+    if (result?.status === 'success') {
+      const p = result.profile || {};
+      log('Connecté ! Profil enregistré.');
+      setAuthError('');
+      document.getElementById('profileName').textContent = p.name || 'Pseudo';
+      document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+      let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+      document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const gEl = document.getElementById('profileGrade');
+      const grade = formatGrade(p.grade ?? p.role);
+      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+      else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+      applyGradeStyle(gEl, p.gradeColor || null, grade);
+      code2faInput.parentElement.style.display = 'none';
+      document.getElementById('btnLogout').style.display = 'inline-block';
+      setProfileSkeleton(false);
+      // Basculer sur l'onglet Jouer automatiquement
+      document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+      document.getElementById('auth').classList.remove('active');
+      document.querySelector('.tab[data-tab="play"]').classList.add('active');
+      document.getElementById('play').classList.add('active');
+      setAuthTabHidden(true);
+      setTabsForAuth(true, isAdminClient(p));
+      await refreshMaintenanceUI();
+      try { await fetchAndUpdatePoints(); } catch {}
+      return { ok: true, profile: p };
+    }
+
+    log('Réponse inconnue du login.');
+    return { ok: false, error: 'unknown' };
+  } catch (e) {
+    const friendly = mapLoginError(null, e);
+    setAuthError(friendly);
+    log('Erreur IPC : ' + (e?.message || e));
+    return { ok: false, error: friendly || (e?.message || 'Connexion échouée') };
+  } finally {
+    if (triggerButton) triggerButton.disabled = false; // Réactive le bouton source si fourni
+  }
+}
+
+// Bouton de connexion principal → réutilise performLogin
+btnLogin.addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('pass').value.trim();
+  const code2fa = code2faInput.value.trim();
+  await performLogin(email, pass, code2fa, { triggerButton: btnLogin });
 });
+
+// Expose une API pour un overlay externe
+window.eminiumUI = window.eminiumUI || {};
+window.eminiumUI.login = async (email, password, code2fa) => {
+  return await performLogin(String(email || '').trim(), String(password || '').trim(), String(code2fa || '').trim());
+};
 
 // Boutons jouer / vérifier
 const progressUI = (() => {
