@@ -525,6 +525,7 @@ function ensurePlayReplacement() {
   // Cibler uniquement le contenu principal de l'onglet Jouer (la première .panel)
   const container = play.querySelector('.panel') || play;
   let orig = container.querySelector('#playOriginal');
+  // Ne plus gérer/ajouter d'image de remplacement
   let repl = container.querySelector('#playReplacement');
   if (!orig) {
     // Envelopper UNIQUEMENT le contenu de ce container (pas l'onglet complet)
@@ -533,36 +534,21 @@ function ensurePlayReplacement() {
     while (container.firstChild) orig.appendChild(container.firstChild);
     container.appendChild(orig);
   }
-  if (!repl) {
-    repl = document.createElement('div');
-    repl.id = 'playReplacement';
-    repl.style.display = 'none';
-    repl.style.width = '100%';
-    repl.style.height = '360px';
-    repl.style.borderRadius = '16px';
-    repl.style.overflow = 'hidden';
-    repl.style.border = '1px solid rgba(255,255,255,0.08)';
-    repl.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 26px rgba(0,0,0,0.32)';
-    const img = document.createElement('img');
-    img.src = 'https://eminium.ovh/storage/img/maintenance-v10-screen-launcher-5d5bae42-d011-46d3-a737-ef0114b2611d-png.png';
-    img.alt = 'Accès restreint';
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    repl.appendChild(img);
-    container.appendChild(repl);
-  }
+  // Ne rien créer ni afficher, mais retourner les refs si jamais présentes
   return { play, orig, repl };
 }
 
 function setPlayRestricted(restricted) {
+  // Désactivé: toujours afficher le contenu original et les onglets
   const ctx = ensurePlayReplacement();
   if (!ctx) return;
-  ctx.orig.style.display = restricted ? 'none' : '';
-  ctx.repl.style.display = restricted ? '' : 'none';
-  // Cacher/afficher la barre d'onglets pour les utilisateurs non privilégiés
+  if (ctx.orig) ctx.orig.style.display = '';
+  // Si un ancien élément de remplacement existe encore, on le retire du DOM
+  if (ctx.repl && ctx.repl.parentNode) {
+    try { ctx.repl.parentNode.removeChild(ctx.repl); } catch {}
+  }
   const tabsBar = document.querySelector('.tabs');
-  if (tabsBar) tabsBar.style.display = restricted ? 'none' : '';
+  if (tabsBar) tabsBar.style.display = '';
 }
 
 async function loadSettings() {
