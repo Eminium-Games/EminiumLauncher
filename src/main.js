@@ -26,7 +26,7 @@ const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '140088855148
 const AZ_BASE_URL = process.env.EMINIUM_BASE_URL || 'https://eminium.ovh';
 const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
 // (shop endpoints removed)
-let remoteMaintenance = false; // null = inconnu, true/false = connu
+let remoteMaintenance = null; // null = inconnu, true/false = connu
 let maintenancePollTimer = null;
 
 function getAzuriomAuthHeaders() {
