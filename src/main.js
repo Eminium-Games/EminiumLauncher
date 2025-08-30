@@ -46,7 +46,7 @@ function getAzuriomAuthHeaders() {
 }
 
 async function fetchRemoteMaintenance() {
-  return { ok: true, maintenance: true, updatedAt: null };
+  return { ok: true, maintenance: false, updatedAt: null };
 }
 
 // (VPN/proxy detection removed)
