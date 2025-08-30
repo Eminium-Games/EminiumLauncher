@@ -45,8 +45,11 @@ function getAzuriomAuthHeaders() {
   return headers;
 }
 
-// Maintenance désactivée
+// Maintenance désactivée de force
 async function fetchRemoteMaintenance() {
+  // Forcer la maintenance à false et ignorer tout état distant
+  remoteMaintenance = false;
+  broadcastMaintenance(false);
   return { ok: true, maintenance: false, updatedAt: new Date().toISOString() };
 }
 
@@ -461,27 +464,10 @@ ipcMain.handle('settings:set', async (_evt, patch) => {
 // Maintenance (Azuriom): IPC endpoints (read-only)
 ipcMain.handle('maintenance:get', async () => {
   try {
-    // Prefer cached remote state; refresh in background
-    const cached = remoteMaintenance;
-    // Kick an async refresh but don't await to keep UI snappy
-    fetchRemoteMaintenance().then((r) => {
-      if (r?.ok) {
-        const v = !!r.maintenance;
-        if (remoteMaintenance !== v) {
-          remoteMaintenance = v;
-          broadcastMaintenance(remoteMaintenance);
-        }
-      }
-    }).catch(() => { });
-    if (cached !== null) return { ok: true, maintenance: !!cached };
-    // No cache yet, do a blocking fetch
-    const r = await fetchRemoteMaintenance();
-    if (r?.ok) {
-      remoteMaintenance = !!r.maintenance;
-      return { ok: true, maintenance: remoteMaintenance };
-    }
-    // Fallback to local setting
-    return { ok: true, maintenance: !!readSettings().maintenanceEnabled };
+    // Forcer la maintenance à false et ignorer le cache
+    remoteMaintenance = false;
+    broadcastMaintenance(false);
+    return { ok: true, maintenance: false };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
