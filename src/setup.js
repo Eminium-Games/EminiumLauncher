@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const AdmZip = require('adm-zip');
 const crypto = require('crypto');           // pour générer un UUID offline si besoin
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 const SITE_URL = 'https://eminium.ovh';     // ton site Azuriom
 const { app, BrowserWindow } = require('electron');
 
