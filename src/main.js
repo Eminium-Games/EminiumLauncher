@@ -46,6 +46,7 @@ function getAzuriomAuthHeaders() {
 }
 
 // MAINTENANCE MODE : CHANGE 'maintenance' to 'false' to disable maintenance mode
+// MAINTENANCE MODE : CHANGE 'maintenance' to 'true' to enable maintenance mode
 async function fetchRemoteMaintenance() {
   return { ok: true, maintenance: true, updatedAt: null };
 }
