@@ -658,8 +658,7 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       document.getElementById('auth').classList.add('active');
       setAuthTabHidden(false);
       setTabsForAuth(false, false);
-      // Restore Play content
-      try { setPlayRestricted(false); } catch {}
+      // Maintenance UI supprimée: rien à restaurer
     } else {
       log('Échec de déconnexion: ' + (res?.error || 'inconnu'));
     }
@@ -695,8 +694,7 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       // Show Admin tab if admin and adjust tabs visibility
       const admin = isAdminClient(p);
       setTabsForAuth(true, admin);
-      // Restrict Play content if not Administrateur/Développeur
-      setPlayRestricted(!hasPrivilegedAccess(p));
+      // Maintenance UI supprimée
       // Fetch points on init when already logged in
       try { await fetchAndUpdatePoints(); } catch {}
     }
@@ -866,7 +864,7 @@ function mapLoginError(result, caught){
   }
 
   if (/invalid.*(credential|identifiant|password|mot de passe)/.test(reason) || /unauthoriz|401/.test(reason)) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
-  if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et réessayez.";
+  if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et recliquez sur Connexion.";
   if (/2fa.*(invalid|incorrect)/.test(reason)) return "Code 2FA invalide. Réessayez avec un code valide.";
   if (/ban|banni|suspend|suspens|lock/.test(reason)) return "Compte restreint (banni/suspendu/verrouillé). Contactez le support.";
   if (/email.*not.*verif|mail.*non.*v[ée]rifi/.test(reason)) return "Adresse email non vérifiée. Vérifiez votre boîte mail pour valider votre compte.";
@@ -937,8 +935,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
       document.getElementById('play').classList.add('active');
       setAuthTabHidden(true);
       setTabsForAuth(true, isAdminClient(p));
-      // Restrict Play content if not Administrateur/Développeur
-      setPlayRestricted(!hasPrivilegedAccess(p));
+      // Maintenance UI supprimée
       try { await fetchAndUpdatePoints(); } catch {}
       return { ok: true, profile: p };
     }

@@ -41,6 +41,8 @@ function getAzuriomAuthHeaders() {
 }
 
 // Fonctionnalité de maintenance désactivée
+// Définit un fallback global au cas où d'anciens appels y feraient encore référence
+const remoteMaintenance = false;
 
 // --- Discord Rich Presence helpers ---
 async function initDiscordRPC() {
@@ -644,37 +646,8 @@ ipcMain.handle('updater:apply', async (_evt, payload) => {
 
 ipcMain.handle('launcher:play', async (_evt, userOpts) => {
   try {
-    // Maintenance/whitelist enforcement
-    let maintenance = remoteMaintenance;
-    if (maintenance === null) {
-      // Fallback to remote fetch, then settings
-      const r = await fetchRemoteMaintenance();
-      maintenance = r?.ok ? !!r.maintenance : null;
-    }
-    if (maintenance === null) {
-      const settings = readSettings();
-      maintenance = !!settings.maintenanceEnabled;
-    }
-    if (maintenance) {
-      // Allow admins to play during maintenance, but notify them
-      let isAdmin = false;
-      try {
-        const profile = readUserProfile && readUserProfile();
-        isAdmin = !!(profile && typeof isAdminProfile === 'function' ? isAdminProfile(profile) : false);
-      } catch {}
-      if (!isAdmin) {
-        const msg = 'Maintenance activée — accès restreint.';
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
-        }
-        return { ok: false, error: msg };
-      } else {
-        const warn = `Maintenance activée — accès autorisé. Le serveur peut être indisponible.`;
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('play:progress', { type: 'log', line: warn });
-        }
-      }
-    }
+    // Maintenance désactivée: ne plus bloquer le lancement
+    const maintenance = false;
 
     // (VPN/proxy reminder removed)
 
