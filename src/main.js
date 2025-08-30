@@ -45,10 +45,9 @@ function getAzuriomAuthHeaders() {
   return headers;
 }
 
-// MAINTENANCE MODE : CHANGE 'maintenance' to 'false' to disable maintenance mode
-// MAINTENANCE MODE : CHANGE 'maintenance' to 'true' to enable maintenance mode
+// Maintenance désactivée
 async function fetchRemoteMaintenance() {
-  return { ok: true, maintenance: false, updatedAt: true };
+  return { ok: true, maintenance: false, updatedAt: new Date().toISOString() };
 }
 
 // (VPN/proxy detection removed)
