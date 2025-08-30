@@ -392,7 +392,7 @@ function isAdminProfile(p) {
     if (p.role && typeof p.role === 'object' && p.role.name) parts.push(p.role.name);
     if (p.grade && typeof p.grade === 'object' && p.grade.name) parts.push(p.grade.name);
     const s = parts.join(' ').toLowerCase();
-    return /\b(administrateur|développeur|)\b/.test(s);
+    return /\b(administrateur|développeur|super-modérateur|modérateur|responsable|modérateur test|animateur|commandant|seigneur|recrue|premium|joueur)\b/.test(s);
   } catch { return false; }
 }
 
