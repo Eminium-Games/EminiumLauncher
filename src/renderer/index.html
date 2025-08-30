@@ -574,30 +574,27 @@ async function loadSettings() {
 async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
 
 async function refreshMaintenanceUI() {
-  let maintenanceOn = false;
-  try {
-    const res = await window.eminium.getMaintenance();
-    maintenanceOn = !!res?.maintenance;
-  } catch { /* fallback to local if remote unavailable */
-    const set = await loadSettings();
-    maintenanceOn = !!set.maintenanceEnabled;
-  }
-  // Toggle state
+  // Désactivation forcée de la maintenance
+  const maintenanceOn = false;
+  
+  // Mise à jour de l'interface utilisateur
   const toggle = document.getElementById('maintenanceToggle');
-  if (toggle) toggle.checked = maintenanceOn;
-  // Disable Play if needed for current user
+  if (toggle) toggle.checked = false;
+  
+  // Toujours autoriser le jeu
+  const btn = document.getElementById('btnPlay');
+  if (btn) {
+    btn.disabled = false;
+    btn.title = 'Lancer le jeu';
+  }
+  
+  // Masquer la bannière de maintenance
+  const banner = document.getElementById('maintenanceBanner');
+  if (banner) banner.style.display = 'none';
+  
+  // Mettre à jour l'état distant
   try {
-    const profRes = await window.eminium.getProfile();
-    const p = profRes?.profile || {};
-    const isAdmin = isAdminClient(p);
-    const allowed = !maintenanceOn || isAdmin; // admins peuvent jouer pendant maintenance
-    const btn = document.getElementById('btnPlay');
-    if (btn) {
-      btn.disabled = !allowed;
-      btn.title = allowed ? 'Lancer le jeu' : 'Maintenance activée — accès restreint';
-    }
-    const banner = document.getElementById('maintenanceBanner');
-    if (banner) banner.style.display = (maintenanceOn && IS_LOGGED) ? '' : 'none';
+    await window.eminium.getMaintenance();
   } catch {}
 }
 
