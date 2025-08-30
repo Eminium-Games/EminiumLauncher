@@ -382,21 +382,6 @@ html, body { overflow: hidden; }
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
           </div>
         </div>
-        <style>
-          #maintenanceBanner {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            height: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: none !important;
-            pointer-events: none !important;
-          }
-        </style>
-        <div id="maintenanceBanner" class="panel" style="display:none;">
-          <!-- Contenu masqué -->
-        </div>
         <div class="row toggles" style="margin-top:8px;">
           <label style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
@@ -585,45 +570,7 @@ async function loadSettings() {
 }
 async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
 
-async function refreshMaintenanceUI() {
-  // Désactivation forcée de la maintenance
-  const maintenanceOn = false;
-  
-  // Mise à jour de l'interface utilisateur
-  const toggle = document.getElementById('maintenanceToggle');
-  if (toggle) toggle.checked = false;
-  
-  // Toujours autoriser le jeu
-  const btn = document.getElementById('btnPlay');
-  if (btn) {
-    btn.disabled = false;
-    btn.title = 'Lancer le jeu';
-  }
-  
-  // Masquer la bannière de maintenance
-  const banner = document.getElementById('maintenanceBanner');
-  if (banner) banner.style.display = 'none';
-  
-  // Mettre à jour l'état distant
-  try {
-    await window.eminium.getMaintenance();
-  } catch {}
-}
-
-// Maintenance: lecture seule (aucun gestion côté launcher)
-
-// Subscribe to remote maintenance changes
-(() => {
-  try {
-    if (window.eminiumMaintenance?.onChanged) {
-      window.eminiumMaintenance.onChanged(() => {
-        refreshMaintenanceUI();
-      });
-    }
-  } catch {}
-  // Initial UI sync
-  refreshMaintenanceUI();
-})();
+// Maintenance désactivée
 
 // (Anti-VPN banner and subscriptions removed)
 

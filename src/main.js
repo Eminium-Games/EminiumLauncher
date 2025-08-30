@@ -22,12 +22,7 @@ let isGameRunning = false;
 // Shared Discord Application ID for all users. Replace the placeholder with your real Client ID.
 const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '1400888551486521454';
 
-// --- Azuriom Maintenance Sync ---
-const AZ_BASE_URL = process.env.EMINIUM_BASE_URL || 'https://eminium.ovh';
-const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
-// (shop endpoints removed)
-let remoteMaintenance = null; // null = inconnu, true/false = connu
-let maintenancePollTimer = null;
+// Configuration de base
 
 function getAzuriomAuthHeaders() {
   const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
@@ -45,34 +40,7 @@ function getAzuriomAuthHeaders() {
   return headers;
 }
 
-// Maintenance désactivée de force
-async function fetchRemoteMaintenance() {
-  // Forcer la maintenance à false et ignorer tout état distant
-  remoteMaintenance = false;
-  broadcastMaintenance(false);
-  return { ok: true, maintenance: false, updatedAt: new Date().toISOString() };
-}
-
-// (VPN/proxy detection removed)
-
-async function setRemoteMaintenance(on) {
-  try {
-    const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
-    const res = await axios.post(url, { maintenance: !!on }, { timeout: 8000, headers: getAzuriomAuthHeaders() });
-    const val = !!(res?.data?.maintenance ?? on);
-    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e) };
-  }
-}
-
-function broadcastMaintenance(val) {
-  try {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('maintenance:changed', { maintenance: !!val });
-    }
-  } catch { }
-}
+// Fonctionnalité de maintenance désactivée
 
 // --- Discord Rich Presence helpers ---
 async function initDiscordRPC() {
@@ -254,10 +222,7 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
-  // Désactivation complète du polling de maintenance
-  remoteMaintenance = false;
-  broadcastMaintenance(false);
-  try { if (maintenancePollTimer) clearInterval(maintenancePollTimer); } catch { }
+  // Désactivation des fonctionnalités de maintenance
 
   // Auto-check on startup: if remote version differs, force reinstall
   try {
@@ -434,8 +399,6 @@ function isAdminProfile(p) {
 ipcMain.handle('settings:get', async () => {
   try {
     const base = readSettings();
-    // Override maintenance with remote value when known
-    if (remoteMaintenance !== null) base.maintenanceEnabled = !!remoteMaintenance;
     return { ok: true, settings: base };
   }
   catch (e) { return { ok: false, error: e?.message || String(e) }; }
@@ -444,17 +407,7 @@ ipcMain.handle('settings:set', async (_evt, patch) => {
   return writeSettings(patch);
 });
 
-// Maintenance (Azuriom): IPC endpoints (read-only)
-ipcMain.handle('maintenance:get', async () => {
-  try {
-    // Forcer la maintenance à false et ignorer le cache
-    remoteMaintenance = false;
-    broadcastMaintenance(false);
-    return { ok: true, maintenance: false };
-  } catch (e) {
-    return { ok: false, error: e?.message || String(e) };
-  }
-});
+// Endpoint de maintenance désactivé
 
 // Status handler used by renderer to know readiness / rpc state
 ipcMain.handle('launcher:status', async () => {
