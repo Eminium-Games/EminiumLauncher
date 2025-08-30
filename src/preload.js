@@ -1,21 +1,74 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Logger pour les appels IPC
+const logIpc = (channel, ...args) => {
+  console.log(`[IPC] ${channel} appelé avec:`, ...args);
+  return args;
+};
+
+// Wrapper pour ajouter le logging aux appels IPC
+const withLogging = (channel, fn) => 
+  async (...args) => {
+    logIpc(channel, ...args);
+    try {
+      const result = await fn(...args);
+      console.log(`[IPC] ${channel} réussi:`, result);
+      return result;
+    } catch (error) {
+      console.error(`[IPC] ${channel} échoué:`, error);
+      throw error;
+    }
+  };
+
+// Exposer l'API au renderer avec logging
 contextBridge.exposeInMainWorld('eminium', {
-  login: (email, password, code) => ipcRenderer.invoke('auth:login', { email, password, code }),
-  ensure: () => ipcRenderer.invoke('launcher:ensure'),
-  play: (opts) => ipcRenderer.invoke('launcher:play', opts),
-  status: () => ipcRenderer.invoke('launcher:status'),
-  prepare: () => ipcRenderer.invoke('launcher:prepare'),
-  getProfile: () => ipcRenderer.invoke('auth:profile:get'),
-  logout: () => ipcRenderer.invoke('auth:logout'),
-  ping: (host, port, timeout=3000) => ipcRenderer.invoke('launcher:ping', { host, port, timeout }),
-  // System info helpers
-  getSystemRamMB: () => ipcRenderer.invoke('sys:ram:totalMB'),
-  // Settings
-  getSettings: () => ipcRenderer.invoke('settings:get'),
-  setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
-  // Maintenance (Azuriom)
-  getMaintenance: () => ipcRenderer.invoke('maintenance:get')
+  // Authentification
+  login: withLogging('auth:login', (email, password, code) => 
+    ipcRenderer.invoke('auth:login', { email, password, code })
+  ),
+  logout: withLogging('auth:logout', () => 
+    ipcRenderer.invoke('auth:logout')
+  ),
+  getProfile: withLogging('auth:profile:get', () => 
+    ipcRenderer.invoke('auth:profile:get')
+  ),
+  
+  // Gestion du launcher
+  ensure: withLogging('launcher:ensure', () => 
+    ipcRenderer.invoke('launcher:ensure')
+  ),
+  play: withLogging('launcher:play', (opts) => 
+    ipcRenderer.invoke('launcher:play', opts)
+  ),
+  status: withLogging('launcher:status', () => 
+    ipcRenderer.invoke('launcher:status')
+  ),
+  prepare: withLogging('launcher:prepare', () => 
+    ipcRenderer.invoke('launcher:prepare')
+  ),
+  
+  // Utilitaires réseau
+  ping: withLogging('launcher:ping', (host, port, timeout = 3000) => 
+    ipcRenderer.invoke('launcher:ping', { host, port, timeout })
+  ),
+  
+  // Informations système
+  getSystemRamMB: withLogging('sys:ram:totalMB', () => 
+    ipcRenderer.invoke('sys:ram:totalMB')
+  ),
+  
+  // Paramètres
+  getSettings: withLogging('settings:get', () => 
+    ipcRenderer.invoke('settings:get')
+  ),
+  setSettings: withLogging('settings:set', (patch) => 
+    ipcRenderer.invoke('settings:set', patch)
+  ),
+  
+  // Maintenance
+  getMaintenance: withLogging('maintenance:get', () => 
+    ipcRenderer.invoke('maintenance:get')
+  )
 });
 
 // Progress event subscriptions

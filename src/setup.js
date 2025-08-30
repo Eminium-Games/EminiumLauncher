@@ -892,6 +892,28 @@ async function ensureAll() {
   };
 }
 
+// Test de connexion au serveur
+async function testServerConnection() {
+  const url = `${SITE_URL}/api/ping`;
+  try {
+    const start = Date.now();
+    const response = await axios.get(url, { timeout: 10000 });
+    const ping = Date.now() - start;
+    return { 
+      online: true, 
+      ping,
+      status: response.status,
+      version: response.data?.version
+    };
+  } catch (error) {
+    return {
+      online: false,
+      error: error.code || 'connection_failed',
+      message: error.message || 'Impossible de se connecter au serveur'
+    };
+  }
+}
+
 // ===== AUTH AZURIOM — helpers =====
 
 // UUID offline (même algo que les launchers offline)
@@ -930,37 +952,124 @@ function logoutEminium() {
     if (fs.existsSync(userProfilePath)) fs.unlinkSync(userProfilePath);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e?.message || String(e) };
+    return { ok: false, error: e.message };
   }
 }
 
-// Login via Azuriom HTTP API (sans SDK)
 async function loginEminium(email, password, twoFactorCode) {
+  // Validation des entrées
+  if (!email || !password) {
+    return { 
+      status: 'error',
+      reason: 'validation',
+      message: 'L\'email et le mot de passe sont requis.'
+    };
+  }
+
   const url = `${SITE_URL}/api/auth/authenticate`;
   const payload = {
-    email,
-    password,
-    ...(twoFactorCode ? { code: twoFactorCode } : {})
+    email: email.trim(),
+    password: password,
+    ...(twoFactorCode ? { code: twoFactorCode.trim() } : {})
   };
+
+  console.log('Tentative de connexion à:', url);
+  console.log('Payload:', JSON.stringify({
+    ...payload,
+    password: '***' // Ne pas logger le mot de passe en clair
+  }));
 
   let res;
   try {
+    const startTime = Date.now();
     res = await axios.post(
       url,
       payload,
-      { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
-    );
-  } catch (err) {
-    // Si le serveur renvoie une erreur JSON, essayons de la parser proprement
-    const data = err?.response?.data;
-    if (data && typeof data === 'object') {
-      // Cas 2FA requis via status pending/reason 2fa (selon la doc fournie)
-      if (data.status === 'pending' && (data.reason === '2fa' || data.reason === 'two_factor')) {
-        return { status: 'pending', reason: '2fa' };
+      { 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'User-Agent': 'EminiumLauncher/1.0',
+          'X-Eminium-Version': '1.0.0'
+        },
+        timeout: 30000, // Augmentation du timeout à 30 secondes
+        validateStatus: status => status < 500, // Valider les réponses < 500 comme réussies
+        maxRedirects: 5,
+        httpsAgent: new (require('https').Agent)({  
+          rejectUnauthorized: true,
+          keepAlive: true
+        })
       }
-      return { status: 'error', reason: data.reason || 'unknown', message: data.message || 'Login error' };
+    );
+    const responseTime = Date.now() - startTime;
+    console.log(`Réponse reçue en ${responseTime}ms - Status: ${res.status}`);
+    console.log('Réponse du serveur (données):', JSON.stringify(res.data, null, 2));
+  } catch (err) {
+    console.error('Erreur lors de la connexion:', err);
+    
+    // Gestion des erreurs réseau
+    if (err.code === 'ECONNABORTED') {
+      return { status: 'error', reason: 'timeout', message: 'Le serveur met trop de temps à répondre' };
     }
-    return { status: 'error', reason: 'network', message: err?.message || 'Network error' };
+    
+    if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') {
+      return { status: 'error', reason: 'server_unreachable', message: 'Impossible de joindre le serveur' };
+    }
+    
+    // Si le serveur renvoie une erreur JSON, essayons de la parser
+    const data = err?.response?.data;
+    const status = err?.response?.status;
+    
+    if (status === 422) {
+      // Erreur de validation (mauvais format d'email, mot de passe trop court, etc.)
+      const message = data?.message || 'Données de connexion invalides';
+      const errors = data?.errors ? Object.values(data.errors).flat().join(', ') : '';
+      return { 
+        status: 'error', 
+        reason: 'validation', 
+        message: `${message} ${errors}`.trim()
+      };
+    }
+    
+    if (status === 401) {
+      // Non autorisé (mauvais identifiants)
+      return { 
+        status: 'error', 
+        reason: 'unauthorized', 
+        message: 'Email ou mot de passe incorrect'
+      };
+    }
+    
+    if (status === 403) {
+      // Compte banni ou suspendu
+      return { 
+        status: 'error', 
+        reason: 'forbidden', 
+        message: 'Accès refusé. Votre compte est peut-être suspendu.'
+      };
+    }
+    
+    // Cas 2FA requis via status pending/reason 2fa
+    if (data && data.status === 'pending' && (data.reason === '2fa' || data.reason === 'two_factor')) {
+      return { status: 'pending', reason: '2fa', message: 'Code de vérification requis' };
+    }
+    
+    // Autres erreurs avec réponse du serveur
+    if (data && typeof data === 'object') {
+      return { 
+        status: 'error', 
+        reason: data.reason || 'server_error', 
+        message: data.message || 'Erreur lors de la connexion'
+      };
+    }
+    
+    // Erreur réseau ou de connexion
+    return { 
+      status: 'error', 
+      reason: 'network', 
+      message: err?.message || 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.'
+    };
   }
 
   const data = res?.data || {};
@@ -1091,7 +1200,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = 'play.eminium.ovh
   // Validate Java by running -version; if javaw fails, try sibling java.exe
   const tryCheck = (exePath) => {
     try {
-      const { spawnSync } = require('child_process');
+      const { loginEminium, testServerConnection } = require('./setup.js');
       const res = spawnSync(exePath, ['-version'], { encoding: 'utf8', windowsHide: true });
       // Some Javas print version to stderr; accept exitCode 0
       if (res.error) throw res.error;
@@ -1173,6 +1282,7 @@ module.exports = {
   ensureAll,
   launchMinecraft,
   loginEminium,
+  testServerConnection,
   readUserProfile,
   logoutEminium,
   eminiumDir,

@@ -711,7 +711,6 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       setTabsForAuth(true, admin);
       // Restrict Play content if not Administrateur/Développeur
       setPlayRestricted(!hasPrivilegedAccess(p));
-      await refreshMaintenanceUI();
       // Fetch points on init when already logged in
       try { await fetchAndUpdatePoints(); } catch {}
     }
@@ -720,8 +719,6 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
 
 // Au chargement: afficher uniquement l'onglet Connexion
 setTabsForAuth(false, false);
-// Puis rafraîchir l'UI maintenance
-refreshMaintenanceUI();
 
 // Logger
 function log(msg) {
@@ -956,7 +953,6 @@ async function performLogin(email, pass, code2fa, options = {}) {
       setTabsForAuth(true, isAdminClient(p));
       // Restrict Play content if not Administrateur/Développeur
       setPlayRestricted(!hasPrivilegedAccess(p));
-      await refreshMaintenanceUI();
       try { await fetchAndUpdatePoints(); } catch {}
       return { ok: true, profile: p };
     }
