@@ -48,7 +48,7 @@ function getAzuriomAuthHeaders() {
 // MAINTENANCE MODE : CHANGE 'maintenance' to 'false' to disable maintenance mode
 // MAINTENANCE MODE : CHANGE 'maintenance' to 'true' to enable maintenance mode
 async function fetchRemoteMaintenance() {
-  return { ok: false, maintenance: false, updatedAt: null };
+  return { ok: true, maintenance: false, updatedAt: null };
 }
 
 // (VPN/proxy detection removed)
@@ -58,7 +58,7 @@ async function setRemoteMaintenance(on) {
     const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
     const res = await axios.post(url, { maintenance: !!on }, { timeout: 8000, headers: getAzuriomAuthHeaders() });
     const val = !!(res?.data?.maintenance ?? on);
-    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
+    return { ok: false, maintenance: val, updatedAt: res?.data?.updatedAt || null };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
