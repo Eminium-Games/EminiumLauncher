@@ -26,7 +26,7 @@ const DISCORD_APP_ID_SHARED = process.env.DISCORD_APP_ID_SHARED || '140088855148
 const AZ_BASE_URL = process.env.EMINIUM_BASE_URL || 'https://eminium.ovh';
 const MAINTENANCE_ENDPOINT = '/api/launcher/maintenance';
 // (shop endpoints removed)
-let remoteMaintenance = null; // null = inconnu, true/false = connu
+let remoteMaintenance = false; // null = inconnu, true/false = connu
 let maintenancePollTimer = null;
 
 function getAzuriomAuthHeaders() {
@@ -58,7 +58,7 @@ async function setRemoteMaintenance(on) {
     const url = AZ_BASE_URL.replace(/\/$/, '') + MAINTENANCE_ENDPOINT;
     const res = await axios.post(url, { maintenance: !!on }, { timeout: 8000, headers: getAzuriomAuthHeaders() });
     const val = !!(res?.data?.maintenance ?? on);
-    return { ok: false, maintenance: val, updatedAt: res?.data?.updatedAt || null };
+    return { ok: true, maintenance: val, updatedAt: res?.data?.updatedAt || null };
   } catch (e) {
     return { ok: false, error: e?.message || String(e) };
   }
