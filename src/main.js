@@ -254,27 +254,10 @@ app.whenReady().then(async () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 
-  // Start maintenance polling
-  try {
-    const prime = await fetchRemoteMaintenance();
-    if (prime?.ok) {
-      remoteMaintenance = !!prime.maintenance;
-      broadcastMaintenance(remoteMaintenance);
-    }
-  } catch { }
+  // Désactivation complète du polling de maintenance
+  remoteMaintenance = false;
+  broadcastMaintenance(false);
   try { if (maintenancePollTimer) clearInterval(maintenancePollTimer); } catch { }
-  maintenancePollTimer = setInterval(async () => {
-    try {
-      const r = await fetchRemoteMaintenance();
-      if (r?.ok) {
-        const val = !!r.maintenance;
-        if (remoteMaintenance !== val) {
-          remoteMaintenance = val;
-          broadcastMaintenance(remoteMaintenance);
-        }
-      }
-    } catch { }
-  }, 30000);
 
   // Auto-check on startup: if remote version differs, force reinstall
   try {

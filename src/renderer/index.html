@@ -382,8 +382,20 @@ html, body { overflow: hidden; }
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
           </div>
         </div>
-        <div id="maintenanceBanner" class="panel" style="display:none; margin-top:12px; border:1px solid #f59e0b; background:rgba(245,158,11,0.12); color:#fce8c3;">
-          <strong>Maintenance en cours.</strong> L'accès au jeu est temporairement limité.
+        <style>
+          #maintenanceBanner {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            pointer-events: none !important;
+          }
+        </style>
+        <div id="maintenanceBanner" class="panel" style="display:none;">
+          <!-- Contenu masqué -->
         </div>
         <div class="row toggles" style="margin-top:8px;">
           <label style="display:flex; align-items:center; gap:8px;">
