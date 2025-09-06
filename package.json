@@ -8,7 +8,10 @@
   "scripts": {
     "start": "electron . --dev",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:mac": "electron-builder --mac"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
@@ -45,6 +48,22 @@
     ],
     "win": {
       "icon": "assets/icon/icon.ico"
+    },
+    "linux": {
+      "icon": "assets/icon/icon.png",
+      "category": "Game",
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "mac": {
+      "icon": "assets/icon/icon.icns",
+      "category": "public.app-category.games",
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "nsis": {
       "oneClick": false,
