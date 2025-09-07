@@ -12,7 +12,7 @@
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
     "dist:mac": "electron-builder --mac",
-    "icons": "electron-icon-builder --input=assets/icon/icon.png --output=assets/icon"
+    "icons": "icon-gen -i assets/icon/icon.png -o assets/icon --icns --ico"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "electron": "^29.4.6",
     "electron-builder": "^24.13.3",
-    "electron-icon-builder": "^2.1.0"
+    "icon-gen": "^3.0.1"
   },
   "build": {
     "appId": "ovh.eminium.launcher",
@@ -39,6 +39,7 @@
       "!src/.env.*"
     ],
     "asar": false,
+    "publish": "never",
     "extraResources": [
       {
         "from": "assets",
@@ -49,7 +50,11 @@
       }
     ],
     "win": {
-      "icon": "assets/icon/icon.ico"
+      "icon": "assets/icon/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
     },
     "linux": {
       "icon": "assets/icon/icon.png",
@@ -76,7 +81,7 @@
       "installerIcon": "assets/icon/icon.ico",
       "uninstallerIcon": "assets/icon/icon.ico",
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Eminium Launcher Setup.exe"
+      "artifactName": "Eminium-Launcher-Setup-${version}.exe"
     }
   }
 }
