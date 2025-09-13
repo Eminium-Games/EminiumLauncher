@@ -12,7 +12,7 @@
     "dist:win": "electron-builder --win",
     "dist:linux": "electron-builder --linux",
     "dist:mac": "electron-builder --mac",
-    "icons": "icon-gen -i assets/icon/icon.png -o assets/icon --icns --ico"
+    "icons": "electron-builder icon -i assets/icon/icon.png -o assets/icon"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
@@ -39,7 +39,6 @@
       "!src/.env.*"
     ],
     "asar": false,
-    "publish": "never",
     "extraResources": [
       {
         "from": "assets",
@@ -66,7 +65,7 @@
       "artifactName": "Eminium-Launcher-${version}.${ext}"
     },
     "mac": {
-      "icon": "assets/icon/icon.icns",
+      "icon": "assets/icon/app.icns",
       "category": "public.app-category.games",
       "target": [
         "dmg",
