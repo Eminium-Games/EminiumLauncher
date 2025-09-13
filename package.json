@@ -3,7 +3,10 @@
   "version": "1.0.1",
   "private": true,
   "description": "Launcheur pour le serveur Eminium - Installez et Jouez ! v${version}",
-  "author": "Eminium",
+  "author": {
+    "name": "Eminium",
+    "email": "support@eminium.ovh"
+  },
   "main": "src/main.js",
   "scripts": {
     "start": "electron . --dev",
@@ -62,6 +65,7 @@
         "AppImage",
         "deb"
       ],
+      "maintainer": "Eminium <support@eminium.ovh>",
       "artifactName": "Eminium-Launcher-${version}.${ext}"
     },
     "mac": {
