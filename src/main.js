@@ -64,6 +64,70 @@ async function initDiscordRPC() {
       rpcReady = false;
     }
     rpcClient = new DiscordRPC.Client({ transport: 'ipc' });
+
+// Diagnostic Croissant: vérifie la configuration et la connectivité
+ipcMain.handle('croissant:diagnose', async () => {
+  const checks = [];
+  const add = (name, ok, details) => checks.push({ name, ok: !!ok, details: details ? String(details) : '' });
+  try {
+    const API_BASE = String(process.env.CROISSANT_API_BASE || 'https://croissant-api.fr/api').replace(/\/$/, '');
+    const CLIENT_ID = String(process.env.CROISSANT_CLIENT_ID || '').trim();
+    const API_KEY = String(process.env.CROISSANT_API_KEY || '').trim();
+    const PORT = Number(process.env.CROISSANT_REDIRECT_PORT || 45871);
+
+    add('API_BASE présent', !!API_BASE, API_BASE);
+    add('CLIENT_ID présent', !!CLIENT_ID, CLIENT_ID || 'manquant');
+    add('API_KEY présent', !!API_KEY, API_KEY ? '••••••' : 'manquant');
+    add('REDIRECT_PORT', !!PORT && PORT > 0, PORT);
+
+    // Vérifier liaison port local
+    try {
+      await new Promise((resolve, reject) => {
+        const server = http.createServer((_req, res) => { res.statusCode = 200; res.end('ok'); });
+        server.once('error', reject);
+        server.listen(PORT, '127.0.0.1', () => {
+          try { server.close(() => resolve()); } catch { resolve(); }
+        });
+      });
+      add('Port local libre', true, `127.0.0.1:${PORT}`);
+    } catch (e) {
+      add('Port local libre', false, e?.message || e);
+    }
+
+    // Vérifier l’accès API (liste apps ou détail client)
+    if (API_KEY) {
+      try {
+        const hdr = { Authorization: `Bearer ${API_KEY}` };
+        // Si CLIENT_ID fourni, tenter le détail, sinon tenter /apps
+        if (CLIENT_ID) {
+          const u = `${API_BASE}/oauth2/app/${encodeURIComponent(CLIENT_ID)}`;
+          const r = await axios.get(u, { headers: hdr, timeout: 10000 });
+          add('Client OAuth récupérable', r.status >= 200 && r.status < 300, `status ${r.status}`);
+        } else {
+          const u = `${API_BASE}/oauth2/apps`;
+          const r = await axios.get(u, { headers: hdr, timeout: 10000 });
+          add('Accès API (apps)', Array.isArray(r.data) || (r.status >= 200 && r.status < 300), `status ${r.status}`);
+        }
+      } catch (e) {
+        const status = e?.response?.status;
+        add('Accès API (auth Bearer)', false, status ? `HTTP ${status}` : (e?.message || e));
+      }
+    }
+
+    // Construire URL d’authorize
+    if (CLIENT_ID) {
+      const redirectUri = `http://127.0.0.1:${PORT}/croissant/callback`;
+      const params = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: redirectUri, state: 'diag' });
+      const openUrl = `${API_BASE}/oauth2/authorize?${params.toString()}`;
+      add('Authorize URL', true, openUrl);
+    }
+
+    return { ok: true, checks };
+  } catch (e) {
+    add('Exception', false, e?.message || String(e));
+    return { ok: false, checks };
+  }
+});
     rpcClient.on('ready', () => {
       rpcReady = true;
       console.log('[RPC] prêt');

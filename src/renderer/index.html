@@ -330,6 +330,11 @@ html, body { overflow: hidden; }
               <span id="profileName" class="skeleton">Pseudo</span>
               <span class="uuid skeleton" id="profileUUID">UUID</span>
               <span class="badge-grade" id="profileGrade" aria-label="Grade" title=""></span>
+              <div id="croissantInfo" style="margin-top:6px; display:none; font-size:12px; color: var(--muted);">
+                <span id="croissantVerified" style="display:none; margin-right:8px; color:#34d399;">Vérifié ✓</span>
+                <span id="croissantBalance" style="display:none; margin-right:8px;"></span>
+                <span id="croissantLinks" style="display:none;"></span>
+              </div>
             </div>
             <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;" aria-label="Se déconnecter" title="Se déconnecter">Déconnexion</button>
           </div>
@@ -350,7 +355,8 @@ html, body { overflow: hidden; }
       <div class="panel">
         <!-- Boutons principaux de connexion -->
         <button class="btn" id="btnLoginWithEminium" aria-label="Se connecter avec Eminium" title="Se connecter avec Eminium" style="width:100%; display:block; margin-bottom:8px;">Se connecter avec Eminium</button>
-        <button class="btn sec" id="btnLoginWithCroissant" aria-label="Se connecter avec Croissant-API.fr" title="Se connecter avec Croissant-API.fr" style="width:100%; display:block; margin-bottom:12px;">Se connecter avec Croissant-API.fr</button>
+        <button class="btn sec" id="btnLoginWithCroissant" aria-label="Se connecter avec Croissant-API.fr" title="Se connecter avec Croissant-API.fr" style="width:100%; display:block; margin-bottom:8px;">Se connecter avec Croissant-API.fr</button>
+        <button class="btn sec" id="btnCroissantDiag" aria-label="Tester la configuration Croissant" title="Tester la configuration Croissant" style="width:100%; display:block; margin-bottom:12px;">Tester la configuration Croissant</button>
         <!-- Formulaire détaillé masqué par défaut -->
         <div id="authForm" style="display:none;">
           <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
@@ -653,6 +659,8 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       // Clear grade badge
       const gEl = document.getElementById('profileGrade');
       gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; applyGradeStyle(gEl, null, null);
+      // Clear croissant UI
+      updateCroissantUI({});
       setProfileSkeleton(true);
       document.getElementById('btnLogout').style.display = 'none';
       // Clear points UI
@@ -689,6 +697,8 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
       if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
       else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
       applyGradeStyle(gEl, p.gradeColor || null, grade);
+      // Croissant UI
+      updateCroissantUI(p);
       document.getElementById('btnLogout').style.display = 'inline-block';
       setProfileSkeleton(false);
       // Ouvrir directement l'onglet Jouer
@@ -793,6 +803,33 @@ function setProfileSkeleton(on) {
     if (!el) return;
     if (on) el.classList.add('skeleton'); else el.classList.remove('skeleton');
   });
+}
+
+// Met à jour l'UI spécifique Croissant
+function updateCroissantUI(profile) {
+  try {
+    const box = document.getElementById('croissantInfo');
+    const ver = document.getElementById('croissantVerified');
+    const bal = document.getElementById('croissantBalance');
+    const links = document.getElementById('croissantLinks');
+    if (!box || !ver || !bal || !links) return;
+    const c = profile?.croissant || {};
+    let any = false;
+    // Verified
+    if (typeof c.verified === 'boolean') { ver.style.display = c.verified ? 'inline' : 'none'; any = any || c.verified; }
+    else { ver.style.display = 'none'; }
+    // Balance
+    if (typeof c.balance === 'number') { bal.textContent = `Solde: ${c.balance}`; bal.style.display = 'inline'; any = true; }
+    else { bal.textContent=''; bal.style.display='none'; }
+    // Social links
+    const parts = [];
+    if (c.discord_id) parts.push(`Discord: ${c.discord_id}`);
+    if (c.steam_id) parts.push(`Steam: ${c.steam_id}`);
+    if (c.google_id) parts.push(`Google: ${c.google_id}`);
+    if (parts.length) { links.textContent = parts.join(' · '); links.style.display = 'inline'; any = true; }
+    else { links.textContent=''; links.style.display='none'; }
+    box.style.display = any ? 'block' : 'none';
+  } catch {}
 }
 
 // Validation formulaire login
@@ -902,6 +939,27 @@ code2faInput.parentElement.style.display = 'none';
   }
 })();
 
+// Bouton de diagnostic Croissant
+(() => {
+  const diagBtn = document.getElementById('btnCroissantDiag');
+  if (diagBtn && window.eminium?.croissantDiagnose) {
+    diagBtn.addEventListener('click', async () => {
+      try {
+        const res = await window.eminium.croissantDiagnose();
+        if (!res) { log('Diag Croissant: réponse vide'); return; }
+        log('— Diag Croissant —');
+        const arr = Array.isArray(res.checks) ? res.checks : [];
+        for (const c of arr) {
+          const status = c.ok ? 'OK' : 'ERREUR';
+          log(`${status} • ${c.name}${c.details ? ` — ${c.details}` : ''}`);
+        }
+      } catch (e) {
+        log('Diag Croissant: ' + (e?.message || e));
+      }
+    });
+  }
+})();
+
 // Bouton Croissant-API.fr -> ouvre la page d'auth publique
 (() => {
   const croissantBtn = document.getElementById('btnLoginWithCroissant');
@@ -992,6 +1050,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
       if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
       else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
       applyGradeStyle(gEl, p.gradeColor || null, grade);
+      updateCroissantUI(p);
       code2faInput.parentElement.style.display = 'none';
       document.getElementById('btnLogout').style.display = 'inline-block';
       setProfileSkeleton(false);

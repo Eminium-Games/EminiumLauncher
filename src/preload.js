@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('eminium', {
   croissantLogin: withLogging('croissant:login', () => 
     ipcRenderer.invoke('croissant:login')
   ),
+  croissantDiagnose: withLogging('croissant:diagnose', () =>
+    ipcRenderer.invoke('croissant:diagnose')
+  ),
   
   // Gestion du launcher
   ensure: withLogging('launcher:ensure', () => 
