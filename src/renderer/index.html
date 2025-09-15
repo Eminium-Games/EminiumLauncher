@@ -348,10 +348,15 @@ html, body { overflow: hidden; }
     <!-- Contenus -->
     <div class="tab-content active" id="auth">
       <div class="panel">
-        <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
-        <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
-        <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
-        <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter">Connexion</button>
+        <!-- Bouton principal de connexion Eminium -->
+        <button class="btn" id="btnLoginWithEminium" aria-label="Se connecter avec Eminium" title="Se connecter avec Eminium" style="width:100%; display:block; margin-bottom:12px;">Se connecter avec Eminium</button>
+        <!-- Formulaire détaillé masqué par défaut -->
+        <div id="authForm" style="display:none;">
+          <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
+          <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
+          <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
+          <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter" style="margin-top:8px;">Connexion</button>
+        </div>
         <div id="authError" class="auth-error" role="alert" aria-live="polite"></div>
       </div>
     </div>
@@ -881,6 +886,20 @@ function mapLoginError(result, caught){
 
 // Masquer le 2FA par défaut
 code2faInput.parentElement.style.display = 'none';
+
+// Bouton "Se connecter avec Eminium" -> révèle le formulaire détaillé
+(() => {
+  const revealBtn = document.getElementById('btnLoginWithEminium');
+  const form = document.getElementById('authForm');
+  const emailInput = document.getElementById('email');
+  if (revealBtn && form) {
+    revealBtn.addEventListener('click', () => {
+      form.style.display = '';
+      revealBtn.style.display = 'none';
+      try { emailInput?.focus(); } catch {}
+    });
+  }
+})();
 
 // Action de connexion unifiée (réutilisable par un overlay)
 async function performLogin(email, pass, code2fa, options = {}) {
