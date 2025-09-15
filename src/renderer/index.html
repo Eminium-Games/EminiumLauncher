@@ -348,8 +348,9 @@ html, body { overflow: hidden; }
     <!-- Contenus -->
     <div class="tab-content active" id="auth">
       <div class="panel">
-        <!-- Bouton principal de connexion Eminium -->
-        <button class="btn" id="btnLoginWithEminium" aria-label="Se connecter avec Eminium" title="Se connecter avec Eminium" style="width:100%; display:block; margin-bottom:12px;">Se connecter avec Eminium</button>
+        <!-- Boutons principaux de connexion -->
+        <button class="btn" id="btnLoginWithEminium" aria-label="Se connecter avec Eminium" title="Se connecter avec Eminium" style="width:100%; display:block; margin-bottom:8px;">Se connecter avec Eminium</button>
+        <button class="btn sec" id="btnLoginWithCroissant" aria-label="Se connecter avec Croissant-API.fr" title="Se connecter avec Croissant-API.fr" style="width:100%; display:block; margin-bottom:12px;">Se connecter avec Croissant-API.fr</button>
         <!-- Formulaire détaillé masqué par défaut -->
         <div id="authForm" style="display:none;">
           <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
@@ -897,6 +898,53 @@ code2faInput.parentElement.style.display = 'none';
       form.style.display = '';
       revealBtn.style.display = 'none';
       try { emailInput?.focus(); } catch {}
+    });
+  }
+})();
+
+// Bouton Croissant-API.fr -> ouvre la page d'auth publique
+(() => {
+  const croissantBtn = document.getElementById('btnLoginWithCroissant');
+  if (croissantBtn && window.eminium?.croissantLogin) {
+    croissantBtn.addEventListener('click', async () => {
+      try {
+        const res = await window.eminium.croissantLogin();
+        if (!(res?.ok)) {
+          log(res?.error ? ('Croissant OAuth: ' + res.error) : 'Impossible d’ouvrir Croissant-API.fr');
+          return;
+        }
+        // Si un profil est renvoyé, mettre à jour l’UI comme pour une connexion réussie
+        const p = res.profile;
+        if (p && p.name && p.uuid) {
+          log('Connecté via Croissant-API.fr');
+          setAuthError('');
+          document.getElementById('profileName').textContent = p.name || 'Pseudo';
+          document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+          let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+          document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+          const gEl = document.getElementById('profileGrade');
+          const grade = formatGrade(p.grade ?? p.role);
+          if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+          else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+          applyGradeStyle(gEl, p.gradeColor || null, grade);
+          code2faInput.parentElement.style.display = 'none';
+          document.getElementById('btnLogout').style.display = 'inline-block';
+          setProfileSkeleton(false);
+          // Basculer sur l'onglet Jouer automatiquement
+          document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+          document.getElementById('auth').classList.remove('active');
+          document.querySelector('.tab[data-tab="play"]').classList.add('active');
+          document.getElementById('play').classList.add('active');
+          setAuthTabHidden(true);
+          setTabsForAuth(true, isAdminClient(p));
+          try { await fetchAndUpdatePoints(); } catch {}
+        } else {
+          // Sinon, simple ouverture du site (cas non configuré)
+          log('Ouverture de Croissant-API.fr…');
+        }
+      } catch (e) {
+        log('Erreur lors de l’ouverture: ' + (e?.message || e));
+      }
     });
   }
 })();

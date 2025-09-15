@@ -1329,6 +1329,10 @@ async function prepareGame(log) {
 
 module.exports.checkReady = checkReady;
 module.exports.prepareGame = prepareGame;
+// Expose a helper to persist a user profile from other auth flows (e.g., Croissant-API)
+module.exports.setUserProfile = function setUserProfile(profile) {
+  try { writeUserProfile(profile); return { ok: true }; } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+};
 
 // Parcours récursif des JARs pour supprimer ceux corrompus
 async function cleanupCorruptLibraries() {

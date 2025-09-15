@@ -1,16 +1,18 @@
 // Load .env early
 try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch { }
-const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeImage, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
+const crypto = require('crypto');
 
 const AdmZip = require('adm-zip');
 let DiscordRPC;
 try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
-const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
+const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame, setUserProfile } = require('./setup');
 
 let mainWindow;
 let windowIcon; // nativeImage pour l'icône
@@ -448,6 +450,109 @@ ipcMain.handle('auth:profile:get', async () => {
 });
 ipcMain.handle('auth:logout', async () => {
   return logoutEminium();
+});
+
+// Ouvrir l'auth Croissant-API.fr dans le navigateur
+ipcMain.handle('croissant:login', async () => {
+  // Croissant-API OAuth selon la spécification fournie:
+  // 1) GET /api/oauth2/authorize?client_id=...&redirect_uri=...
+  // 2) Callback local reçoit ?code=...
+  // 3) GET /api/oauth2/user?code=...&client_id=... avec Authorization: Bearer <API_KEY>
+  try {
+    const API_BASE = String(process.env.CROISSANT_API_BASE || 'https://croissant-api.fr/api').replace(/\/$/, '');
+    const CLIENT_ID = String(process.env.CROISSANT_CLIENT_ID || '').trim();
+    const API_KEY = String(process.env.CROISSANT_API_KEY || '').trim();
+    const PORT = Number(process.env.CROISSANT_REDIRECT_PORT || 45871);
+    const HOMEPAGE = 'https://croissant-api.fr';
+
+    if (!CLIENT_ID) {
+      try { await shell.openExternal(HOMEPAGE); } catch {}
+      return { ok: false, error: 'CLIENT_ID manquant (CROISSANT_CLIENT_ID).' };
+    }
+    if (!API_KEY) {
+      try { await shell.openExternal(HOMEPAGE); } catch {}
+      return { ok: false, error: 'API_KEY manquant (CROISSANT_API_KEY). Générez-la via /api-key sur Discord.' };
+    }
+
+    const redirectUri = `http://127.0.0.1:${PORT}/croissant/callback`;
+    const state = crypto.randomBytes(16).toString('hex');
+
+    let server;
+    const waitForCode = () => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        try { server?.close(); } catch {}
+        reject(new Error('Timeout OAuth'));
+      }, 120000);
+      server = http.createServer((req, res) => {
+        try {
+          const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+          if (url.pathname !== '/croissant/callback') { res.statusCode = 404; res.end('Not found'); return; }
+          const gotState = url.searchParams.get('state') || '';
+          const code = url.searchParams.get('code') || '';
+          if (!code /* state may or may not be enforced server-side */) { res.statusCode = 400; res.end('Invalid code'); return; }
+          res.statusCode = 200; res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.end('<html><body style="font-family:sans-serif;">Authentification réussie. Vous pouvez revenir au launcher.</body></html>');
+          clearTimeout(timer);
+          try { server?.close(); } catch {}
+          resolve(code);
+        } catch (e) {
+          clearTimeout(timer);
+          try { server?.close(); } catch {}
+          reject(e);
+        }
+      });
+      server.listen(PORT, '127.0.0.1', () => {});
+    });
+
+    const params = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: redirectUri, state });
+    const openUrl = `${API_BASE}/oauth2/authorize?${params.toString()}`;
+    await shell.openExternal(openUrl);
+
+    const code = await waitForCode();
+    // Demander l'utilisateur via l'API sécurisée par API Key
+    const infoUrl = `${API_BASE}/oauth2/user?` + new URLSearchParams({ code, client_id: CLIENT_ID }).toString();
+    const infoRes = await axios.get(infoUrl, {
+      headers: { Authorization: `Bearer ${API_KEY}` },
+      timeout: 15000
+    });
+    const u = infoRes?.data || {};
+    const name = String(u.username || 'CroissantUser');
+    const email = u.email || null;
+    const id = u.user_id || u.id || null;
+    // Offline-UUID from name
+    const md5 = crypto.createHash('md5').update('OfflinePlayer:' + name).digest();
+    md5[6] = (md5[6] & 0x0f) | 0x30;
+    md5[8] = (md5[8] & 0x3f) | 0x80;
+    const hex = md5.toString('hex');
+    const uuid = `${hex.substring(0,8)}-${hex.substring(8,12)}-${hex.substring(12,16)}-${hex.substring(16,20)}-${hex.substring(20)}`;
+
+    const profile = {
+      id,
+      name,
+      uuid,
+      email,
+      role: null,
+      grade: null,
+      gradeColor: null,
+      banned: false,
+      created_at: null,
+      access_token: null,
+      obtainedAt: new Date().toISOString(),
+      auth: 'croissant',
+      croissant: {
+        balance: u.balance,
+        verified: !!u.verified,
+        discord_id: u.discord_id || null,
+        steam_id: u.steam_id || null,
+        google_id: u.google_id || null
+      }
+    };
+
+    try { setUserProfile && setUserProfile(profile); } catch {}
+    return { ok: true, profile };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
 });
 ipcMain.handle('launcher:ensure', async () => {
   try {
