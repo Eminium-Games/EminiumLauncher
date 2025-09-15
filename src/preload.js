@@ -32,13 +32,7 @@ contextBridge.exposeInMainWorld('eminium', {
   getProfile: withLogging('auth:profile:get', () => 
     ipcRenderer.invoke('auth:profile:get')
   ),
-  // Auth externe: Croissant-API
-  croissantLogin: withLogging('croissant:login', () => 
-    ipcRenderer.invoke('croissant:login')
-  ),
-  croissantDiagnose: withLogging('croissant:diagnose', () =>
-    ipcRenderer.invoke('croissant:diagnose')
-  ),
+  // (croissant removed)
   
   // Gestion du launcher
   ensure: withLogging('launcher:ensure', () => 
