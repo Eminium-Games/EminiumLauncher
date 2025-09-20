@@ -353,9 +353,10 @@ html, body { overflow: hidden; }
           <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium" style="height:24px; vertical-align:middle; margin-right:8px;">
           Se connecter avec Eminium
         </button>
+        <!-- Charger le script après le bouton pour garantir l'initialisation -->
+        <script defer src="https://croissant-api.fr/oauth2/script.js"></script>
         
         <!-- Bouton Croissant-API.fr (snippet fourni) -->
-        <script src="https://croissant-api.fr/oauth2/script.js"></script>
         <script>
           async function alertUser(user) {
             try {
