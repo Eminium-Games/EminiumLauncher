@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('eminium', {
   getProfile: withLogging('auth:profile:get', () => 
     ipcRenderer.invoke('auth:profile:get')
   ),
+  setProfile: withLogging('auth:profile:set', (profile) =>
+    ipcRenderer.invoke('auth:profile:set', profile)
+  ),
   // (croissant removed)
   
   // Gestion du launcher

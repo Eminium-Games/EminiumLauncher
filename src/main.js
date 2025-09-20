@@ -11,7 +11,7 @@ let DiscordRPC;
 try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
-const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
+const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame, setUserProfile } = require('./setup');
 
 let mainWindow;
 let windowIcon; // nativeImage pour l'icône
@@ -449,6 +449,18 @@ ipcMain.handle('auth:profile:get', async () => {
 });
 ipcMain.handle('auth:logout', async () => {
   return logoutEminium();
+});
+
+// Permettre de définir un profil (depuis un flux externe, p.ex. Croissant script)
+ipcMain.handle('auth:profile:set', async (_evt, profile) => {
+  try {
+    const res = setUserProfile(profile || {});
+    if (!res || res.ok !== true) return { ok: false, error: res?.error || 'write_failed' };
+    const saved = readUserProfile();
+    return { ok: true, profile: saved };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
 });
 
 

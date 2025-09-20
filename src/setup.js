@@ -1329,6 +1329,20 @@ async function prepareGame(log) {
 
 module.exports.checkReady = checkReady;
 module.exports.prepareGame = prepareGame;
+// Persist a user profile coming from an external auth flow
+module.exports.setUserProfile = function setUserProfile(profile) {
+  try {
+    const p = Object.assign({}, profile || {});
+    if (!p || typeof p !== 'object') throw new Error('invalid_profile');
+    // Ensure uuid (derive from name if missing)
+    if (!p.uuid && p.name) {
+      p.uuid = uuidFromName(String(p.name));
+    }
+    p.obtainedAt = new Date().toISOString();
+    writeUserProfile(p);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+};
 
 // Parcours récursif des JARs pour supprimer ceux corrompus
 async function cleanupCorruptLibraries() {
