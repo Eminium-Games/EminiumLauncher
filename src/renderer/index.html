@@ -353,13 +353,54 @@ html, body { overflow: hidden; }
           <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium" style="height:24px; vertical-align:middle; margin-right:8px;">
           Se connecter avec Eminium
         </button>
-        <!-- Charger le script après le bouton pour garantir l'initialisation -->
-        <script defer src="https://croissant-api.fr/oauth2/script.js"></script>
         
-        <!-- Bouton Croissant-API.fr (snippet fourni) -->
+        <!-- Bouton Croissant-API.fr -->
+        <button
+          id="btnLoginWithCroissant"
+          class="btn"
+          style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;"
+          aria-label="Se connecter avec Croissant-API.fr"
+          title="Se connecter avec Croissant-API.fr"
+        >
+          <img src="https://croissant-api.fr/assets/icons/favicon-32x32.avif" alt="Croissant" style="width:24px; height:24px;">
+          Se connecter avec Croissant-API.fr
+        </button>
+        
+        <!-- Script Croissant-API.fr -->
+        <script src="https://croissant-api.fr/oauth2/script.js"></script>
+        
+        <!-- Debug et handler -->
         <script>
+          // Debug: vérifier que le script se charge
+          console.log('[Croissant] Script chargé');
+          
+          // Handler pour le bouton Croissant
+          document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btnLoginWithCroissant');
+            if (btn) {
+              btn.addEventListener('click', () => {
+                console.log('[Croissant] Clic sur le bouton');
+                // Tenter d'ouvrir la popup via le script Croissant
+                if (window.CroissantOAuth && typeof window.CroissantOAuth.open === 'function') {
+                  window.CroissantOAuth.open({
+                    client_id: '2b90be46-3fdb-45f1-98bd-081b70cc3d9f',
+                    callback: alertUser
+                  });
+                } else {
+                  console.error('[Croissant] Script non chargé ou API non disponible');
+                  alert('Le script Croissant n\'est pas disponible');
+                }
+              });
+            } else {
+              console.error('[Croissant] Bouton non trouvé');
+            }
+          });
+          
+          // Callback pour la connexion Croissant
           async function alertUser(user) {
             try {
+              console.log('[Croissant] Utilisateur reçu:', user);
+              
               // Construire un profil local à partir des champs renvoyés par Croissant
               const name = String(user?.username || 'CroissantUser');
               const id = user?.user_id || user?.id || null;
@@ -367,8 +408,7 @@ html, body { overflow: hidden; }
               const profile = {
                 id,
                 name,
-                // uuid sera généré côté main si manquant
-                uuid: null,
+                uuid: null, // sera généré côté main
                 email,
                 role: null,
                 grade: null,
@@ -385,55 +425,57 @@ html, body { overflow: hidden; }
                   google_id: user?.google_id || null
                 }
               };
+              
               // Persister le profil dans le launcher
-              const saveRes = await (window.eminium?.setProfile ? window.eminium.setProfile(profile) : Promise.resolve({ ok: false, error: 'setProfile indisponible' }));
-              if (!saveRes?.ok) {
-                log('Croissant: échec de la sauvegarde du profil: ' + (saveRes?.error || 'inconnu'));
-                return;
+              if (window.eminium && window.eminium.setProfile) {
+                const saveRes = await window.eminium.setProfile(profile);
+                if (!saveRes?.ok) {
+                  console.error('[Croissant] Échec sauvegarde profil:', saveRes?.error);
+                  return;
+                }
+                const p = saveRes.profile || profile;
+                
+                // Mettre à jour l'UI comme pour une connexion réussie
+                console.log('[Croissant] Profil sauvegardé:', p);
+                log('Connecté via Croissant-API.fr');
+                setAuthError('');
+                document.getElementById('profileName').textContent = p.name || 'Pseudo';
+                document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+                const skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+                document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+                const gEl = document.getElementById('profileGrade');
+                const grade = formatGrade(p.grade ?? p.role);
+                if (grade) { 
+                  gEl.textContent = `Grade: ${grade}`; 
+                  gEl.title = `Grade: ${grade}`; 
+                  gEl.style.display = 'inline-block'; 
+                } else { 
+                  gEl.textContent = ''; 
+                  gEl.title=''; 
+                  gEl.style.display = 'none'; 
+                }
+                applyGradeStyle(gEl, p.gradeColor || null, grade);
+                code2faInput.parentElement.style.display = 'none';
+                document.getElementById('btnLogout').style.display = 'inline-block';
+                setProfileSkeleton(false);
+                
+                // Onglet Jouer
+                document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+                document.getElementById('auth').classList.remove('active');
+                document.querySelector('.tab[data-tab="play"]').classList.add('active');
+                document.getElementById('play').classList.add('active');
+                setAuthTabHidden(true);
+                setTabsForAuth(true, isAdminClient(p));
+                try { await fetchAndUpdatePoints(); } catch {}
+              } else {
+                console.error('[Croissant] API launcher non disponible');
               }
-              const p = saveRes.profile || profile;
-              // Mettre à jour l'UI comme pour une connexion réussie
-              log('Connecté via Croissant-API.fr');
-              setAuthError('');
-              document.getElementById('profileName').textContent = p.name || 'Pseudo';
-              document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
-              const skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
-              document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
-              const gEl = document.getElementById('profileGrade');
-              const grade = formatGrade(p.grade ?? p.role);
-              if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
-              else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
-              applyGradeStyle(gEl, p.gradeColor || null, grade);
-              code2faInput.parentElement.style.display = 'none';
-              document.getElementById('btnLogout').style.display = 'inline-block';
-              setProfileSkeleton(false);
-              // Onglet Jouer
-              document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
-              document.getElementById('auth').classList.remove('active');
-              document.querySelector('.tab[data-tab="play"]').classList.add('active');
-              document.getElementById('play').classList.add('active');
-              setAuthTabHidden(true);
-              setTabsForAuth(true, isAdminClient(p));
-              try { await fetchAndUpdatePoints(); } catch {}
             } catch (e) {
-              console.log('alertUser error', e);
+              console.error('[Croissant] Erreur:', e);
               try { log('Erreur Croissant: ' + (e?.message || e)); } catch {}
             }
           }
         </script>
-        <button
-          data-client_id="2b90be46-3fdb-45f1-98bd-081b70cc3d9f"
-          data-callback="alertUser"
-          class="croissant-oauth2-btn"
-          style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;"
-        >
-          <img
-            src="https://croissant-api.fr/assets/icons/favicon-32x32.avif"
-            alt="icon"
-            style="width:24px; height:24px;"
-          />
-          Se connecter avec Croissant-API.fr
-        </button>
         <!-- Formulaire détaillé masqué par défaut -->
         <div id="authForm" style="display:none;">
           <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
