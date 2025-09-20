@@ -366,35 +366,71 @@ html, body { overflow: hidden; }
           Se connecter avec Croissant-API.fr
         </button>
         
-        <!-- Script Croissant-API.fr -->
-        <script src="https://croissant-api.fr/oauth2/script.js"></script>
+        <!-- Script Croissant-API.fr avec gestion d'erreur -->
+        <script>
+          // Debug avant chargement
+          console.log('[Croissant] Tentative de chargement du script...');
+          
+          // Créer dynamiquement le script pour mieux gérer les erreurs
+          const script = document.createElement('script');
+          script.src = 'https://croissant-api.fr/oauth2/script.js';
+          script.onload = function() {
+            console.log('[Croissant] Script chargé avec succès!');
+            console.log('[Croissant] window.CroissantOAuth disponible:', typeof window.CroissantOAuth);
+          };
+          script.onerror = function() {
+            console.error('[Croissant] Erreur de chargement du script!');
+          };
+          document.head.appendChild(script);
+        </script>
         
         <!-- Debug et handler -->
         <script>
-          // Debug: vérifier que le script se charge
-          console.log('[Croissant] Script chargé');
-          
           // Handler pour le bouton Croissant
           document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('btnLoginWithCroissant');
             if (btn) {
+              console.log('[Croissant] Bouton trouvé, attachement du handler...');
               btn.addEventListener('click', () => {
                 console.log('[Croissant] Clic sur le bouton');
+                console.log('[Croissant] window.CroissantOAuth:', window.CroissantOAuth);
+                console.log('[Croissant] typeof window.CroissantOAuth.open:', typeof window.CroissantOAuth?.open);
+                
                 // Tenter d'ouvrir la popup via le script Croissant
                 if (window.CroissantOAuth && typeof window.CroissantOAuth.open === 'function') {
+                  console.log('[Croissant] Tentative d\'ouverture de la popup...');
                   window.CroissantOAuth.open({
                     client_id: '2b90be46-3fdb-45f1-98bd-081b70cc3d9f',
                     callback: alertUser
                   });
                 } else {
                   console.error('[Croissant] Script non chargé ou API non disponible');
-                  alert('Le script Croissant n\'est pas disponible');
+                  console.error('[Croissant] Détails:', {
+                    'window.CroissantOAuth': window.CroissantOAuth,
+                    'typeof open': typeof window.CroissantOAuth?.open
+                  });
+                  
+                  // Alternative: essayer d'ouvrir directement l'URL OAuth
+                  const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
+                  const redirectUri = encodeURIComponent(window.location.origin + '/callback');
+                  const authUrl = `https://croissant-api.fr/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=croissant_login`;
+                  
+                  if (confirm('Le script Croissant n\'est pas disponible. Voulez-vous ouvrir la page d\'authentification manuellement?')) {
+                    window.open(authUrl, '_blank');
+                  }
                 }
               });
             } else {
               console.error('[Croissant] Bouton non trouvé');
             }
           });
+          
+          // Vérification périodique de l'API
+          setTimeout(() => {
+            console.log('[Croissant] Vérification après délai:');
+            console.log('- window.CroissantOAuth:', window.CroissantOAuth);
+            console.log('- typeof open:', typeof window.CroissantOAuth?.open);
+          }, 2000);
           
           // Callback pour la connexion Croissant
           async function alertUser(user) {
