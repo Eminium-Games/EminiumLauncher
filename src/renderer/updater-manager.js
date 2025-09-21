@@ -8,7 +8,7 @@ let _updaterState = {
   checking: false,
   downloading: false,
   installing: false,
-  currentVersion: '1.0.0',
+  currentVersion: '1.0.1',
   latestVersion: null,
   updateAvailable: false,
   updateInfo: null,
@@ -40,9 +40,9 @@ async function initUpdaterManager() {
     // Get current version
     if (window.eminium && window.eminium.getVersion) {
       const versionInfo = await window.eminium.getVersion();
-      _updaterState.currentVersion = versionInfo.version || '1.0.0';
+      _updaterState.currentVersion = versionInfo.version || '1.0.1';
     } else {
-      _updaterState.currentVersion = '1.0.0';
+      _updaterState.currentVersion = '1.0.1';
     }
     
     console.log('[Updater] Current version:', _updaterState.currentVersion);
@@ -530,7 +530,7 @@ async function forceUpdate() {
     // Clear any cached update info
     _updaterState.updateAvailable = false;
     _updaterState.updateInfo = null;
-    _updaterState.latestVersion = '1.0.0';
+    _updaterState.latestVersion = '1.0.1';
     
     // Force a fresh check
     await checkForUpdates(true);
