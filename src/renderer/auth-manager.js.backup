@@ -242,7 +242,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
   }
 }
 
-// Complete logout and reset
+// Logout function
 async function performLogout() {
   try {
     // Show confirmation dialog
@@ -253,6 +253,75 @@ async function performLogout() {
     }
 
     console.log('[Auth] Starting logout process...');
+
+    // Disable logout button during logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = 'Déconnexion...';
+    }
+
+    // Call logout API
+    const result = await window.eminium.logout();
+
+    if (result && result.ok) {
+      console.log('[Auth] Logout successful');
+
+      // Show success message
+      if (window.Logger) {
+        window.Logger.success('Déconnexion réussie');
+      }
+
+      // Reset UI
+      resetUIAfterLogout();
+
+      // Update app state if available
+      if (window.App && window.App.getState) {
+        const state = window.App.getState();
+        if (state) {
+          state.authenticated = false;
+        }
+      }
+
+      // Show success notification
+      if (window.UIHelpers && window.UIHelpers.showNotification) {
+        window.UIHelpers.showNotification('Déconnexion réussie !', 'success');
+      }
+    } else {
+      throw new Error(result?.error || 'Logout failed');
+    }
+
+  } catch (error) {
+    console.error('[Auth] Logout error:', error.message);
+
+    // Show error message
+    if (window.Logger) {
+      window.Logger.error('Erreur lors de la déconnexion: ' + error.message);
+    }
+
+    if (window.UIHelpers && window.UIHelpers.showNotification) {
+      window.UIHelpers.showNotification('Erreur lors de la déconnexion', 'error');
+    }
+
+    // Re-enable logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = '🚪 Déconnexion';
+    }
+  }
+}
+// Complete logout and reset
+async function completeLogout() {
+  try {
+    // Show confirmation
+    const confirmed = confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    console.log('[Auth] Starting complete logout process...');
 
     // Disable logout button during logout
     const logoutBtn = document.getElementById('logoutBtn');
@@ -318,7 +387,6 @@ async function performLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
       logoutBtn.disabled = false;
-      logoutBtn.textContent = '🚪 Déconnexion';
     }
   }
 }
@@ -436,20 +504,20 @@ function resetUIAfterLogout() {
   console.log('[Auth] UI reset for logged out state');
 }
 
-// Function to show connection status
-function showConnectionStatus(message, type = 'info') {
-  const indicator = document.getElementById('connectionStatus');
-  if (indicator) {
-    indicator.textContent = message;
-    indicator.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' :
-                                 type === 'success' ? 'rgba(34,197,94,0.9)' :
-                                 'rgba(0,0,0,0.8)';
-    indicator.style.display = 'block';
-    setTimeout(() => {
-      indicator.style.display = 'none';
-    }, 5000);
+  // Function to show connection status
+  function showConnectionStatus(message, type = 'info') {
+    const indicator = document.getElementById('connectionStatus');
+    if (indicator) {
+      indicator.textContent = message;
+      indicator.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' :
+                                   type === 'success' ? 'rgba(34,197,94,0.9)' :
+                                   'rgba(0,0,0,0.8)';
+      indicator.style.display = 'block';
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 5000);
+    }
   }
-}
 
 // Initialize authentication event listeners
 function initAuthListeners() {
