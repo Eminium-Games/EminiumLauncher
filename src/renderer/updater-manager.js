@@ -208,7 +208,9 @@ function handleUpdateProgress(data) {
 
 // Check for updates
 async function checkForUpdates(showProgress = true) {
+  // Prevent multiple simultaneous calls
   if (_updaterState.checking || !window.updater) {
+    console.log('[Updater] Check already in progress or updater not available');
     return { ok: false, error: 'Updater not available or already checking' };
   }
   
@@ -378,7 +380,13 @@ function showUpdateNotification(updateInfo) {
   } else if (Notification.permission !== 'denied') {
     Notification.requestPermission().then(permission => {
       if (permission === 'granted') {
-        showUpdateNotification(updateInfo);
+        // Don't call showUpdateNotification recursively - just show the notification directly
+        new Notification('Mise à jour disponible', {
+          body: `Version ${updateInfo.version} est disponible pour le téléchargement`,
+          icon: '/icon.png',
+          badge: '/icon.png',
+          tag: 'eminium-update'
+        });
       }
     });
   }

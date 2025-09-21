@@ -363,6 +363,7 @@ window.ProgressUI = {
   set,
   addLine,
   setButtonsEnabled,
+  enableClose,
   isOpen,
   resetPhases,
   updatePhases,
