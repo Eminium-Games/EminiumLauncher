@@ -366,19 +366,22 @@ html, body { overflow: hidden; }
           Se connecter avec Croissant-API.fr (BÊTA)
         </button>
         
-        <!-- Connexion Croissant simplifiée -->
+        <!-- Connexion Croissant via Popup -->
         <script>
-          // Connexion directe avec Croissant-API.fr
-          console.log('[Croissant] Initialisation de la connexion...');
+          // Connexion Croissant avec popup
+          console.log('[Croissant] Initialisation de la connexion popup...');
           
-          // Fonction simple pour se connecter avec Croissant
-          window.connectWithCroissant = async function() {
+          // Fonction pour ouvrir la popup OAuth
+          window.connectWithCroissant = function() {
             try {
-              console.log('[Croissant] Début de la connexion...');
+              console.log('[Croissant] Ouverture de la popup OAuth...');
               
               const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
               const redirectUri = 'http://localhost:8080/callback';
               const state = Math.random().toString(36).substring(7);
+              
+              // Stocker l'état pour la vérification
+              sessionStorage.setItem('croissant_oauth_state', state);
               
               const authUrl = `https://croissant-api.fr/oauth2/authorize?` +
                 `client_id=${clientId}&` +
@@ -387,13 +390,68 @@ html, body { overflow: hidden; }
                 `state=${state}&` +
                 `scope=profile email balance`;
               
-              console.log('[Croissant] Redirection vers:', authUrl);
+              console.log('[Croissant] URL OAuth:', authUrl);
               
-              // Stocker l'état pour vérifier plus tard
-              sessionStorage.setItem('croissant_state', state);
+              // Ouvrir la popup
+              const width = 600;
+              const height = 700;
+              const left = (screen.width / 2) - (width / 2);
+              const top = (screen.height / 2) - (height / 2);
               
-              // Rediriger directement vers la page d'authentification
-              window.location.href = authUrl;
+              const popup = window.open(
+                authUrl,
+                'CroissantOAuth',
+                `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+              );
+              
+              if (!popup) {
+                console.error('[Croissant] Impossible d\'ouvrir la popup');
+                alert('Veuillez autoriser les popups pour vous connecter avec Croissant');
+                return;
+              }
+              
+              // Surveiller la popup pour détecter la fermeture
+              const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                  clearInterval(checkClosed);
+                  console.log('[Croissant] Popup fermée par l\'utilisateur');
+                }
+              }, 1000);
+              
+              // Écouter les messages de la popup
+              const messageHandler = function(event) {
+                // Vérifier l'origine pour la sécurité
+                if (event.origin !== window.location.origin) return;
+                
+                if (event.data && event.data.type === 'croissant_oauth_result') {
+                  const { code, state: returnedState, error } = event.data;
+                  
+                  // Vérifier le state
+                  const savedState = sessionStorage.getItem('croissant_oauth_state');
+                  if (returnedState !== savedState) {
+                    console.error('[Croissant] State invalide');
+                    return;
+                  }
+                  
+                  // Nettoyer
+                  sessionStorage.removeItem('croissant_oauth_state');
+                  window.removeEventListener('message', messageHandler);
+                  clearInterval(checkClosed);
+                  
+                  if (error) {
+                    console.error('[Croissant] Erreur OAuth:', error);
+                    alert('Erreur d\'authentification: ' + error);
+                    return;
+                  }
+                  
+                  if (code) {
+                    // Traiter le code OAuth
+                    processOAuthCode(code, clientId, redirectUri);
+                  }
+                }
+              };
+              
+              window.addEventListener('message', messageHandler);
               
             } catch (error) {
               console.error('[Croissant] Erreur:', error);
@@ -401,77 +459,54 @@ html, body { overflow: hidden; }
             }
           };
           
-          // Vérifier si on revient d'une authentification Croissant
-          window.checkCroissantCallback = async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const state = urlParams.get('state');
-            const error = urlParams.get('error');
-            
-            if (error) {
-              console.error('[Croissant] Erreur d\'authentification:', error);
-              alert('Erreur d\'authentification: ' + error);
-              return;
-            }
-            
-            if (code && state) {
-              const savedState = sessionStorage.getItem('croissant_state');
-              if (state !== savedState) {
-                console.error('[Croissant] State invalide');
-                return;
+          // Traiter le code OAuth reçu
+          async function processOAuthCode(code, clientId, redirectUri) {
+            try {
+              console.log('[Croissant] Traitement du code OAuth...');
+              
+              // Échanger le code contre un token
+              const tokenResponse = await fetch('https://croissant-api.fr/oauth2/token', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                  grant_type: 'authorization_code',
+                  code: code,
+                  client_id: clientId,
+                  redirect_uri: redirectUri
+                })
+              });
+              
+              if (!tokenResponse.ok) {
+                throw new Error(`Erreur ${tokenResponse.status}: ${tokenResponse.statusText}`);
               }
               
-              console.log('[Croissant] Code reçu, tentative d\'échange...');
+              const tokenData = await tokenResponse.json();
+              console.log('[Croissant] Token obtenu');
               
-              try {
-                // Échanger le code contre un token
-                const tokenResponse = await fetch('https://croissant-api.fr/oauth2/token', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                  },
-                  body: new URLSearchParams({
-                    grant_type: 'authorization_code',
-                    code: code,
-                    client_id: '2b90be46-3fdb-45f1-98bd-081b70cc3d9f',
-                    redirect_uri: 'http://localhost:8080/callback'
-                  })
-                });
-                
-                if (!tokenResponse.ok) {
-                  throw new Error(`Erreur ${tokenResponse.status}: ${tokenResponse.statusText}`);
+              // Récupérer les infos utilisateur
+              const userResponse = await fetch('https://croissant-api.fr/api/user', {
+                headers: {
+                  'Authorization': `Bearer ${tokenData.access_token}`
                 }
-                
-                const tokenData = await tokenResponse.json();
-                console.log('[Croissant] Token obtenu:', tokenData);
-                
-                // Récupérer les infos utilisateur
-                const userResponse = await fetch('https://croissant-api.fr/api/user', {
-                  headers: {
-                    'Authorization': `Bearer ${tokenData.access_token}`
-                  }
-                });
-                
-                if (!userResponse.ok) {
-                  throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
-                }
-                
-                const userData = await userResponse.json();
-                console.log('[Croissant] Utilisateur:', userData);
-                
-                // Nettoyer l'URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-                sessionStorage.removeItem('croissant_state');
-                
-                // Traiter les données utilisateur
-                await processCroissantUser(userData);
-                
-              } catch (error) {
-                console.error('[Croissant] Erreur lors de l\'échange:', error);
-                alert('Erreur lors de la connexion: ' + error.message);
+              });
+              
+              if (!userResponse.ok) {
+                throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
               }
+              
+              const userData = await userResponse.json();
+              console.log('[Croissant] Utilisateur récupéré');
+              
+              // Traiter les données utilisateur
+              await processCroissantUser(userData);
+              
+            } catch (error) {
+              console.error('[Croissant] Erreur traitement OAuth:', error);
+              alert('Erreur lors de la connexion: ' + error.message);
             }
-          };
+          }
           
           // Traiter les données utilisateur Croissant
           async function processCroissantUser(user) {
@@ -551,12 +586,7 @@ html, body { overflow: hidden; }
             }
           }
           
-          // Vérifier au chargement si on a un callback
-          document.addEventListener('DOMContentLoaded', () => {
-            window.checkCroissantCallback();
-          });
-          
-          console.log('[Croissant] Connexion initialisée!');
+          console.log('[Croissant] Connexion popup initialisée!');
         </script>
         
         <!-- Handler simplifié pour le bouton Croissant -->
