@@ -245,22 +245,147 @@ async function performLogin(email, pass, code2fa, options = {}) {
 // Logout function
 async function performLogout() {
   try {
-    await window.eminium.logout();
-    console.log('[Auth] Logout successful');
+    // Show confirmation dialog
+    const confirmed = confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
 
-    // Reset UI
-    resetUIAfterLogout();
+    if (!confirmed) {
+      return;
+    }
 
-    // Update app state if available
-    if (window.App && window.App.getState) {
-      const state = window.App.getState();
-      if (state) {
-        state.authenticated = false;
+    console.log('[Auth] Starting logout process...');
+
+    // Disable logout button during logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = 'Déconnexion...';
+    }
+
+    // Call logout API
+    const result = await window.eminium.logout();
+
+    if (result && result.ok) {
+      console.log('[Auth] Logout successful');
+
+      // Show success message
+      if (window.Logger) {
+        window.Logger.success('Déconnexion réussie');
       }
+
+      // Reset UI
+      resetUIAfterLogout();
+
+      // Update app state if available
+      if (window.App && window.App.getState) {
+        const state = window.App.getState();
+        if (state) {
+          state.authenticated = false;
+        }
+      }
+
+      // Show success notification
+      if (window.UIHelpers && window.UIHelpers.showNotification) {
+        window.UIHelpers.showNotification('Déconnexion réussie !', 'success');
+      }
+    } else {
+      throw new Error(result?.error || 'Logout failed');
     }
 
   } catch (error) {
     console.error('[Auth] Logout error:', error.message);
+
+    // Show error message
+    if (window.Logger) {
+      window.Logger.error('Erreur lors de la déconnexion: ' + error.message);
+    }
+
+    if (window.UIHelpers && window.UIHelpers.showNotification) {
+      window.UIHelpers.showNotification('Erreur lors de la déconnexion', 'error');
+    }
+
+    // Re-enable logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = '🚪 Déconnexion';
+    }
+// Complete logout and reset
+async function completeLogout() {
+  try {
+    // Show confirmation
+    const confirmed = confirm('Êtes-vous sûr de vouloir vous déconnecter ?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    console.log('[Auth] Starting complete logout process...');
+
+    // Disable logout button during logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = 'Déconnexion...';
+    }
+
+    // Call logout API
+    const result = await window.eminium.logout();
+
+    if (result && result.ok) {
+      console.log('[Auth] Logout successful');
+
+      // Show success message
+      if (window.Logger) {
+        window.Logger.success('Déconnexion réussie');
+      }
+
+      // Complete UI reset
+      resetUIAfterLogout();
+
+      // Update app state if available
+      if (window.App && window.App.getState) {
+        const state = window.App.getState();
+        if (state) {
+          state.authenticated = false;
+          // Clear any cached profile data
+          state.userProfile = null;
+        }
+      }
+
+      // Show success notification
+      if (window.UIHelpers && window.UIHelpers.showNotification) {
+        window.UIHelpers.showNotification('Déconnexion réussie ! Vous pouvez vous reconnecter.', 'success');
+      }
+
+      // Re-enable logout button after a short delay
+      setTimeout(() => {
+        if (logoutBtn) {
+          logoutBtn.disabled = false;
+          logoutBtn.textContent = '🚪 Déconnexion';
+        }
+      }, 1000);
+
+    } else {
+      throw new Error(result?.error || 'Logout failed');
+    }
+
+  } catch (error) {
+    console.error('[Auth] Logout error:', error.message);
+
+    // Show error message
+    if (window.Logger) {
+      window.Logger.error('Erreur lors de la déconnexion: ' + error.message);
+    }
+
+    if (window.UIHelpers && window.UIHelpers.showNotification) {
+      window.UIHelpers.showNotification('Erreur lors de la déconnexion: ' + error.message, 'error');
+    }
+
+    // Re-enable logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.disabled = false;
+    }
   }
 }
 
@@ -402,7 +527,7 @@ function initAuthListeners() {
   let loginInProgress = false;
 
   // Main login button
-  window.DOMUtils.addEventListener('btnLogin', 'click', async () => {
+  window.DOMUtils.addEventListener('loginBtn', 'click', async () => {
     if (loginInProgress) {
       console.log('[Auth] Login already in progress, ignoring duplicate click');
       return;
@@ -415,7 +540,7 @@ function initAuthListeners() {
     const code2fa = window.DOMUtils.getValue('code2fa', '').trim();
 
     // Disable login button during login
-    const loginButton = window.DOMUtils.getElement('btnLogin', false);
+    const loginButton = window.DOMUtils.getElement('loginBtn', false);
     if (loginButton) {
       loginButton.disabled = true;
       loginButton.textContent = 'Connexion en cours...';
@@ -432,26 +557,26 @@ function initAuthListeners() {
       }
     }
   });
-  
+
   // "Se connecter avec Eminium" button
-  window.DOMUtils.addEventListener('btnLoginWithEminium', 'click', () => {
+  window.DOMUtils.addEventListener('oauthBtn', 'click', () => {
     const detailedForm = window.DOMUtils.getElement('detailedLoginForm', false);
     const quickAuth = window.DOMUtils.getElement('quickAuth', false);
-    
+
     if (detailedForm && quickAuth) {
       window.DOMUtils.toggle('detailedLoginForm', 'block');
       window.DOMUtils.toggle('quickAuth', 'block');
     }
   });
-  
+
   // Logout button
-  window.DOMUtils.addEventListener('btnLogout', 'click', performLogout);
-  
+  window.DOMUtils.addEventListener('logoutBtn', 'click', performLogout);
+
   // Handle Enter key in login form
   window.DOMUtils.addEventListener('loginForm', 'keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const btnLogin = window.DOMUtils.getElement('btnLogin', false);
+      const btnLogin = window.DOMUtils.getElement('loginBtn', false);
       if (btnLogin && !btnLogin.disabled) {
         btnLogin.click();
       }
