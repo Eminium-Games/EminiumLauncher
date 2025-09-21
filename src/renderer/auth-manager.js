@@ -4,7 +4,7 @@
  */
 
 // API URL configuration
-const SITE_URL = 'https://croissant-api.fr';
+const SITE_URL = 'https://eminium.ovh';
 
 // Validation formulaire login
 function validateLogin(email, pass, code2fa) {
