@@ -353,8 +353,8 @@ function showUpdateNotification(updateInfo) {
   if (Notification.permission === 'granted') {
     new Notification('Mise à jour disponible', {
       body: `Version ${updateInfo.version} est disponible pour le téléchargement`,
-      icon: '/icon.png',
-      badge: '/icon.png',
+      icon: 'https://eminium.ovh/storage/img/eminium-logo.png',
+      badge: 'https://eminium.ovh/storage/img/eminium-logo.png',
       tag: 'eminium-update'
     });
   } else if (Notification.permission !== 'denied') {
@@ -363,8 +363,8 @@ function showUpdateNotification(updateInfo) {
         // Don't call showUpdateNotification recursively - just show the notification directly
         new Notification('Mise à jour disponible', {
           body: `Version ${updateInfo.version} est disponible pour le téléchargement`,
-          icon: '/icon.png',
-          badge: '/icon.png',
+          icon: 'https://eminium.ovh/storage/img/eminium-logo.png',
+          badge: 'https://eminium.ovh/storage/img/eminium-logo.png',
           tag: 'eminium-update'
         });
       }
