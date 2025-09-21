@@ -194,60 +194,355 @@ function createErrorNotification(error, errorType, severity) {
   const notification = document.createElement('div');
   notification.className = `error-notification error-${severity}`;
   
-  const message = ErrorMessages[errorType][severity];
-  const solutions = ErrorSolutions[errorType];
+  // Get appropriate icon and color for severity
+  const getSeverityConfig = (severity) => {
+    switch (severity) {
+      case ErrorSeverity.LOW:
+        return {
+          icon: 'ℹ️',
+          glowColor: 'rgba(251, 191, 36, 0.3)',
+          borderColor: '#fbbf24'
+        };
+      case ErrorSeverity.MEDIUM:
+        return {
+          icon: '⚠️',
+          glowColor: 'rgba(249, 115, 22, 0.3)',
+          borderColor: '#f97316'
+        };
+      case ErrorSeverity.HIGH:
+        return {
+          icon: '🚨',
+          glowColor: 'rgba(239, 68, 68, 0.3)',
+          borderColor: '#ef4444'
+        };
+      case ErrorSeverity.CRITICAL:
+        return {
+          icon: '💥',
+          glowColor: 'rgba(220, 38, 38, 0.4)',
+          borderColor: '#dc2626'
+        };
+      default:
+        return {
+          icon: '⚠️',
+          glowColor: 'rgba(239, 68, 68, 0.3)',
+          borderColor: '#ef4444'
+        };
+    }
+  };
+
+  const severityConfig = getSeverityConfig(severity);
   
   notification.innerHTML = `
     <div class="error-header">
-      <div class="error-icon">⚠️</div>
-      <div class="error-title">
-        <strong>Erreur ${severity.toUpperCase()}</strong>
-        <div class="error-message">${message}</div>
+      <div class="error-icon">
+        <span class="error-icon-emoji">${severityConfig.icon}</span>
+        <div class="error-icon-glow" style="background: radial-gradient(circle, ${severityConfig.glowColor} 0%, transparent 70%);"></div>
       </div>
-      <button class="error-close" onclick="this.parentElement.parentElement.remove()">×</button>
+      <div class="error-content">
+        <h3 class="error-title">Erreur ${severity.toUpperCase()}</h3>
+        <p class="error-message">${message}</p>
+      </div>
+      <button class="error-close-btn" onclick="this.parentElement.parentElement.remove()" title="Fermer">
+        <span>×</span>
+      </button>
     </div>
-    <div class="error-details">
-      <div class="error-technical">
-        <strong>Détails techniques:</strong>
-        <code>${error?.message || error || 'Erreur inconnue'}</code>
+    <div class="error-body">
+      <div class="error-section">
+        <div class="error-section-title">Détails techniques</div>
+        <div class="error-technical-details">
+          <code class="error-code">${error?.message || error || 'Erreur inconnue'}</code>
+        </div>
       </div>
-      <div class="error-solutions">
-        <strong>Solutions possibles:</strong>
-        <ul>
-          ${solutions.slice(0, 3).map(solution => `<li>${solution}</li>`).join('')}
-        </ul>
+      <div class="error-section">
+        <div class="error-section-title">Solutions possibles</div>
+        <div class="error-solutions">
+          <ul class="error-solutions-list">
+            ${solutions.slice(0, 3).map(solution => `<li class="error-solution-item">${solution}</li>`).join('')}
+          </ul>
+        </div>
       </div>
     </div>
-    <div class="error-actions">
-      <button class="btn btn-primary" onclick="ErrorManager.retryLastAction()">Réessayer</button>
-      <button class="btn btn-secondary" onclick="ErrorManager.showErrorDetails()">Détails</button>
+    <div class="error-footer">
+      <button class="error-btn error-btn-secondary" onclick="ErrorManager.showErrorDetails()">Détails</button>
+      <button class="error-btn error-btn-primary" onclick="ErrorManager.retryLastAction()">Réessayer</button>
     </div>
   `;
   
-  // Add styles
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    max-width: 400px;
-    z-index: 10000;
-    animation: slideIn 0.3s ease-out;
-    backdrop-filter: blur(10px);
+  // Enhanced CSS styles for the new notification design
+  const enhancedStyles = `
+    /* Error Notification Styles */
+    .error-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 40px rgba(0, 0, 0, 0.2);
+      max-width: 480px;
+      min-width: 380px;
+      z-index: 10000;
+      animation: slideInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Header Section */
+    .error-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 20px 16px 20px;
+      background: linear-gradient(135deg, rgba(26, 26, 26, 0.98) 0%, rgba(15, 15, 15, 0.95) 100%);
+      border-bottom: 1px solid var(--border-secondary);
+      position: relative;
+    }
+
+    .error-icon {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .error-icon-emoji {
+      font-size: 28px;
+      display: block;
+      position: relative;
+      z-index: 2;
+    }
+
+    .error-icon-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    .error-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .error-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px 0;
+      line-height: 1.2;
+    }
+
+    .error-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .error-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .error-close-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+    }
+
+    /* Body Section */
+    .error-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .error-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .error-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .error-technical-details {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-secondary);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .error-code {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 12px;
+      color: var(--error);
+      background: rgba(239, 68, 68, 0.05);
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: block;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .error-solutions {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-secondary);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .error-solutions-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .error-solution-item {
+      font-size: 13px;
+      color: var(--text-primary);
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-left: 3px solid var(--accent-primary);
+      border-radius: 6px;
+      position: relative;
+      line-height: 1.4;
+    }
+
+    .error-solution-item:before {
+      content: '💡';
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      opacity: 0.6;
+    }
+
+    .error-solution-item {
+      padding-left: 32px;
+    }
+
+    /* Footer Section */
+    .error-footer {
+      padding: 16px 20px 20px 20px;
+      background: var(--bg-glass);
+      border-top: 1px solid var(--border-secondary);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .error-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 80px;
+    }
+
+    .error-btn-primary {
+      background: var(--gradient-primary);
+      color: var(--bg-primary);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .error-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .error-btn-secondary {
+      background: var(--bg-glass-strong);
+      color: var(--text-primary);
+      border: 1px solid var(--border-primary);
+    }
+
+    .error-btn-secondary:hover {
+      background: var(--bg-glass);
+      border-color: var(--accent-primary);
+    }
+
+    /* Severity-specific colors */
+    .error-notification.error-low {
+      border-left: 4px solid #fbbf24;
+    }
+
+    .error-notification.error-medium {
+      border-left: 4px solid #f97316;
+    }
+
+    .error-notification.error-high {
+      border-left: 4px solid #ef4444;
+    }
+
+    .error-notification.error-critical {
+      border-left: 4px solid #dc2626;
+    }
+
+    /* Animations */
+    @keyframes slideInFromRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOutToRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .error-notification.removing {
+      animation: slideOutToRight 0.3s ease-in;
+    }
   `;
-  
-  // Add severity-specific colors
-  const severityColors = {
-    [ErrorSeverity.LOW]: 'border-left: 4px solid #fbbf24;',
-    [ErrorSeverity.MEDIUM]: 'border-left: 4px solid #f97316;',
-    [ErrorSeverity.HIGH]: 'border-left: 4px solid #ef4444;',
-    [ErrorSeverity.CRITICAL]: 'border-left: 4px solid #dc2626;'
-  };
-  
-  notification.style.cssText += severityColors[severity];
+
+  // Add the enhanced styles to the document
+  if (!document.getElementById('error-notification-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'error-notification-styles';
+    styleElement.textContent = enhancedStyles;
+    document.head.appendChild(styleElement);
+  }
   
   document.body.appendChild(notification);
   
@@ -255,7 +550,7 @@ function createErrorNotification(error, errorType, severity) {
   const autoRemoveTime = severity === ErrorSeverity.LOW || severity === ErrorSeverity.MEDIUM ? 10000 : 15000;
   setTimeout(() => {
     if (notification.parentNode) {
-      notification.style.animation = 'slideOut 0.3s ease-in';
+      notification.classList.add('removing');
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
@@ -386,6 +681,19 @@ const CallStackProtection = {
 
     // Remove from activity tracking
     this._lastActivity.delete(functionName);
+  },
+
+  // Check for stuck functions
+  checkForStuckFunctions: function() {
+    if (!this._protectionActive) return;
+
+    const now = Date.now();
+    for (const [functionName, lastActivity] of this._lastActivity) {
+      if ((now - lastActivity) > this._maxIdleTime) {
+        console.warn(`[CallStackProtection] Function ${functionName} appears stuck, force resetting`);
+        this._forceResetFunction(functionName);
+      }
+    }
   },
 
   // Start monitoring
