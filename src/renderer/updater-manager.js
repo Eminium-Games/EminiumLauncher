@@ -87,33 +87,11 @@ function setupUpdaterEventListeners() {
     });
   }
   
-  // Listen for update events
+  // Listen for update events - simplified version without event listeners
   if (window.updater) {
-    window.updater.onUpdateAvailable((info) => {
-      console.log('[Updater] Update available:', info);
-      _updaterState.updateAvailable = true;
-      _updaterState.updateInfo = info;
-      _updaterState.latestVersion = info.version;
-      
-      // Show notification if enabled
-      if (UPDATE_CONFIG.showNotifications) {
-        showUpdateNotification(info);
-      }
-      
-      // Update UI
-      updateUpdateUI();
-    });
-    
-    window.updater.onUpdateNotAvailable(() => {
-      console.log('[Updater] No updates available');
-      _updaterState.updateAvailable = false;
-      updateUpdateUI();
-    });
-    
-    window.updater.onUpdateError((error) => {
-      console.error('[Updater] Update error:', error);
-      handleUpdateError(error);
-    });
+    // Event listeners are not available in the current implementation
+    // Updates are checked manually via checkForUpdates function instead
+    console.log('[Updater] Event listeners not available, using manual check approach');
   }
 }
 
