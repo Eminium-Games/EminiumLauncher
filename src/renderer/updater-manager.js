@@ -352,6 +352,7 @@ function showUpdateNotification(updateInfo) {
   
   if (Notification.permission === 'granted') {
     new Notification('Mise à jour disponible', {
+      title: 'Mise à jour disponible',
       body: `Version ${updateInfo.version} est disponible pour le téléchargement`,
       icon: 'https://eminium.ovh/storage/img/eminium-logo.png',
       badge: 'https://eminium.ovh/storage/img/eminium-logo.png',
@@ -362,6 +363,7 @@ function showUpdateNotification(updateInfo) {
       if (permission === 'granted') {
         // Don't call showUpdateNotification recursively - just show the notification directly
         new Notification('Mise à jour disponible', {
+          title: 'Mise à jour disponible',
           body: `Version ${updateInfo.version} est disponible pour le téléchargement`,
           icon: 'https://eminium.ovh/storage/img/eminium-logo.png',
           badge: 'https://eminium.ovh/storage/img/eminium-logo.png',
@@ -387,8 +389,11 @@ function handleUpdateError(error) {
   // Show error notification if enabled
   if (UPDATE_CONFIG.showNotifications && 'Notification' in window && Notification.permission === 'granted') {
     new Notification('Erreur de mise à jour', {
+      title: 'Erreur de mise à jour',
       body: 'Une erreur est survenue lors de la mise à jour',
-      icon: '/icon.png'
+      icon: 'https://eminium.ovh/storage/img/eminium-logo.png',
+      badge: 'https://eminium.ovh/storage/img/eminium-logo.png',
+      tag: 'eminium-update'
     });
   }
 }
