@@ -476,6 +476,192 @@ html, body {
   gap: 12px;
 }
 
+/* Enhanced animations and visual feedback */
+.btn-login {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-login.loading {
+  color: transparent;
+}
+
+.btn-login.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  color: white;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Enhanced form inputs with animations */
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  background: var(--bg-glass-strong);
+}
+
+.form-input.error {
+  border-color: var(--error);
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Enhanced error messages */
+.auth-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--error);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Success feedback */
+.auth-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--success);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Loading states */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 10, 10, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(245, 158, 11, 0.3);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Enhanced OAuth button */
+.btn-oauth {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.btn-oauth:hover {
+  background: var(--bg-glass-strong);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.btn-oauth:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Social button styling */
 .social-btn {
   display: flex;
   align-items: center;
@@ -494,14 +680,160 @@ html, body {
 
 .social-btn:hover {
   background: var(--bg-glass);
+  border-color: var(--accent-primary);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .social-btn img {
   width: 24px;
   height: 24px;
   border-radius: 6px;
+}
+
+/* Auth divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-primary);
+}
+
+.auth-divider span {
+  padding: 0 16px;
+}
+
+/* Auth container */
+.auth-container {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Login form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Auth progress */
+.auth-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+  min-width: 280px;
+}
+
+.auth-progress .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(245, 158, 11, 0.2);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.auth-progress .auth-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auth-progress .auth-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-secondary);
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+.auth-progress .auth-step.active {
+  opacity: 1;
+  border-color: var(--accent-primary);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.auth-progress .auth-step.completed {
+  opacity: 1;
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.auth-progress .step-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg-glass);
+  border: 2px solid var(--border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.auth-progress .auth-step.active .step-icon {
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.auth-progress .auth-step.completed .step-icon {
+  border-color: var(--success);
+  background: var(--success);
+  color: white;
+}
+
+.auth-progress .step-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.auth-progress .auth-step.active .step-text {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.auth-progress .auth-step.completed .step-text {
+  color: var(--success);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
 }
 
 /* Range Sliders */
@@ -532,6 +864,7 @@ html, body {
   border-radius: 4px;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .slider::-webkit-slider-thumb {
@@ -628,102 +961,6 @@ html, body {
   color: #86efac;
 }
 
-/* Tutorial Modal */
-.tutorial-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
-}
-
-.tutorial-content {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-primary);
-  border-radius: 24px;
-  padding: 32px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-lg);
-}
-
-.tutorial-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.tutorial-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-}
-
-.tutorial-subtitle {
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.tutorial-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.tutorial-step {
-  display: flex;
-  gap: 16px;
-  padding: 20px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-secondary);
-  border-radius: 16px;
-}
-
-.step-number {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-primary);
-  color: var(--bg-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.step-content h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.step-content p {
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.tutorial-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
 /* Error Messages */
 .error-message {
   background: rgba(239, 68, 68, 0.1);
@@ -759,32 +996,73 @@ html, body {
   border: 1px solid var(--border-primary);
   border-radius: 24px;
   padding: 32px;
-  max-width: 500px;
+  max-width: 600px;
   width: 90%;
   box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .progress-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
   text-align: center;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .progress-bar-container {
   background: var(--bg-secondary);
-  border-radius: 12px;
-  height: 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  height: 16px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .progress-bar {
   height: 100%;
   background: var(--gradient-primary);
-  border-radius: 12px;
-  transition: width 0.3s ease;
+  border-radius: 16px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  overflow: hidden;
 }
 
 .progress-bar::after {
@@ -794,29 +1072,271 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   animation: shimmer 2s infinite;
 }
 
-@keyframes shimmer {
+.progress-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: progressGlow 3s infinite;
+}
+
+@keyframes progressGlow {
   0% {
-    transform: translateX(-100%);
+    left: -100%;
   }
   100% {
-    transform: translateX(100%);
+    left: 100%;
   }
+}
+
+.progress-phases {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+
+.progress-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+}
+
+.progress-phase::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border-secondary);
+  z-index: -1;
+}
+
+.progress-phase:last-child::after {
+  display: none;
+}
+
+.phase-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.phase-icon.active {
+  background: var(--gradient-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+.phase-icon.completed {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.phase-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .progress-log {
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: 8px;
-  padding: 12px;
-  height: 150px;
+  border-radius: 12px;
+  padding: 16px;
+  height: 180px;
   overflow-y: auto;
   font-family: 'Space Grotesk', monospace;
+  font-size: 13px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.progress-log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.progress-log::-webkit-scrollbar-track {
+  background: var(--bg-glass);
+  border-radius: 4px;
+}
+
+.progress-log::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.progress-log::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+.log-entry {
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  animation: logEntrySlide 0.3s ease-out;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.log-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(2px);
+}
+
+@keyframes logEntrySlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.log-entry.success {
+  color: var(--success);
+  border-left-color: var(--success);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.log-entry.error {
+  color: var(--error);
+  border-left-color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+  font-weight: 500;
+}
+
+.log-entry.warning {
+  color: var(--warning);
+  border-left-color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.log-entry.info {
+  color: var(--text-secondary);
+  border-left-color: var(--border-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.log-entry.debug {
+  color: var(--text-secondary);
+  opacity: 0.7;
   font-size: 12px;
-  margin-bottom: 16px;
+  border-left-color: var(--border-secondary);
+}
+
+.log-entry.highlight {
+  background: rgba(245, 158, 11, 0.15);
+  border-left-color: var(--accent-primary);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.log-entry .timestamp {
+  color: var(--text-secondary);
+  opacity: 0.7;
+  font-size: 11px;
+  margin-right: 8px;
+  font-family: 'Space Grotesk', monospace;
+}
+
+.log-entry .log-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+.log-entry.success .log-icon::before {
+  content: '✓';
+  color: var(--success);
+}
+
+.log-entry.error .log-icon::before {
+  content: '✗';
+  color: var(--error);
+}
+
+.log-entry.warning .log-icon::before {
+  content: '⚠';
+  color: var(--warning);
+}
+
+.log-entry.info .log-icon::before {
+  content: 'ℹ';
+  color: var(--text-secondary);
+}
+
+.log-entry.debug .log-icon::before {
+  content: '●';
+  color: var(--border-primary);
+}
+
+.log-entry.highlight .log-icon::before {
+  content: '★';
+  color: var(--accent-primary);
+}
+
+/* Log entry animations for special events */
+.log-entry.pulse {
+  animation: logPulse 1s ease-in-out;
+}
+
+@keyframes logPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Log container empty state */
+.progress-log:empty::before {
+  content: 'Aucune activité pour le moment...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.progress-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
 }
 
 /* Responsive Design */
@@ -1003,45 +1523,47 @@ html, body {
       <section class="content-section active" id="auth">
         <div class="panel">
           <div class="panel-header">
-            <h2 class="panel-title">Bienvenue sur Eminium</h2>
+            <h2 class="panel-title">Connexion</h2>
+            <p class="panel-subtitle">Connectez-vous à votre compte Eminium</p>
           </div>
           
-          <div class="social-login">
-            <button class="social-btn" id="btnLoginWithEminium">
-              <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium">
-              <span>Se connecter avec Eminium</span>
-            </button>
+          <div class="auth-container">
+            <!-- OAuth Login -->
+            <div class="social-login">
+              <button class="btn-oauth" id="btnLoginWithCroissant">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Se connecter avec Croissant-API
+              </button>
+              
+              <div class="auth-divider">
+                <span>ou</span>
+              </div>
+            </div>
             
-            <button class="social-btn" id="btnLoginWithCroissant">
-              <img src="https://croissant-api.fr/assets/icons/favicon-32x32.avif" alt="Croissant">
-              <span>Se connecter avec Croissant-API.fr (BÊTA)</span>
-            </button>
+            <!-- Traditional Login Form -->
+            <form id="loginForm" class="login-form">
+              <div class="form-group">
+                <input type="email" id="email" class="form-input" placeholder="Adresse email" required>
+              </div>
+              
+              <div class="form-group">
+                <input type="password" id="pass" class="form-input" placeholder="Mot de passe" required>
+              </div>
+              
+              <div class="form-group" id="code2faGroup" style="display: none;">
+                <input type="text" id="code2fa" class="form-input" placeholder="Code 2FA" maxlength="6">
+              </div>
+              
+              <button type="submit" class="btn-login" id="btnLogin">
+                <span class="btn-text">Se connecter</span>
+              </button>
+              
+              <!-- Status Messages -->
+              <div id="authStatus"></div>
+            </form>
           </div>
-          
-          <!-- Detailed Login Form (Hidden by default) -->
-          <div id="authForm" style="display: none; margin-top: 24px;">
-            <div class="form-group">
-              <label class="form-label" for="email">Email</label>
-              <input type="email" id="email" class="form-input" placeholder="votre@email.com" autocomplete="username">
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label" for="pass">Mot de passe</label>
-              <input type="password" id="pass" class="form-input" placeholder="••••••••" autocomplete="current-password">
-            </div>
-            
-            <div class="form-group" id="code2faGroup" style="display: none;">
-              <label class="form-label" for="code2fa">Code 2FA</label>
-              <input type="text" id="code2fa" class="form-input" placeholder="000000" inputmode="numeric" pattern="\d{6}">
-            </div>
-            
-            <button class="btn btn-block" id="btnLogin">
-              <span>🔑</span>
-              Se connecter
-            </button>
-          </div>
-          
-          <div id="authError" class="error-message" style="display: none;"></div>
         </div>
       </section>
 
@@ -1152,63 +1674,54 @@ html, body {
   </div>
 </div>
 
-<!-- Tutorial Modal -->
-<div class="tutorial-modal" id="tutorialModal">
-  <div class="tutorial-content">
-    <div class="tutorial-header">
-      <h2 class="tutorial-title">Bienvenue sur Eminium Launcher</h2>
-      <p class="tutorial-subtitle">Découvrez comment utiliser votre nouveau launcher</p>
-    </div>
-    
-    <div class="tutorial-steps">
-      <div class="tutorial-step">
-        <div class="step-number">1</div>
-        <div class="step-content">
-          <h3>Connectez-vous</h3>
-          <p>Utilisez votre compte Eminium ou Croissant-API.fr pour vous connecter. Cliquez sur l'un des boutons de connexion pour commencer.</p>
-        </div>
-      </div>
-      
-      <div class="tutorial-step">
-        <div class="step-number">2</div>
-        <div class="step-content">
-          <h3>Configurez vos paramètres</h3>
-          <p>Dans l'onglet "Jouer", ajustez la mémoire allouée, la distance de rendu et les FPS selon les performances de votre ordinateur.</p>
-        </div>
-      </div>
-      
-      <div class="tutorial-step">
-        <div class="step-number">3</div>
-        <div class="step-content">
-          <h3>Lancez le jeu</h3>
-          <p>Cliquez sur "Installer / Mettre à jour" pour vérifier les fichiers, puis sur "Jouer" pour lancer votre aventure Minecraft.</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="tutorial-actions">
-      <button class="btn btn-secondary" onclick="closeTutorial()">
-        <span>✖️</span>
-        Fermer
-      </button>
-      <button class="btn" onclick="closeTutorial()">
-        <span>🚀</span>
-        Commencer
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- Progress Modal -->
 <div class="progress-modal" id="progressModal">
   <div class="progress-content">
     <h3 class="progress-title" id="progressTitle">Préparation</h3>
+    
+    <div class="progress-stats">
+      <div class="progress-stat">
+        <span class="progress-stat-value" id="progressPercent">0%</span>
+        <span>Progression</span>
+      </div>
+      <div class="progress-stat">
+        <span class="progress-stat-value" id="progressSpeed">0 MB/s</span>
+        <span>Vitesse</span>
+      </div>
+      <div class="progress-stat">
+        <span class="progress-stat-value" id="progressTime">--:--</span>
+        <span>Temps restant</span>
+      </div>
+    </div>
+    
     <div class="progress-bar-container">
       <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
     </div>
+    
+    <div class="progress-phases">
+      <div class="progress-phase">
+        <div class="phase-icon" id="phaseCheck" title="Vérification">✓</div>
+        <span class="phase-label">Vérification</span>
+      </div>
+      <div class="progress-phase">
+        <div class="phase-icon" id="phaseDownload" title="Téléchargement">⬇</div>
+        <span class="phase-label">Téléchargement</span>
+      </div>
+      <div class="progress-phase">
+        <div class="phase-icon" id="phaseInstall" title="Installation">⚙</div>
+        <span class="phase-label">Installation</span>
+      </div>
+      <div class="progress-phase">
+        <div class="phase-icon" id="phaseComplete" title="Terminé">✓</div>
+        <span class="phase-label">Terminé</span>
+      </div>
+    </div>
+    
     <div class="progress-log" id="progressLog"></div>
-    <div class="btn-group">
+    
+    <div class="progress-actions">
       <button class="btn btn-secondary" id="progressClose" disabled>Fermer</button>
+      <button class="btn" id="progressBackground" disabled>Arrière-plan</button>
     </div>
   </div>
 </div>
@@ -1229,48 +1742,36 @@ function createParticles() {
   }
 }
 
-// Tutorial functionality
-function showTutorial() {
-  const modal = document.getElementById('tutorialModal');
-  modal.style.display = 'flex';
-  
-  // Store that user has seen tutorial
-  localStorage.setItem('eminium_tutorial_seen', 'true');
-}
-
-function closeTutorial() {
-  const modal = document.getElementById('tutorialModal');
-  modal.style.display = 'none';
-}
-
-// Show tutorial on first visit
-if (!localStorage.getItem('eminium_tutorial_seen')) {
-  setTimeout(showTutorial, 1000);
-}
 
 // Tab switching functionality
-document.querySelectorAll('.nav-item').forEach(tab => {
-  tab.addEventListener('click', () => {
-    if (tab.style.display === 'none') return; // ignore hidden tabs
-    
-    const targetTab = tab.dataset.tab;
-    
-    // Check if user is logged in for restricted tabs
-    if (!IS_LOGGED && targetTab !== 'auth') {
-      log('Veuillez vous connecter pour accéder à cet onglet.');
-      return;
+(function() {
+  document.querySelectorAll('.nav-item').forEach(tab => {
+    if (tab) {
+      tab.addEventListener('click', () => {
+        if (tab.style.display === 'none') return; // ignore hidden tabs
+        
+        const targetTab = tab.dataset.tab;
+        
+        // Check if user is logged in for restricted tabs
+        if (!IS_LOGGED && targetTab !== 'auth') {
+          log('Veuillez vous connecter pour accéder à cet onglet.');
+          return;
+        }
+        
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(tc => tc.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        tab.classList.add('active');
+        const targetContent = document.getElementById(targetTab);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+      });
     }
-    
-    // Remove active class from all tabs and content
-    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.content-section').forEach(tc => tc.classList.remove('active'));
-    
-    // Add active class to clicked tab and corresponding content
-    tab.classList.add('active');
-    document.getElementById(targetTab).classList.add('active');
   });
-});
-
+})();
 // Auth/tab visibility helpers
 let IS_LOGGED = false;
 function setTabsForAuth(logged, isAdmin = false) {
@@ -1387,9 +1888,11 @@ function setAuthTabHidden(hidden) {
 
 // Toggle functionality
 document.querySelectorAll('.toggle').forEach(toggle => {
-  toggle.addEventListener('click', () => {
-    toggle.classList.toggle('active');
-  });
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+    });
+  }
 });
 
 // Initialize particles on load
@@ -1413,7 +1916,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Déconnexion
-document.getElementById('btnLogout').addEventListener('click', async () => {
+const btnLogout = document.getElementById('btnLogout');
+if (btnLogout) {
+  btnLogout.addEventListener('click', async () => {
   try {
     const res = await window.eminium.logout();
     if (res?.ok) {
@@ -1452,6 +1957,7 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
     log('Erreur IPC (logout): ' + (e?.message || e));
   }
 });
+}
 
 // Logger
 function log(msg) {
@@ -1567,25 +2073,107 @@ function mapLoginError(result, caught) {
 document.getElementById('code2faGroup').style.display = 'none';
 
 // Bouton "Se connecter avec Eminium" -> révèle le formulaire détaillé
-document.getElementById('btnLoginWithEminium').addEventListener('click', () => {
-  const authForm = document.getElementById('authForm');
-  authForm.style.display = authForm.style.display === 'none' ? 'block' : 'none';
-});
+const btnLoginWithEminium = document.getElementById('btnLoginWithEminium');
+if (btnLoginWithEminium) {
+  btnLoginWithEminium.addEventListener('click', () => {
+    const authForm = document.getElementById('authForm');
+    if (authForm) {
+      authForm.style.display = authForm.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+}
 
 // Action de connexion unifiée (réutilisable par un overlay)
 async function performLogin(email, pass, code2fa, options = {}) {
   try {
+    const loginBtn = document.getElementById('btnLogin');
+    const btnText = loginBtn.querySelector('.btn-text');
+    const authStatus = document.getElementById('authStatus');
+    
     setAuthError('');
+    authStatus.innerHTML = '';
+    
     if (!validateLogin(email, pass, code2fa)) {
       setAuthError('Veuillez remplir correctement tous les champs.');
       return;
     }
     
+    // Show loading state
+    loginBtn.classList.add('loading');
+    loginBtn.disabled = true;
+    btnText.textContent = 'Connexion...';
+    
+    // Show enhanced progress indicator
+    authStatus.innerHTML = `
+      <div class="auth-progress">
+        <div class="loading-spinner"></div>
+        <span>Connexion en cours...</span>
+        <div class="auth-steps">
+          <div class="auth-step active" id="authStep1">
+            <div class="step-icon">1</div>
+            <div class="step-text">Validation des informations</div>
+          </div>
+          <div class="auth-step" id="authStep2">
+            <div class="step-icon">2</div>
+            <div class="step-text">Connexion au serveur</div>
+          </div>
+          <div class="auth-step" id="authStep3">
+            <div class="step-icon">3</div>
+            <div class="step-text">Chargement du profil</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Simulate step progression for better UX
+    setTimeout(() => {
+      const step1 = document.getElementById('authStep1');
+      const step2 = document.getElementById('authStep2');
+      if (step1 && step2) {
+        step1.classList.remove('active');
+        step1.classList.add('completed');
+        step1.querySelector('.step-icon').textContent = '✓';
+        step2.classList.add('active');
+      }
+    }, 800);
+    
     const res = await window.eminium.login({ email, password: pass, code2fa: code2fa || null });
+    
+    // Remove loading state
+    loginBtn.classList.remove('loading');
+    loginBtn.disabled = false;
+    btnText.textContent = 'Se connecter';
+    
     if (res?.ok) {
       const p = res.profile;
       log('Connecté avec succès');
-      setAuthError('');
+      
+      // Show success message with final step
+      const step2 = document.getElementById('authStep2');
+      const step3 = document.getElementById('authStep3');
+      if (step2 && step3) {
+        step2.classList.remove('active');
+        step2.classList.add('completed');
+        step2.querySelector('.step-icon').textContent = '✓';
+        step3.classList.add('active');
+      }
+      
+      setTimeout(() => {
+        if (step3) {
+          step3.classList.remove('active');
+          step3.classList.add('completed');
+          step3.querySelector('.step-icon').textContent = '✓';
+        }
+        
+        authStatus.innerHTML = `
+          <div class="auth-success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; vertical-align: middle;">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Connexion réussie ! Redirection...
+          </div>
+        `;
+      }, 500);
       
       // Mettre à jour l'UI
       document.getElementById('profileName').textContent = p.name || 'Pseudo';
@@ -1608,26 +2196,46 @@ async function performLogin(email, pass, code2fa, options = {}) {
       document.getElementById('btnLogout').style.display = 'inline-flex';
       setProfileSkeleton(false);
       
-      // Changer d'onglet
-      document.querySelector('.nav-item[data-tab="auth"]').classList.remove('active');
-      document.getElementById('auth').classList.remove('active');
-      document.querySelector('.nav-item[data-tab="play"]').classList.add('active');
-      document.getElementById('play').classList.add('active');
-      setAuthTabHidden(true);
-      setTabsForAuth(true, isAdminClient(p));
-      try { await fetchAndUpdatePoints(); } catch {}
+      // Changer d'onglet après un délai pour montrer le message de succès
+      setTimeout(async () => {
+        document.querySelector('.nav-item[data-tab="auth"]').classList.remove('active');
+        document.getElementById('auth').classList.remove('active');
+        document.querySelector('.nav-item[data-tab="play"]').classList.add('active');
+        document.getElementById('play').classList.add('active');
+        setAuthTabHidden(true);
+        setTabsForAuth(true, isAdminClient(p));
+        try { await fetchAndUpdatePoints(); } catch {}
+      }, 1500);
       
       return { ok: true, profile: p };
     } else {
       const errMsg = mapLoginError(res, null);
       setAuthError(errMsg);
       log('Échec connexion: ' + errMsg);
+      
+      // Show error animation
+      const formInputs = document.querySelectorAll('.form-input');
+      formInputs.forEach(input => {
+        if (input.value.trim() === '') {
+          input.classList.add('error');
+          setTimeout(() => input.classList.remove('error'), 500);
+        }
+      });
+      
       return { ok: false, error: errMsg };
     }
   } catch (caught) {
     const errMsg = mapLoginError(null, caught);
     setAuthError(errMsg);
     log('Erreur connexion: ' + errMsg);
+    
+    // Reset button state
+    const loginBtn = document.getElementById('btnLogin');
+    const btnText = loginBtn.querySelector('.btn-text');
+    loginBtn.classList.remove('loading');
+    loginBtn.disabled = false;
+    btnText.textContent = 'Se connecter';
+    
     return { ok: false, error: errMsg };
   }
 }
@@ -1637,12 +2245,14 @@ function login(email, password, code2fa) {
 }
 
 // Bouton de connexion principal → réutilise performLogin
-btnLogin.addEventListener('click', async () => {
-  const email = document.getElementById('email').value.trim();
-  const pass = document.getElementById('pass').value.trim();
-  const code2fa = document.getElementById('code2fa').value.trim();
-  await performLogin(email, pass, code2fa);
-});
+if (btnLogin) {
+  btnLogin.addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('pass').value.trim();
+    const code2fa = document.getElementById('code2fa').value.trim();
+    await performLogin(email, pass, code2fa);
+  });
+}
 
 // Progress UI
 const progressUI = (() => {
@@ -1651,6 +2261,14 @@ const progressUI = (() => {
   const bar = document.getElementById('progressBar');
   const log = document.getElementById('progressLog');
   const btnClose = document.getElementById('progressClose');
+  const btnBackground = document.getElementById('progressBackground');
+  const percentEl = document.getElementById('progressPercent');
+  const speedEl = document.getElementById('progressSpeed');
+  const timeEl = document.getElementById('progressTime');
+  
+  let startTime = null;
+  let lastBytes = 0;
+  let lastTime = null;
   
   function flush() {
     if (log) log.innerHTML = '';
@@ -1661,6 +2279,19 @@ const progressUI = (() => {
     if (title) title.textContent = t || 'Préparation';
     if (bar) bar.style.width = '0%';
     if (btnClose) btnClose.disabled = true;
+    if (btnBackground) btnBackground.disabled = true;
+    if (percentEl) percentEl.textContent = '0%';
+    if (speedEl) speedEl.textContent = '0 MB/s';
+    if (timeEl) timeEl.textContent = '--:--';
+    
+    // Reset phases
+    resetPhases();
+    
+    // Start tracking
+    startTime = Date.now();
+    lastBytes = 0;
+    lastTime = startTime;
+    
     flush();
   }
   
@@ -1668,8 +2299,24 @@ const progressUI = (() => {
     if (modal) modal.classList.remove('show');
   }
   
-  function set(p) {
+  function set(p, options = {}) {
     if (bar) bar.style.width = Math.max(0, Math.min(100, p)) + '%';
+    if (percentEl) percentEl.textContent = `${Math.round(p)}%`;
+    
+    // Calculate speed if provided
+    if (options.speed !== undefined && speedEl) {
+      speedEl.textContent = `${options.speed.toFixed(1)} MB/s`;
+    }
+    
+    // Calculate ETA if provided
+    if (options.eta !== undefined && timeEl) {
+      const minutes = Math.floor(options.eta / 60);
+      const seconds = Math.floor(options.eta % 60);
+      timeEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Update phases based on progress
+    updatePhases(p);
   }
   
   function bump(delta = 3) {
@@ -1681,26 +2328,220 @@ const progressUI = (() => {
   function addLine(line, cls = '') {
     if (!log) return;
     const entry = document.createElement('div');
+    
+    // Add base class and specific type class
     entry.className = 'log-entry' + (cls ? ' ' + cls : '');
-    entry.textContent = line;
+    
+    // Create timestamp
+    const timestamp = document.createElement('span');
+    timestamp.className = 'timestamp';
+    timestamp.textContent = new Date().toLocaleTimeString('fr-FR');
+    
+    // Create icon
+    const icon = document.createElement('span');
+    icon.className = 'log-icon';
+    
+    // Create message text
+    const message = document.createElement('span');
+    message.textContent = line;
+    
+    // Assemble the entry
+    entry.appendChild(timestamp);
+    entry.appendChild(icon);
+    entry.appendChild(message);
+    
+    // Add special animation for important events
+    if (cls === 'error' || cls === 'success' || cls === 'highlight') {
+      entry.classList.add('pulse');
+    }
+    
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
+    
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      if (log) {
+        log.scrollTop = log.scrollHeight;
+      }
+    }, 100);
   }
   
   function enableClose() {
     if (btnClose) btnClose.disabled = false;
+    if (btnBackground) btnBackground.disabled = false;
   }
   
   function isOpen() {
     return modal?.classList.contains('show');
   }
   
+  function resetPhases() {
+    const phases = ['phaseCheck', 'phaseDownload', 'phaseInstall', 'phaseComplete'];
+    phases.forEach(phaseId => {
+      const phase = document.getElementById(phaseId);
+      if (phase) {
+        phase.classList.remove('active', 'completed');
+      }
+    });
+  }
+  
+  function updatePhases(percent) {
+    const checkPhase = document.getElementById('phaseCheck');
+    const downloadPhase = document.getElementById('phaseDownload');
+    const installPhase = document.getElementById('phaseInstall');
+    const completePhase = document.getElementById('phaseComplete');
+    
+    if (percent >= 0 && checkPhase) checkPhase.classList.add('active');
+    if (percent >= 10 && checkPhase) checkPhase.classList.add('completed');
+    
+    if (percent >= 10 && downloadPhase) downloadPhase.classList.add('active');
+    if (percent >= 50 && downloadPhase) downloadPhase.classList.add('completed');
+    
+    if (percent >= 50 && installPhase) installPhase.classList.add('active');
+    if (percent >= 90 && installPhase) installPhase.classList.add('completed');
+    
+    if (percent >= 95 && completePhase) completePhase.classList.add('active');
+    if (percent >= 100 && completePhase) completePhase.classList.add('completed');
+  }
+  
+  function calculateSpeed(bytesDownloaded) {
+    const now = Date.now();
+    const timeDiff = (now - lastTime) / 1000; // seconds
+    const bytesDiff = bytesDownloaded - lastBytes;
+    
+    if (timeDiff > 0) {
+      const speedBytesPerSec = bytesDiff / timeDiff;
+      const speedMBPerSec = speedBytesPerSec / (1024 * 1024);
+      lastBytes = bytesDownloaded;
+      lastTime = now;
+      return speedMBPerSec;
+    }
+    return 0;
+  }
+  
+  function calculateETA(percent, totalBytes) {
+    if (percent <= 0 || percent >= 100) return 0;
+    
+    const now = Date.now();
+    const elapsed = (now - startTime) / 1000; // seconds
+    const remaining = (elapsed * (100 - percent)) / percent;
+    
+    return remaining;
+  }
+  
   if (btnClose) {
     btnClose.addEventListener('click', close);
   }
   
-  return { open, close, set, bump, addLine, flush, enableClose, isOpen };
-})();
+  if (btnBackground) {
+    btnBackground.addEventListener('click', close);
+  }
+  
+  return { 
+    open, 
+    close, 
+    set, 
+    bump, 
+    addLine, 
+    flush, 
+    enableClose, 
+    isOpen,
+    calculateSpeed,
+    calculateETA
+  };})();
+
+// Enhanced logging utilities
+const logUtils = {
+  // Log with different severity levels
+  info: (message) => progressUI.addLine(message, 'info'),
+  success: (message) => progressUI.addLine(message, 'success'),
+  warning: (message) => progressUI.addLine(message, 'warning'),
+  error: (message) => progressUI.addLine(message, 'error'),
+  debug: (message) => progressUI.addLine(message, 'debug'),
+  highlight: (message) => progressUI.addLine(message, 'highlight'),
+  
+  // Log file operations
+  fileStart: (filename) => {
+    logUtils.info(`Début du traitement: ${filename}`);
+  },
+  
+  fileComplete: (filename, size = null) => {
+    const sizeText = size ? ` (${(size / 1024 / 1024).toFixed(2)} MB)` : '';
+    logUtils.success(`Fichier terminé: ${filename}${sizeText}`);
+  },
+  
+  fileError: (filename, error) => {
+    logUtils.error(`Erreur fichier ${filename}: ${error}`);
+  },
+  
+  // Log download progress
+  downloadStart: (url, filename) => {
+    logUtils.info(`Téléchargement: ${filename} depuis ${url}`);
+  },
+  
+  downloadProgress: (filename, percent, speed) => {
+    logUtils.debug(`${filename}: ${percent.toFixed(1)}% - ${speed.toFixed(1)} MB/s`);
+  },
+  
+  downloadComplete: (filename, totalSize) => {
+    logUtils.success(`Téléchargement terminé: ${filename} (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
+  },
+  
+  // Log installation steps
+  installStart: (component) => {
+    logUtils.info(`Installation de: ${component}`);
+  },
+  
+  installProgress: (component, step, total) => {
+    logUtils.debug(`${component}: Étape ${step}/${total}`);
+  },
+  
+  installComplete: (component) => {
+    logUtils.success(`Installation terminée: ${component}`);
+  },
+  
+  // Log verification steps
+  verifyStart: (target) => {
+    logUtils.info(`Vérification de: ${target}`);
+  },
+  
+  verifyProgress: (current, total) => {
+    const percent = (current / total * 100).toFixed(1);
+    logUtils.debug(`Vérification: ${percent}% (${current}/${total})`);
+  },
+  
+  verifyComplete: (target) => {
+    logUtils.success(`Vérification terminée: ${target}`);
+  },
+  
+  // Log system operations
+  systemInfo: (info) => {
+    logUtils.info(`Système: ${info}`);
+  },
+  
+  systemWarning: (warning) => {
+    logUtils.warning(`Avertissement système: ${warning}`);
+  },
+  
+  // Log milestones
+  milestone: (message) => {
+    logUtils.highlight(`🎯 ${message}`);
+  },
+  
+  // Log completion
+  complete: (message) => {
+    logUtils.highlight(`✅ ${message}`);
+  },
+  
+  // Log errors with details
+  errorDetails: (error, context = '') => {
+    const contextText = context ? `[${context}] ` : '';
+    logUtils.error(`${contextText}${error.message || error}`);
+    if (error.stack) {
+      logUtils.debug(`Stack: ${error.stack.split('\n')[0]}`);
+    }
+  }
+};
 
 // Ping serveur toutes les 5s pour activer/désactiver le bouton Jouer
 let _pingTimer = null;
@@ -1775,11 +2616,16 @@ async function checkAndAutoPrepare() {
 }
 
 // Remappe le bouton Vérifier/Préparer pour utiliser prepare()
-document.getElementById('btnCheck').addEventListener('click', async () => {
-  await checkAndAutoPrepare();
-});
+const btnCheck = document.getElementById('btnCheck');
+if (btnCheck) {
+  btnCheck.addEventListener('click', async () => {
+    await checkAndAutoPrepare();
+  });
+}
 
-document.getElementById('btnPlay').addEventListener('click', async () => {
+const btnPlay = document.getElementById('btnPlay');
+if (btnPlay) {
+  btnPlay.addEventListener('click', async () => {
   const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
   const serverHost = 'play.eminium.ovh';
   const serverPort = 25565;
@@ -1804,6 +2650,7 @@ document.getElementById('btnPlay').addEventListener('click', async () => {
     progressUI.enableClose();
   }
 });
+}
 
 // Updater + startup flow
 async function runUpdaterIfNeeded() {
@@ -1860,7 +2707,7 @@ async function runUpdaterIfNeeded() {
 })();
 
 // RAM + perf UI bindings
-(async function initPerfUI(){
+(async function() {
   const memSlider = document.getElementById('memSlider');
   const memLabel = document.getElementById('memLabel');
   const ramInfo = document.getElementById('ramInfo');
@@ -1901,10 +2748,11 @@ async function runUpdaterIfNeeded() {
     ramInfo.textContent = 'Impossible de détecter la RAM système';
   }
 
-  memSlider.addEventListener('input', async () => {
-    updateMemLabel();
-    warnIfTooHigh(detectedRamMB);
-    settingsDebouncedSave();
+  if (memSlider) {
+    memSlider.addEventListener('input', async () => {
+      updateMemLabel();
+      warnIfTooHigh(detectedRamMB);
+      settingsDebouncedSave();
   });
 
   const syncFPS = () => {
@@ -1924,11 +2772,17 @@ async function runUpdaterIfNeeded() {
     }
   };
   
-  render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; });
-  render.addEventListener('change', settingsDebouncedSave);
-  fps.addEventListener('input', ()=> { if (!fpsUnlimited.classList.contains('active')) fpsLabel.textContent = String(fps.value); });
-  fps.addEventListener('change', settingsDebouncedSave);
-  fpsUnlimited.addEventListener('change', () => { syncFPS(); settingsDebouncedSave(); });
+  if (render) {
+    render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; });
+    render.addEventListener('change', settingsDebouncedSave);
+  }
+  if (fps) {
+    fps.addEventListener('input', ()=> { if (!fpsUnlimited.classList.contains('active')) fpsLabel.textContent = String(fps.value); });
+    fps.addEventListener('change', settingsDebouncedSave);
+  }
+  if (fpsUnlimited) {
+    fpsUnlimited.addEventListener('change', () => { syncFPS(); settingsDebouncedSave(); });
+  }
   
   // Initial labels
   renderLabel.textContent = `${render.value} chunks`;
@@ -1973,8 +2827,13 @@ async function runUpdaterIfNeeded() {
   }
   
   // Save checkboxes immediately on toggle
-  document.getElementById('vsync').addEventListener('change', settingsDebouncedSave);
-  fpsUnlimited.addEventListener('change', settingsDebouncedSave);
+  const vsync = document.getElementById('vsync');
+  if (vsync) {
+    vsync.addEventListener('change', settingsDebouncedSave);
+  }
+  if (fpsUnlimited) {
+    fpsUnlimited.addEventListener('change', settingsDebouncedSave);
+  }
 
   // Load on startup
   try {
@@ -2064,7 +2923,9 @@ async function connectWithCroissant() {
       }
     };
     
-    window.addEventListener('message', messageHandler);
+    if (window) {
+      window.addEventListener('message', messageHandler);
+    }
     
   } catch (error) {
     console.error('[Croissant] Erreur:', error);
@@ -2344,7 +3205,9 @@ async function handleOAuthCallback(code, state) {
 document.addEventListener('DOMContentLoaded', handleCallbackParams);
 
 // Appeler aussi si la page change (pour les SPA)
-window.addEventListener('popstate', handleCallbackParams);
+if (window) {
+  window.addEventListener('popstate', handleCallbackParams);
+}
 
 // Fetch and update points (if available)
 async function fetchAndUpdatePoints() {
