@@ -4,2023 +4,1096 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eminium Launcher</title>
-  --bg-glass-strong: rgba(255, 255, 255, 0.08);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-accent: #fbbf24;
-  --accent-primary: #f59e0b;
-  --accent-secondary: #d97706;
-  --accent-glow: rgba(245, 158, 11, 0.25);
-  --success: #10b981;
-  --error: #ef4444;
-  --border-primary: rgba(255, 255, 255, 0.1);
-  --border-secondary: rgba(255, 255, 255, 0.05);
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
-  --shadow-accent: 0 0 32px rgba(245, 158, 11, 0.3);
-  --gradient-primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
-  --gradient-card: linear-gradient(180deg, rgba(26, 26, 26, 0.98) 0%, rgba(15, 15, 15, 0.95) 100%);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  font-family: 'Inter', sans-serif;
-  background: var(--gradient-bg);
-  color: var(--text-primary);
-  overflow: hidden;
-  position: relative;
-}
-
-/* Animated background particles */
-.bg-particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  background: var(--accent-primary);
-  border-radius: 50%;
-  opacity: 0.3;
-  animation: float 20s infinite linear;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(100vh) translateX(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.3;
-  }
-  90% {
-    opacity: 0.3;
-  }
-  100% {
-    transform: translateY(-100vh) translateX(100px);
-    opacity: 0;
-  }
-}
-
-.main-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  position: relative;
-  z-index: 2;
-}
-
-.app-card {
-  width: 100%;
-  max-width: 1200px;
-  min-height: 700px;
-  background: var(--gradient-card);
-  border-radius: 24px;
-  border: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-lg), var(--shadow-accent);
-  backdrop-filter: blur(20px);
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  grid-template-rows: auto 1fr;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.app-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6), 0 0 48px rgba(245, 158, 11, 0.35);
-}
-
-/* Header */
-.app-header {
-  grid-column: 1 / -1;
-  padding: 24px 32px;
-  background: var(--bg-glass);
-  border-bottom: 1px solid var(--border-secondary);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.logo-container {
-  position: relative;
-  width: 64px;
-  height: 64px;
-}
-
-.logo {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
-  animation: logo-pulse 3s ease-in-out infinite;
-}
-
-.logo img {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-}
-
-@keyframes logo-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.6);
-  }
-}
-
-.brand-text h1 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.brand-text .subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-/* Profile Card */
-.profile-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-secondary);
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.profile-card:hover {
-  background: var(--bg-glass-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.profile-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.profile-info {
-  flex: 1;
-}
-
-.profile-name {
-  font-weight: 600;
-  font-size: 16px;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-
-.profile-uuid {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-family: 'Space Grotesk', monospace;
-}
-
-.profile-grade {
-  display: inline-block;
-  padding: 4px 12px;
-  background: var(--gradient-primary);
-  color: var(--bg-primary);
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 4px;
-}
-
-/* Sidebar Navigation */
-.sidebar-nav {
-  grid-column: 1;
-  grid-row: 2;
-  padding: 24px 16px;
-  background: var(--bg-glass);
-  border-right: 1px solid var(--border-secondary);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--gradient-primary);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: -1;
-}
-
-.nav-item:hover {
-  color: var(--text-primary);
-  border-color: var(--border-primary);
-  background: var(--bg-glass-strong);
-  transform: translateX(4px);
-}
-
-.nav-item.active {
-  color: var(--bg-primary);
-  border-color: var(--accent-primary);
-  background: var(--gradient-primary);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
-}
-
-.nav-item.active::before {
-  opacity: 1;
-}
-
-.nav-icon {
-  font-size: 20px;
-  width: 24px;
-  text-align: center;
-}
-
-/* Main Content Area */
-.main-content {
-  grid-column: 2;
-  grid-row: 2;
-  padding: 32px;
-  overflow-y: auto;
-  position: relative;
-}
-
-.content-section {
-  display: none;
-  animation: fadeIn 0.5s ease;
-}
-
-.content-section.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Panels */
-.panel {
-  background: var(--bg-glass);
-  border: 1px solid var(--border-secondary);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.panel:hover {
-  border-color: var(--border-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.panel-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Form Elements */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.form-input {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--accent-glow);
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: var(--gradient-primary);
-  color: var(--bg-primary);
-  border: none;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
-}
-
-.btn:active {
-  transform: translateY(0);
-}
-
-.btn-secondary {
-  background: var(--bg-glass-strong);
-  color: var(--text-primary);
-  border: 1px solid var(--border-primary);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-glass);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-block {
-  width: 100%;
-}
-
-.btn-group {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-/* Social Login Buttons */
-.social-login {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Enhanced animations and visual feedback */
-.btn-login {
-  background: var(--gradient-primary);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-}
-
-.btn-login:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
-}
-
-.btn-login:active {
-  transform: translateY(0);
-}
-
-.btn-login:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-login.loading {
-  color: transparent;
-}
-
-.btn-login.loading::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: 50%;
-  left: 50%;
-  margin-left: -8px;
-  margin-top: -8px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  color: white;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Enhanced form inputs with animations */
-.form-group {
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.form-input {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-  background: var(--bg-glass-strong);
-}
-
-.form-input.error {
-  border-color: var(--error);
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-/* Enhanced error messages */
-.auth-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: var(--error);
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-top: 16px;
-  font-size: 14px;
-  backdrop-filter: blur(10px);
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Success feedback */
-.auth-success {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--success);
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-top: 16px;
-  font-size: 14px;
-  backdrop-filter: blur(10px);
-  animation: slideIn 0.3s ease-out;
-}
-
-/* Loading states */
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(10, 10, 10, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-  z-index: 10;
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(245, 158, 11, 0.3);
-  border-top: 3px solid var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* Enhanced OAuth button */
-.btn-oauth {
-  background: var(--bg-card);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  backdrop-filter: blur(10px);
-}
-
-.btn-oauth:hover {
-  background: var(--bg-glass-strong);
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.btn-oauth:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Social button styling */
-.social-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--bg-glass-strong);
-  border: 1px solid var(--border-primary);
-  border-radius: 16px;
-  color: var(--text-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.social-btn:hover {
-  background: var(--bg-glass);
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.social-btn img {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-}
-
-/* Auth divider */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  margin: 24px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-primary);
-}
-
-.auth-divider span {
-  padding: 0 16px;
-}
-
-/* Auth container */
-.auth-container {
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-/* Login form */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Auth progress */
-.auth-progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 24px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  color: var(--text-secondary);
-  font-size: 14px;
-  backdrop-filter: blur(10px);
-  animation: slideIn 0.3s ease-out;
-  min-width: 280px;
-}
-
-.auth-progress .loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(245, 158, 11, 0.2);
-  border-top: 3px solid var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.auth-progress .auth-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  margin-top: 8px;
-}
-
-.auth-progress .auth-step {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-secondary);
-  transition: all 0.3s ease;
-  opacity: 0.5;
-}
-
-.auth-progress .auth-step.active {
-  opacity: 1;
-  border-color: var(--accent-primary);
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.auth-progress .auth-step.completed {
-  opacity: 1;
-  border-color: var(--success);
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.auth-progress .step-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--bg-glass);
-  border: 2px solid var(--border-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.auth-progress .auth-step.active .step-icon {
-  border-color: var(--accent-primary);
-  background: var(--accent-primary);
-  color: var(--bg-primary);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.auth-progress .auth-step.completed .step-icon {
-  border-color: var(--success);
-  background: var(--success);
-  color: white;
-}
-
-.auth-progress .step-text {
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.auth-progress .auth-step.active .step-text {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.auth-progress .auth-step.completed .step-text {
-  color: var(--success);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-/* Range Sliders */
-.slider-container {
-  margin-bottom: 20px;
-}
-
-.slider-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.slider-value {
-  background: var(--gradient-primary);
-  color: var(--bg-primary);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.slider {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
-  transition: all 0.3s ease;
-}
-
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6);
-}
-
-/* Toggles */
-.toggle-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toggle-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--bg-glass);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-}
-
-.toggle {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  background: var(--bg-secondary);
-  border-radius: 24px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: var(--text-primary);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.toggle.active {
-  background: var(--gradient-primary);
-}
-
-.toggle.active::after {
-  left: 26px;
-}
-
-/* Log Area */
-.log-container {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-  padding: 16px;
-  height: 300px;
-  overflow-y: auto;
-  font-family: 'Space Grotesk', monospace;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.log-entry {
-  margin-bottom: 4px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--bg-glass);
-}
-
-.log-entry.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
-}
-
-.log-entry.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: #86efac;
-}
-
-/* Error Messages */
-.error-message {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #fca5a5;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  margin-top: 12px;
-}
-
-/* Progress Modal */
-.progress-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(8px);
-}
-
-.progress-modal.show {
-  display: flex;
-}
-
-.progress-content {
-  background: var(--gradient-card);
-  border: 1px solid var(--border-primary);
-  border-radius: 24px;
-  padding: 32px;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(20px);
-  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.progress-title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  text-align: center;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.progress-stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.progress-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.progress-stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.progress-bar-container {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-secondary);
-  border-radius: 16px;
-  height: 16px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.progress-bar {
-  height: 100%;
-  background: var(--gradient-primary);
-  border-radius: 16px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-bar::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 2s infinite;
-}
-
-.progress-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: progressGlow 3s infinite;
-}
-
-@keyframes slideIn {
-  0% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOut {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-@keyframes progressGlow {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* Enhanced entrance animations */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
-
-/* Enhanced button hover effects */
-.btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.btn:active::after {
-  width: 300px;
-  height: 300px;
-}
-
-/* Smooth panel entrance */
-.panel {
-  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  animation-fill-mode: both;
-}
-
-.panel:nth-child(1) { animation-delay: 0.1s; }
-.panel:nth-child(2) { animation-delay: 0.2s; }
-.panel:nth-child(3) { animation-delay: 0.3s; }
-.panel:nth-child(4) { animation-delay: 0.4s; }
-
-/* Enhanced form inputs */
-.form-input {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.form-input:focus {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
-}
-
-/* Enhanced nav items */
-.nav-item {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item:hover {
-  transform: translateX(8px) scale(1.02);
-}
-
-.nav-item.active {
-  animation: bounce 0.6s ease;
-}
-
-/* Enhanced profile card */
-.profile-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.profile-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
-}
-
-/* Enhanced toggle buttons */
-.toggle {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.toggle:hover {
-  transform: scale(1.05);
-}
-
-.toggle.active {
-  animation: scaleIn 0.3s ease;
-}
-
-/* Enhanced slider */
-.slider::-webkit-slider-thumb {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
-}
-
-.progress-phases {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 0 8px;
-}
-
-.progress-phase {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  position: relative;
-}
-
-.progress-phase::after {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  width: 100%;
-  height: 2px;
-  background: var(--border-secondary);
-  z-index: -1;
-}
-
-.progress-phase:last-child::after {
-  display: none;
-}
-
-.phase-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  transition: all 0.3s ease;
-}
-
-.phase-icon.active {
-  background: var(--gradient-primary);
-  border-color: var(--accent-primary);
-  color: white;
-  transform: scale(1.1);
-}
-
-.phase-icon.completed {
-  background: var(--success);
-  border-color: var(--success);
-  color: white;
-}
-
-.phase-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.progress-log {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-  padding: 16px;
-  height: 180px;
-  overflow-y: auto;
-  font-family: 'Space Grotesk', monospace;
-  font-size: 13px;
-  margin-bottom: 20px;
-  line-height: 1.5;
-  position: relative;
-}
-
-.progress-log::-webkit-scrollbar {
-  width: 8px;
-}
-
-.progress-log::-webkit-scrollbar-track {
-  background: var(--bg-glass);
-  border-radius: 4px;
-}
-
-.progress-log::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.progress-log::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-primary);
-}
-
-.log-entry {
-  margin-bottom: 6px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border-left: 3px solid transparent;
-  animation: logEntrySlide 0.3s ease-out;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.log-entry:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(2px);
-}
-
-@keyframes logEntrySlide {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.log-entry.success {
-  color: var(--success);
-  border-left-color: var(--success);
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.log-entry.error {
-  color: var(--error);
-  border-left-color: var(--error);
-  background: rgba(239, 68, 68, 0.1);
-  font-weight: 500;
-}
-
-.log-entry.warning {
-  color: var(--warning);
-  border-left-color: var(--warning);
-  background: rgba(245, 158, 11, 0.1);
-}
-
-.log-entry.info {
-  color: var(--text-secondary);
-  border-left-color: var(--border-primary);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.log-entry.debug {
-  color: var(--text-secondary);
-  opacity: 0.7;
-  font-size: 12px;
-  border-left-color: var(--border-secondary);
-}
-
-.log-entry.highlight {
-  background: rgba(245, 158, 11, 0.15);
-  border-left-color: var(--accent-primary);
-  color: var(--accent-primary);
-  font-weight: 500;
-}
-
-.log-entry .timestamp {
-  color: var(--text-secondary);
-  opacity: 0.7;
-  font-size: 11px;
-  margin-right: 8px;
-  font-family: 'Space Grotesk', monospace;
-}
-
-.log-entry .log-icon {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
-  vertical-align: middle;
-  font-size: 12px;
-}
-
-.log-entry.success .log-icon::before {
-  content: '✓';
-  color: var(--success);
-}
-
-.log-entry.error .log-icon::before {
-  content: '✗';
-  color: var(--error);
-}
-
-.log-entry.warning .log-icon::before {
-  content: '⚠';
-  color: var(--warning);
-}
-
-.log-entry.info .log-icon::before {
-  content: 'ℹ';
-  color: var(--text-secondary);
-}
-
-.log-entry.debug .log-icon::before {
-  content: '●';
-  color: var(--border-primary);
-}
-
-.log-entry.highlight .log-icon::before {
-  content: '★';
-  color: var(--accent-primary);
-}
-
-/* Log entry animations for special events */
-.log-entry.pulse {
-  animation: logPulse 1s ease-in-out;
-}
-
-@keyframes logPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
-/* Log container empty state */
-.progress-log:empty::before {
-  content: 'Aucune activité pour le moment...';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--text-secondary);
-  opacity: 0.5;
-  font-style: italic;
-  pointer-events: none;
-}
-
-.progress-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .app-card {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
-    max-width: 100%;
-  }
-
-  .sidebar-nav {
-    grid-column: 1;
-    grid-row: 2;
-    flex-direction: row;
-    padding: 16px;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border-secondary);
-  }
-
-  .nav-item {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  .main-content {
-    grid-column: 1;
-    grid-row: 3;
-    padding: 24px;
-  }
-
-  .app-header {
-    padding: 16px 24px;
-  }
-
-  .brand-text h1 {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-container {
-    padding: 12px;
-  }
-
-  .app-card {
-    border-radius: 16px;
-    min-height: 600px;
-  }
-
-  .app-header {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-  }
-
-  .sidebar-nav {
-    justify-content: center;
-  }
-
-  .main-content {
-    padding: 16px;
-  }
-
-  .panel {
-    padding: 16px;
-  }
-
-  .btn-group {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
-
-/* Loading Skeleton */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-glass) 50%, var(--bg-secondary) 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 8px;
-}
-
-@keyframes loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Hide scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--accent-primary);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-secondary);
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-</style>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://eminium.ovh/storage/img/eminium-logo.png">
+
+    <style>
+        /* CSS Reset & Variables */
+        :root {
+            /* Colors */
+            --primary: #f59e0b;
+            --primary-dark: #d97706;
+            --primary-light: #fbbf24;
+            --secondary: #1f2937;
+            --dark: #0f172a;
+            --darker: #020617;
+
+            /* Backgrounds */
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #1a1b26;
+            --bg-tertiary: #2d3748;
+            --bg-card: rgba(26, 27, 38, 0.8);
+            --bg-glass: rgba(255, 255, 255, 0.02);
+            --bg-glass-hover: rgba(255, 255, 255, 0.05);
+            --bg-glass-strong: rgba(255, 255, 255, 0.08);
+
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-accent: #fbbf24;
+
+            /* Status */
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+
+            /* Borders */
+            --border-primary: rgba(255, 255, 255, 0.1);
+            --border-secondary: rgba(255, 255, 255, 0.05);
+            --border-strong: rgba(255, 255, 255, 0.15);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.3);
+
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --gradient-secondary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --gradient-card: linear-gradient(145deg, rgba(26, 27, 38, 0.9) 0%, rgba(15, 23, 42, 0.8) 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        }
+
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        /* Main Layout */
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        /* Header */
+        .header {
+            background: var(--gradient-card);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .user-card:hover {
+            background: var(--bg-glass-hover);
+            border-color: var(--border-strong);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .user-details {
+            text-align: left;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-primary);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 1rem;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-glass-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: var(--primary-light);
+            border-radius: 2px;
+        }
+
+        .nav-icon {
+            font-size: 1.125rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: transparent;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Authentication Section */
+        .auth-section {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .auth-form {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+            background: var(--bg-glass-strong);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border-primary);
+        }
+
+        .auth-divider span {
+            background: var(--bg-card);
+            padding: 0 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .oauth-button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-glass-strong);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+        }
+
+        .oauth-button:hover {
+            background: var(--bg-glass);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .status-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .status-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #86efac;
+        }
+
+        .status-message.info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Game Section */
+        .game-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+        }
+
+        .settings-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .slider-container {
+            margin-bottom: 1rem;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .slider-value {
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-glass-strong);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-glass);
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 0.5rem;
+            }
+
+            .nav-item {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .auth-section {
+                margin: 1rem auto;
+            }
+
+            .auth-form {
+                padding: 1.5rem;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                justify-content: center;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .mb-4 { margin-bottom: 1.5rem; }
+
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-3 { margin-top: 1rem; }
+        .mt-4 { margin-top: 1.5rem; }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 1rem; }
+        .gap-4 { gap: 1.5rem; }
+    </style>
 </head>
 <body>
-<!-- Animated Background Particles -->
-<div class="bg-particles" id="particles"></div>
-
-<!-- Main Container -->
-<div class="main-container">
-  <div class="app-card">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="brand-section">
-        <div class="logo-container">
-          <div class="logo">
-            <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium Logo">
-          </div>
-        </div>
-        <div class="brand-text">
-          <h1>Eminium Launcher</h1>
-          <div class="subtitle">Votre portail vers l'aventure</div>
-        </div>
-      </div>
-      
-      <!-- Profile Section -->
-      <div class="profile-card" id="profileCard" style="display: none;">
-        <div class="profile-avatar">
-          <img id="profileSkin" src="" alt="Profile Skin" class="skeleton">
-        </div>
-        <div class="profile-info">
-          <div class="profile-name" id="profileName">Chargement...</div>
-          <div class="profile-uuid" id="profileUUID">UUID</div>
-          <div class="profile-grade" id="profileGrade" style="display: none;">Grade</div>
-        </div>
-        <button class="btn btn-secondary" id="btnLogout" style="display: none;">
-          <span>🚪</span>
-          Déconnexion
-        </button>
-      </div>
-    </header>
-
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar-nav">
-      <a class="nav-item active" data-tab="auth" id="tabAuth">
-        <span class="nav-icon">🔐</span>
-        <span>Connexion</span>
-      </a>
-      <a class="nav-item" data-tab="play" id="tabPlay" style="display: none;">
-        <span class="nav-icon">🎮</span>
-        <span>Jouer</span>
-      </a>
-      <a class="nav-item" data-tab="log" id="tabLog" style="display: none;">
-        <span class="nav-icon">📜</span>
-        <span>Logs</span>
-      </a>
-      <a class="nav-item" data-tab="admin" id="tabAdmin" style="display: none;">
-        <span class="nav-icon">🛠️</span>
-        <span>Admin</span>
-      </a>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- Authentication Section -->
-      <section class="content-section active" id="auth">
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Connexion</h2>
-            <p class="panel-subtitle">Connectez-vous à votre compte Eminium</p>
-          </div>
-          
-          <div class="auth-container">
-            <!-- OAuth Login -->
-            <div class="social-login">
-              <button class="btn-oauth" id="btnLoginWithCroissant">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-                Se connecter avec Croissant-API
-              </button>
-              
-              <div class="auth-divider">
-                <span>ou</span>
-              </div>
-            </div>
-            
-            <!-- Traditional Login Form -->
-            <form id="loginForm" class="login-form" novalidate>
-              <div class="form-group">
-                <input type="email" id="email" class="form-input" placeholder="Adresse email" required>
-              </div>
-              
-              <div class="form-group">
-                <input type="password" id="pass" class="form-input" placeholder="Mot de passe" required>
-              </div>
-              
-              <div class="form-group" id="code2faGroup" style="display: none;">
-                <input type="text" id="code2fa" class="form-input" placeholder="Code 2FA" maxlength="6">
-              </div>
-              
-              <button type="button" class="btn-login" id="btnLogin">
-                <span class="btn-text">Se connecter</span>
-              </button>
-              
-              <!-- Status Messages -->
-              <div id="authStatus"></div>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <!-- Play Section -->
-      <section class="content-section" id="play">
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Paramètres de jeu</h2>
-          </div>
-          
-          <div class="slider-container">
-            <div class="slider-label">
-              <label class="form-label">Mémoire allouée</label>
-              <span class="slider-value" id="memLabel">2048 Mo</span>
-            </div>
-            <input type="range" id="memSlider" class="slider" min="1024" max="8192" step="256" value="2048">
-            <div id="ramInfo" class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Détection RAM...</div>
-          </div>
-          
-          <div class="panel">
-            <div class="panel-header">
-              <h3 class="panel-title">Performances</h3>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-              <div class="slider-container">
-                <div class="slider-label">
-                  <label class="form-label">Distance de rendu</label>
-                  <span class="slider-value" id="renderLabel">12 chunks</span>
+    <div class="app" id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium Logo">
                 </div>
-                <input type="range" id="renderDist" class="slider" min="2" max="32" step="1" value="12">
-              </div>
-              
-              <div class="slider-container">
-                <div class="slider-label">
-                  <label class="form-label">FPS max</label>
-                  <span class="slider-value" id="fpsLabel">120</span>
+                <div>
+                    <h1 class="title">Eminium Launcher</h1>
+                    <p class="subtitle">Votre passerelle vers l'aventure</p>
                 </div>
-                <input type="range" id="fpsCap" class="slider" min="30" max="240" step="10" value="120">
-              </div>
             </div>
-            
-            <div class="toggle-group" style="margin-top: 20px;">
-              <div class="toggle-item">
-                <label class="form-label">VSync</label>
-                <div class="toggle" id="vsync"></div>
-              </div>
-              
-              <div class="toggle-item">
-                <label class="form-label">FPS illimités</label>
-                <div class="toggle" id="fpsUnlimited"></div>
-              </div>
+
+            <div class="user-info">
+                <div class="user-card" id="userCard" style="display: none;">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">Utilisateur</div>
+                        <div class="user-role" id="userRole">Membre</div>
+                    </div>
+                </div>
+                <button class="btn-secondary" id="logoutBtn" style="display: none;">
+                    <span>🚪</span>
+                    Déconnexion
+                </button>
             </div>
-          </div>
-          
-          <div class="toggle-item" style="margin-top: 20px;">
-            <label class="form-label">Fermer le launcher au démarrage du jeu</label>
-            <div class="toggle" id="closeOnPlayToggle"></div>
-          </div>
-          
-          <div class="panel" style="margin-top: 24px;">
-            <div class="panel-header">
-              <h3 class="panel-title">Mises à jour</h3>
-            </div>
-            
-            <div class="update-info" style="padding: 16px; background: var(--bg-glass); border-radius: 8px; margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <span style="font-size: 14px; color: var(--text-secondary);">Version actuelle</span>
-                <span style="font-weight: 500;" id="currentVersion">Chargement...</span>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 14px; color: var(--text-secondary);">Dernière vérification</span>
-                <span style="font-size: 12px; color: var(--text-secondary);" id="lastCheck">Jamais</span>
-              </div>
-            </div>
-            
-            <div id="updateStatus" style="padding: 12px; background: var(--bg-glass); border-radius: 8px; margin-bottom: 16px; display: none;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span id="updateStatusIcon">🔄</span>
-                <span id="updateStatusText" style="font-weight: 500;">Vérification des mises à jour...</span>
-              </div>
-              <div id="updateStatusDetails" style="font-size: 12px; color: var(--text-secondary);"></div>
-            </div>
-            
-            <div id="updateAvailable" style="padding: 16px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; margin-bottom: 16px; border-left: 3px solid var(--accent-primary); display: none;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span style="font-size: 18px;">📦</span>
-                <span style="font-weight: 500;">Nouvelle version disponible</span>
-              </div>
-              <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
-                Version <span id="latestVersion" style="font-weight: 500; color: var(--accent-primary);"></span> est prête à être installée
-              </div>
-              <div id="updateChangelog" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; max-height: 100px; overflow-y: auto;"></div>
-            </div>
-            
-            <div class="btn-group" style="gap: 8px;">
-              <button class="btn btn-secondary" id="btnCheckUpdates">
-                <span>🔄</span>
-                Vérifier les mises à jour
-              </button>
-              <button class="btn btn-secondary" id="btnInstallUpdate" style="display: none;">
-                <span>⬇</span>
-                Installer la mise à jour
-              </button>
-              <button class="btn btn-secondary" id="btnUpdateSettings">
-                <span>⚙️</span>
-                Paramètres
-              </button>
-            </div>
-          </div>
-          
-          <div class="btn-group" style="margin-top: 24px;">
-            <button class="btn btn-secondary" id="btnCheck">
-              <span>🔄</span>
-              Installer / Mettre à jour
-            </button>
-            <button class="btn btn-secondary" id="btnForceUpdate">
-              <span>⚡</span>
-              Forcer la mise à jour
-            </button>
-            <button class="btn" id="btnPlay">
-              <span>🚀</span>
-              Jouer
-            </button>
-          </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="nav-item active" data-tab="auth" id="navAuth">
+                    <span class="nav-icon">🔐</span>
+                    <span>Connexion</span>
+                </div>
+                <div class="nav-item" data-tab="play" id="navPlay" style="display: none;">
+                    <span class="nav-icon">🎮</span>
+                    <span>Jouer</span>
+                </div>
+                <div class="nav-item" data-tab="logs" id="navLogs" style="display: none;">
+                    <span class="nav-icon">📊</span>
+                    <span>Logs</span>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <main class="content-area">
+                <!-- Authentication Section -->
+                <section class="content-section active" id="authSection">
+                    <div class="auth-section">
+                        <div class="auth-header">
+                            <h2 class="auth-title">Connexion</h2>
+                            <p class="auth-subtitle">Connectez-vous à votre compte Eminium</p>
+                        </div>
+
+                        <div class="auth-form">
+                            <!-- OAuth Login -->
+                            <button class="oauth-button" id="oauthBtn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                Se connecter avec Croissant-API
+                            </button>
+
+                            <div class="auth-divider">
+                                <span>ou</span>
+                            </div>
+
+                            <!-- Login Form -->
+                            <form id="loginForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="email">Adresse email</label>
+                                    <input type="email" id="email" class="form-input" placeholder="votre@email.com" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="password">Mot de passe</label>
+                                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                                </div>
+
+                                <div class="form-group" id="code2faGroup" style="display: none;">
+                                    <label class="form-label" for="code2fa">Code 2FA</label>
+                                    <input type="text" id="code2fa" class="form-input" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+                                </div>
+
+                                <button type="submit" class="auth-button" id="loginBtn">
+                                    <span class="loading-spinner" id="loginSpinner" style="display: none;"></span>
+                                    <span id="loginText">Se connecter</span>
+                                </button>
+                            </form>
+
+                            <!-- Status Messages -->
+                            <div class="status-message" id="authError"></div>
+                            <div class="status-message success" id="authSuccess"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Game Section -->
+                <section class="content-section" id="playSection" style="display: none;">
+                    <div class="game-section">
+                        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem; text-align: center;">
+                            Paramètres de Jeu
+                        </h2>
+
+                        <div class="settings-grid">
+                            <!-- Memory Settings -->
+                            <div class="settings-card">
+                                <h3 class="settings-title">Mémoire</h3>
+                                <div class="slider-container">
+                                    <div class="slider-label">
+                                        <span class="form-label">Mémoire allouée</span>
+                                        <span class="slider-value" id="memValue">2048 Mo</span>
+                                    </div>
+                                    <input type="range" id="memSlider" class="slider" min="1024" max="8192" step="256" value="2048">
+                                </div>
+                                <div id="ramInfo" class="form-label" style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    Détection RAM...
+                                </div>
+                            </div>
+
+                            <!-- Performance Settings -->
+                            <div class="settings-card">
+                                <h3 class="settings-title">Performances</h3>
+
+                                <div class="slider-container">
+                                    <div class="slider-label">
+                                        <span class="form-label">Distance de rendu</span>
+                                        <span class="slider-value" id="renderValue">12 chunks</span>
+                                    </div>
+                                    <input type="range" id="renderSlider" class="slider" min="2" max="32" step="1" value="12">
+                                </div>
+
+                                <div class="slider-container">
+                                    <div class="slider-label">
+                                        <span class="form-label">FPS maximum</span>
+                                        <span class="slider-value" id="fpsValue">120 FPS</span>
+                                    </div>
+                                    <input type="range" id="fpsSlider" class="slider" min="30" max="240" step="10" value="120">
+                                </div>
+                            </div>
+
+                            <!-- Graphics Settings -->
+                            <div class="settings-card">
+                                <h3 class="settings-title">Graphismes</h3>
+
+                                <div class="toggle-item">
+                                    <span class="form-label">VSync</span>
+                                    <label class="toggle" id="vsyncToggle">
+                                        <input type="checkbox" id="vsyncInput">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-item">
+                                    <span class="form-label">FPS illimités</span>
+                                    <label class="toggle" id="unlimitedFpsToggle">
+                                        <input type="checkbox" id="unlimitedFpsInput">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Game Options -->
+                            <div class="settings-card">
+                                <h3 class="settings-title">Options</h3>
+
+                                <div class="toggle-item">
+                                    <span class="form-label">Fermer le launcher au démarrage</span>
+                                    <label class="toggle" id="closeOnPlayToggle">
+                                        <input type="checkbox" id="closeOnPlayInput" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <button class="btn-secondary" id="prepareBtn">
+                                <span>🔄</span>
+                                Préparer le jeu
+                            </button>
+                            <button class="btn-primary" id="playBtn">
+                                <span>🚀</span>
+                                Lancer le jeu
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Logs Section -->
+                <section class="content-section" id="logsSection" style="display: none;">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 2rem; text-align: center;">
+                            Journal d'Activité
+                        </h2>
+
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 12px; padding: 1.5rem; backdrop-filter: blur(20px);">
+                            <div style="height: 400px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; line-height: 1.6;" id="logsContainer">
+                                <div class="log-entry info">🔧 Eminium Launcher démarré</div>
+                                <div class="log-entry info">📡 Vérification de la connexion...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
         </div>
-      </section>
+    </div>
 
-      <!-- Logs Section -->
-      <section class="content-section" id="log">
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Journal d'activité</h2>
-          </div>
-          <div class="log-container" id="log"></div>
-        </div>
-      </section>
+    <!-- Progress Modal -->
+    <div class="modal-overlay" id="progressModal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="progressTitle">Préparation</h3>
 
-      <!-- Admin Section -->
-      <section class="content-section" id="admin">
-        <div class="panel">
-          <div class="panel-header">
-            <h2 class="panel-title">Administration</h2>
-          </div>
-          
-          <div class="toggle-item">
-            <label class="form-label">Statut maintenance</label>
-            <div class="toggle" id="maintenanceToggle" disabled></div>
-          </div>
-          
-          <div style="margin-top: 12px; padding: 12px; background: var(--bg-glass); border-radius: 8px; border-left: 3px solid var(--accent-primary);">
-            <div style="font-size: 12px; color: var(--text-secondary);">
-              Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.
+            <div class="progress-stats">
+                <div class="progress-stat">
+                    <div id="progressPercent">0%</div>
+                    <div>Progression</div>
+                </div>
+                <div class="progress-stat">
+                    <div id="progressSpeed">0 MB/s</div>
+                    <div>Vitesse</div>
+                </div>
+                <div class="progress-stat">
+                    <div id="progressEta">--:--</div>
+                    <div>Temps restant</div>
+                </div>
             </div>
-          </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="progress-log" id="progressLogContainer"></div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" id="progressClose" style="display: none;">Fermer</button>
+                <button class="btn-primary" id="progressBackground" style="display: none;">Arrière-plan</button>
+            </div>
         </div>
-      </section>
-    </main>
-  </div>
-</div>
-
-<!-- Progress Modal -->
-<div class="progress-modal" id="progressModal">
-  <div class="progress-content">
-    <h3 class="progress-title" id="progressTitle">Préparation</h3>
-    
-    <div class="progress-stats">
-      <div class="progress-stat">
-        <span class="progress-stat-value" id="progressPercent">0%</span>
-        <span>Progression</span>
-      </div>
-      <div class="progress-stat">
-        <span class="progress-stat-value" id="progressSpeed">0 MB/s</span>
-        <span>Vitesse</span>
-      </div>
-      <div class="progress-stat">
-        <span class="progress-stat-value" id="progressTime">--:--</span>
-        <span>Temps restant</span>
-      </div>
     </div>
-    
-    <div class="progress-bar-container">
-      <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
-    </div>
-    
-    <div class="progress-phases">
-      <div class="progress-phase">
-        <div class="phase-icon" id="phaseCheck" title="Vérification">✓</div>
-        <span class="phase-label">Vérification</span>
-      </div>
-      <div class="progress-phase">
-        <div class="phase-icon" id="phaseDownload" title="Téléchargement">⬇</div>
-        <span class="phase-label">Téléchargement</span>
-      </div>
-      <div class="progress-phase">
-        <div class="phase-icon" id="phaseInstall" title="Installation">⚙</div>
-        <span class="phase-label">Installation</span>
-      </div>
-      <div class="progress-phase">
-        <div class="phase-icon" id="phaseComplete" title="Terminé">✓</div>
-        <span class="phase-label">Terminé</span>
-      </div>
-    </div>
-    
-    <div class="progress-log" id="progressLog"></div>
-    
-    <div class="progress-actions">
-      <button class="btn btn-secondary" id="progressClose" disabled>Fermer</button>
-      <button class="btn" id="progressBackground" disabled>Arrière-plan</button>
-    </div>
-  </div>
-</div>
-<script src="./dom-utils.js"></script>
-<script src="./common-utils.js"></script>
-<script src="./updater-manager.js"></script>
-<script src="./app.js"></script>
-<script src="./auth-manager.js"></script>
-<script src="./logger.js"></script>
-<script src="./oauth-manager.js"></script>
-<script src="./progress-ui.js"></script>
-<script src="./error-manager.js"></script>
-<script src="./settings-manager.js"></script>
-<script src="./ui-helpers.js"></script>
-<!-- Debug script to check module loading -->
-<script>
-  // Debug function to check if modules are loaded
-  function checkModules() {
-    console.log('[DEBUG] Checking module loading...');
 
-    const modules = [
-      'UIHelpers',
-      'AuthManager',
-      'ErrorManager',
-      'SettingsManager',
-      'UpdaterManager',
-      'DOMUtils',
-      'ProgressUI'
-    ];
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
 
-    modules.forEach(moduleName => {
-      const isLoaded = typeof window[moduleName] !== 'undefined';
-      console.log(`[DEBUG] ${moduleName}: ${isLoaded ? '✅ Loaded' : '❌ Not loaded'}`);
-    });
+        .modal-content {
+            background: var(--gradient-card);
+            border: 1px solid var(--border-primary);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s ease;
+        }
 
-    // Check if app.js functions are available
-    const appFunctions = ['App', 'initializeApp'];
-    appFunctions.forEach(func => {
-      const isAvailable = typeof window[func] !== 'undefined';
-      console.log(`[DEBUG] ${func}: ${isAvailable ? '✅ Available' : '❌ Not available'}`);
-    });
+        .modal-content h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    // Check DOM elements
-    const keyElements = ['tabAuth', 'btnLogin', 'email', 'pass', 'loginForm'];
-    keyElements.forEach(elementId => {
-      const element = document.getElementById(elementId);
-      console.log(`[DEBUG] Element #${elementId}: ${element ? '✅ Found' : '❌ Not found'}`);
-    });
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
 
-    // Update debug panel
-    const debugModules = document.getElementById('debug-modules');
-    const debugAuth = document.getElementById('debug-auth');
-    const debugInterface = document.getElementById('debug-interface');
+        .progress-stat {
+            text-align: center;
+        }
 
-    if (debugModules) debugModules.textContent = modules.filter(m => typeof window[m] !== 'undefined').length + '/' + modules.length;
-    if (debugAuth) debugAuth.textContent = authSection ? '✅ Found' : '❌ Not found';
-    if (debugInterface) debugInterface.textContent = computedStyle.backgroundColor !== 'transparent' ? '✅ Loaded' : '❌ Not loaded';
+        .progress-stat > div:first-child {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
 
-    // Auto-initialize if not done
-    if (typeof window.App !== 'undefined' && typeof window.App.initializeApp === 'function') {
-      console.log('[DEBUG] Auto-initializing app...');
-      window.App.initializeApp();
-    }
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
 
-    // Force show auth tab
-    const authTab = document.querySelector('.nav-item[data-tab="auth"]');
-    if (authTab) {
-      authTab.click();
-      console.log('[DEBUG] Auth tab activated');
-    }
-  }
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
 
-  // Run debug check when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkModules);
-  } else {
-    setTimeout(checkModules, 1000); // Give time for all scripts to load
-  }
+        .progress-log {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
 
-  // Force display of auth section
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-      const authSection = document.getElementById('auth');
-      if (authSection) {
-        authSection.classList.add('active');
-        console.log('[DEBUG] Auth section activated');
-      }
-    }, 500);
-  });
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
 
-  // Add debug info panel to DOM
-  document.addEventListener('DOMContentLoaded', function() {
-    const debugPanel = document.createElement('div');
-    debugPanel.className = 'debug-info';
-    debugPanel.innerHTML = `
-      <div><strong>🔧 Debug Mode</strong></div>
-      <div>Modules loaded: <span id="debug-modules">Checking...</span></div>
-      <div>Auth section: <span id="debug-auth">Checking...</span></div>
-      <div>Interface: <span id="debug-interface">Checking...</span></div>
-    `;
-    document.body.appendChild(debugPanel);
-  });
-</script>
+        /* Toggle Switch Styles */
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background: var(--gradient-primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .toggle-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+
+    <!-- JavaScript Files -->
+    <script src="./dom-utils.js"></script>
+    <script src="./common-utils.js"></script>
+    <script src="./error-manager.js"></script>
+    <script src="./logger.js"></script>
+    <script src="./auth-manager.js"></script>
+    <script src="./progress-ui.js"></script>
+    <script src="./updater-manager.js"></script>
+    <script src="./ui-helpers.js"></script>
+    <script src="./settings-manager.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
