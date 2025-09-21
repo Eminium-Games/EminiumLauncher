@@ -250,6 +250,21 @@ async function checkAuthStatus() {
   }
 }
 
+  // Function to show connection status
+  function showConnectionStatus(message, type = 'info') {
+    const indicator = document.getElementById('connectionStatus');
+    if (indicator) {
+      indicator.textContent = message;
+      indicator.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' :
+                                   type === 'success' ? 'rgba(34,197,94,0.9)' :
+                                   'rgba(0,0,0,0.8)';
+      indicator.style.display = 'block';
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 5000);
+    }
+  }
+
 // Initialize authentication event listeners
 function initAuthListeners() {
   if (!window.DOMUtils) {
@@ -332,21 +347,6 @@ function initAuthListeners() {
     color: white;
   `;
   document.body.appendChild(statusIndicator);
-
-  // Function to show connection status
-  function showConnectionStatus(message, type = 'info') {
-    const indicator = document.getElementById('connectionStatus');
-    if (indicator) {
-      indicator.textContent = message;
-      indicator.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' :
-                                   type === 'success' ? 'rgba(34,197,94,0.9)' :
-                                   'rgba(0,0,0,0.8)';
-      indicator.style.display = 'block';
-      setTimeout(() => {
-        indicator.style.display = 'none';
-      }, 5000);
-    }
-  }
 }
 
 // Initialize authentication manager

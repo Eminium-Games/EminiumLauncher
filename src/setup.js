@@ -12,6 +12,27 @@ const { app, BrowserWindow } = require('electron');
 
 
 
+// Simple call stack protection for main process
+const CallStackProtection = {
+  safeExecute: function(functionName, fn, ...args) {
+    try {
+      return fn(...args);
+    } catch (error) {
+      console.error(`[CallStackProtection] Error in ${functionName}:`, error);
+      return null;
+    }
+  },
+
+  safeExecuteAsync: async function(functionName, fn, ...args) {
+    try {
+      return await fn(...args);
+    } catch (error) {
+      console.error(`[CallStackProtection] Async error in ${functionName}:`, error);
+      return null;
+    }
+  }
+};
+
 // ── Editable constants
 const MC_VERSION = '1.20.1';
 const FORGE_VERSION = '47.3.0';

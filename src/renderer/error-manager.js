@@ -230,7 +230,8 @@ function createErrorNotification(error, errorType, severity) {
     }
   };
 
-  const severityConfig = getSeverityConfig(severity);
+  const message = ErrorMessages[errorType][severity];
+  const solutions = ErrorSolutions[errorType];
   
   notification.innerHTML = `
     <div class="error-header">
