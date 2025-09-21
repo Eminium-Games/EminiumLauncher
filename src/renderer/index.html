@@ -2707,7 +2707,7 @@ async function runUpdaterIfNeeded() {
 })();
 
 // RAM + perf UI bindings
-(async function() {
+((async function() {
   const memSlider = document.getElementById('memSlider');
   const memLabel = document.getElementById('memLabel');
   const ramInfo = document.getElementById('ramInfo');
@@ -2798,7 +2798,7 @@ async function runUpdaterIfNeeded() {
       vsync: document.getElementById('vsync').classList.contains('active'),
       fpsUnlimited: fpsUnlimited.classList.contains('active')
     };
-  }
+  }}}));
   
   async function applySettings(s) {
     if (!s || typeof s !== 'object') return;
@@ -2839,8 +2839,7 @@ async function runUpdaterIfNeeded() {
   try {
     const res = await (window.eminium?.getSettings ? window.eminium.getSettings() : null);
     if (res && res.ok && res.settings) await applySettings(res.settings);
-  } catch {}
-})();
+  } catch {};
 
 // Fonction pour ouvrir la popup OAuth
 async function connectWithCroissant() {
@@ -3225,6 +3224,7 @@ async function fetchAndUpdatePoints() {
 }
 
 console.log('[Eminium] Launcher initialisé avec succès!');
+
 </script>
 
 </body>
