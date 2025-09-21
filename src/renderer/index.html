@@ -1564,7 +1564,7 @@ function mapLoginError(result, caught) {
 }
 
 // Masquer le 2FA par défaut
-code2faInput.parentElement.style.display = 'none';
+document.getElementById('code2faGroup').style.display = 'none';
 
 // Bouton "Se connecter avec Eminium" -> révèle le formulaire détaillé
 document.getElementById('btnLoginWithEminium').addEventListener('click', () => {
