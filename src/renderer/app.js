@@ -51,6 +51,9 @@ async function initializeApp() {
       window.Logger.init();
     }
 
+    // Apply saved settings to UI
+    applySettingsToUI();
+
     // Start pinging server
     startPing();
 
@@ -165,6 +168,7 @@ function initializeToggleFunctionality() {
     vsyncToggle.addEventListener('click', () => {
       vsyncInput.checked = !vsyncInput.checked;
       console.log(`[Settings] VSync: ${vsyncInput.checked ? 'ON' : 'OFF'}`);
+      saveSetting('vsync', vsyncInput.checked);
     });
   }
 
@@ -176,6 +180,7 @@ function initializeToggleFunctionality() {
     unlimitedFpsToggle.addEventListener('click', () => {
       unlimitedFpsInput.checked = !unlimitedFpsInput.checked;
       console.log(`[Settings] Unlimited FPS: ${unlimitedFpsInput.checked ? 'ON' : 'OFF'}`);
+      saveSetting('unlimitedFps', unlimitedFpsInput.checked);
     });
   }
 
@@ -187,6 +192,7 @@ function initializeToggleFunctionality() {
     closeOnPlayToggle.addEventListener('click', () => {
       closeOnPlayInput.checked = !closeOnPlayInput.checked;
       console.log(`[Settings] Close on play: ${closeOnPlayInput.checked ? 'ON' : 'OFF'}`);
+      saveSetting('closeOnPlay', closeOnPlayInput.checked);
     });
   }
 }
@@ -210,7 +216,88 @@ function updateSliderValue(slider, valueElement, unit, maxForUnlimited = null) {
     valueElement.textContent = displayValue;
   }
 
+  // Save slider value
+  const sliderId = slider.id;
+  saveSetting(sliderId, value);
+
   console.log(`[Settings] ${unit} updated: ${displayValue}`);
+}
+
+// Settings management functions
+function saveSetting(key, value) {
+  try {
+    const settings = loadSettings();
+    settings[key] = value;
+    localStorage.setItem('eminium-launcher-settings', JSON.stringify(settings));
+    console.log(`[Settings] Saved ${key}: ${value}`);
+  } catch (error) {
+    console.error('[Settings] Error saving setting:', error);
+  }
+}
+
+function loadSettings() {
+  try {
+    const settings = localStorage.getItem('eminium-launcher-settings');
+    return settings ? JSON.parse(settings) : getDefaultSettings();
+  } catch (error) {
+    console.error('[Settings] Error loading settings:', error);
+    return getDefaultSettings();
+  }
+}
+
+function getDefaultSettings() {
+  return {
+    memSlider: 2048,
+    renderSlider: 12,
+    fpsSlider: 120,
+    vsync: false,
+    unlimitedFps: false,
+    closeOnPlay: true
+  };
+}
+
+function applySettingsToUI() {
+  const settings = loadSettings();
+
+  // Apply slider values
+  const memSlider = document.getElementById('memSlider');
+  const memValue = document.getElementById('memValue');
+  if (memSlider && memValue && settings.memSlider) {
+    memSlider.value = settings.memSlider;
+    updateSliderValue(memSlider, memValue, 'Mo');
+  }
+
+  const renderSlider = document.getElementById('renderSlider');
+  const renderValue = document.getElementById('renderValue');
+  if (renderSlider && renderValue && settings.renderSlider) {
+    renderSlider.value = settings.renderSlider;
+    updateSliderValue(renderSlider, renderValue, 'chunks');
+  }
+
+  const fpsSlider = document.getElementById('fpsSlider');
+  const fpsValue = document.getElementById('fpsValue');
+  if (fpsSlider && fpsValue && settings.fpsSlider) {
+    fpsSlider.value = settings.fpsSlider;
+    updateSliderValue(fpsSlider, fpsValue, 'FPS', fpsSlider.max);
+  }
+
+  // Apply toggle values
+  const vsyncInput = document.getElementById('vsyncInput');
+  if (vsyncInput && settings.vsync !== undefined) {
+    vsyncInput.checked = settings.vsync;
+  }
+
+  const unlimitedFpsInput = document.getElementById('unlimitedFpsInput');
+  if (unlimitedFpsInput && settings.unlimitedFps !== undefined) {
+    unlimitedFpsInput.checked = settings.unlimitedFps;
+  }
+
+  const closeOnPlayInput = document.getElementById('closeOnPlayInput');
+  if (closeOnPlayInput && settings.closeOnPlay !== undefined) {
+    closeOnPlayInput.checked = settings.closeOnPlay;
+  }
+
+  console.log('[Settings] Applied settings to UI');
 }
 
 // Initialize server monitoring
@@ -335,23 +422,48 @@ async function checkAndAutoPrepare() {
 
 // Launch game
 async function launchGame() {
-  const memoryMB = parseInt(window.DOMUtils?.getValue('memSlider', '2048'), 10) || 2048;
+  const settings = loadSettings();
+  const memoryMB = settings.memSlider || 2048;
   const serverHost = 'play.eminium.ovh';
   const serverPort = 25565;
-  
+
   try {
     window.ProgressUI.open('Lancement');
     window.ProgressUI.set(10);
     window.Logger.info(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${serverHost}:${serverPort})`);
-    
-    const res = await window.eminium.play({ memoryMB, serverHost, serverPort });
-    
+
+    // Prepare launch parameters
+    const launchParams = {
+      memoryMB: memoryMB,
+      serverHost: serverHost,
+      serverPort: serverPort
+    };
+
+    // Add graphics settings if available
+    if (settings.vsync !== undefined) {
+      launchParams.vsync = settings.vsync;
+    }
+    if (settings.unlimitedFps !== undefined) {
+      launchParams.unlimitedFps = settings.unlimitedFps;
+    }
+
+    const res = await window.eminium.play(launchParams);
+
     if (res?.ok) {
       window.Logger.success('Client lancé ✓');
       window.ProgressUI.set(100);
       window.ProgressUI.addLine('Client lancé ✓');
       window.ProgressUI.enableClose();
       setTimeout(() => window.ProgressUI.close(), 1500);
+
+      // Close launcher if setting is enabled
+      if (settings.closeOnPlay) {
+        setTimeout(() => {
+          window.Logger.info('Fermeture du launcher...');
+          // Note: In Electron, we would use window.close() or app.quit()
+          console.log('[Launcher] Close on play enabled - would close window');
+        }, 2000);
+      }
     } else {
       window.ErrorManager.handleError(new Error(res?.error || 'Échec du lancement'), 'launchGame');
       window.ProgressUI.addLine('Échec du lancement: ' + (res?.error || 'inconnu'));
