@@ -275,6 +275,10 @@ const CallStackProtection = {
   _functionTimeouts: new Map(),
   _maxExecutionTime: 30000, // 30 seconds max per function
   _callCounts: new Map(),
+  _lastActivity: new Map(),
+  _monitoredFunctions: new Map(),
+  _protectionActive: true,
+  _maxIdleTime: 300000, // 5 minutes max idle time
 
   // Execute a function safely with stack protection
   safeExecute: function(functionName, fn, ...args) {
@@ -360,13 +364,13 @@ const CallStackProtection = {
 
   // Force reset a stuck function
   _forceResetFunction: function(functionName) {
-    console.error(`[StackOverflowProtection] Force resetting ${functionName}`);
+    console.error(`[CallStackProtection] Force resetting ${functionName}`);
 
     // Reset global state
     if (functionName === 'ensureAll') {
       if (globalThis._ensureAllInProgress) {
         globalThis._ensureAllInProgress = false;
-        console.log(`[StackOverflowProtection] Reset ensureAll state`);
+        console.log(`[CallStackProtection] Reset ensureAll state`);
       }
     }
 
@@ -374,7 +378,7 @@ const CallStackProtection = {
       if (typeof window !== 'undefined' && window.UpdaterManager) {
         const updaterState = window.UpdaterManager.getUpdaterState();
         if (updaterState.checking) {
-          console.log(`[StackOverflowProtection] Reset checkForUpdates state`);
+          console.log(`[CallStackProtection] Reset checkForUpdates state`);
           // The function will be reset by the call stack protection timeout
         }
       }
@@ -393,13 +397,13 @@ const CallStackProtection = {
       this.checkForStuckFunctions();
     }, 30000);
 
-    console.log(`[StackOverflowProtection] Started monitoring ${this._monitoredFunctions.size} functions`);
+    console.log(`[CallStackProtection] Started monitoring ${this._monitoredFunctions.size} functions`);
   },
 
   // Stop monitoring
   stopMonitoring: function() {
     this._protectionActive = false;
-    console.log('[StackOverflowProtection] Stopped monitoring');
+    console.log('[CallStackProtection] Stopped monitoring');
   },
 
   // Get status

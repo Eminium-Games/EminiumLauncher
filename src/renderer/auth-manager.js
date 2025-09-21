@@ -48,6 +48,34 @@ function mapLoginError(result, caught) {
   return null;
 }
 
+// Test connection to server before attempting login
+async function testConnection() {
+  try {
+    const response = await fetch(`${SITE_URL}/api/ping`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'EminiumLauncher/1.0'
+      },
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
+
+    if (response.ok) {
+      return { ok: true, message: 'Connexion au serveur OK' };
+    } else {
+      return { ok: false, message: `Serveur répond avec le code ${response.status}` };
+    }
+  } catch (error) {
+    if (error.name === 'TimeoutError') {
+      return { ok: false, message: 'Timeout de connexion (serveur injoignable)' };
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return { ok: false, message: 'Impossible de contacter le serveur' };
+    } else {
+      return { ok: false, message: error.message || 'Erreur de connexion inconnue' };
+    }
+  }
+}
+
 // Update UI after successful login
 function updateUIAfterLogin(profile) {
   if (!profile) return;
@@ -79,15 +107,15 @@ function updateUIAfterLogin(profile) {
   window.UIHelpers.switchToPlayTab();
 }
 
-// Action de connexion unifiée (réutilisable par un overlay)
+// Action de connexion unifiée avec protection contre le blocage
 async function performLogin(email, pass, code2fa, options = {}) {
   const { quiet = false, onSuccess, onError } = options;
-  
+
   if (!quiet) {
     setAuthError('');
     window.UIHelpers.setProfileSkeleton(true);
   }
-  
+
   // Validate input
   const validation = validateLogin(email, pass, code2fa);
   if (!validation.valid) {
@@ -95,21 +123,55 @@ async function performLogin(email, pass, code2fa, options = {}) {
     if (onError) onError(validation.error);
     return;
   }
-  
+
+  // Add timeout protection for the entire login process
+  const loginTimeout = setTimeout(() => {
+    if (!quiet) {
+      setAuthError('La connexion met trop de temps à répondre. Vérifiez votre connexion internet.');
+      window.Logger.error('Connexion timeout après 20 secondes');
+      window.UIHelpers.setProfileSkeleton(false);
+      window.AuthManager.showConnectionStatus('Timeout de connexion', 'error');
+    }
+    if (onError) onError('Timeout de connexion');
+  }, 20000);
+
   try {
+    // Test connection first
+    if (!quiet) {
+      window.Logger.info('Test de connexion au serveur...');
+      window.AuthManager.showConnectionStatus('Test de connexion...', 'info');
+    }
+
+    const connectionTest = await testConnection();
+    if (!connectionTest.ok) {
+      if (!quiet) {
+        setAuthError(connectionTest.message);
+        window.Logger.error('Test de connexion échoué:', connectionTest.message);
+        window.UIHelpers.setProfileSkeleton(false);
+        window.AuthManager.showConnectionStatus('Serveur injoignable', 'error');
+      }
+      if (onError) onError(connectionTest.message);
+      clearTimeout(loginTimeout);
+      return;
+    }
+
     if (!quiet) {
       window.Logger.info('Tentative de connexion...');
+      window.AuthManager.showConnectionStatus('Connexion en cours...', 'info');
     }
-    
+
     const result = await window.eminium.login(email, pass, code2fa);
-    
+
+    clearTimeout(loginTimeout);
+
     if (result && result.ok) {
       if (!quiet) {
         window.Logger.success('Connexion réussie!');
         updateUIAfterLogin(result.profile);
         window.UIHelpers.setProfileSkeleton(false);
+        window.AuthManager.showConnectionStatus('Connexion réussie!', 'success');
       }
-      
+
       if (onSuccess) onSuccess(result.profile);
       return result.profile;
     } else {
@@ -118,19 +180,22 @@ async function performLogin(email, pass, code2fa, options = {}) {
         setAuthError(errorMsg);
         window.Logger.error('Échec de connexion: ' + errorMsg);
         window.UIHelpers.setProfileSkeleton(false);
+        window.AuthManager.showConnectionStatus('Échec de connexion', 'error');
       }
-      
+
       if (onError) onError(errorMsg);
       return null;
     }
   } catch (error) {
+    clearTimeout(loginTimeout);
     const errorMsg = mapLoginError(null, error);
     if (!quiet) {
       setAuthError(errorMsg);
       window.Logger.error('Erreur de connexion: ' + errorMsg);
       window.UIHelpers.setProfileSkeleton(false);
+      window.AuthManager.showConnectionStatus('Erreur de connexion', 'error');
     }
-    
+
     if (onError) onError(errorMsg);
     return null;
   }
@@ -188,14 +253,39 @@ function initAuthListeners() {
     console.error('DOMUtils not available');
     return;
   }
-  
+
+  let loginInProgress = false;
+
   // Main login button
   window.DOMUtils.addEventListener('btnLogin', 'click', async () => {
+    if (loginInProgress) {
+      console.log('[Auth] Login already in progress, ignoring duplicate click');
+      return;
+    }
+
+    loginInProgress = true;
+
     const email = window.DOMUtils.getValue('email', '').trim();
     const password = window.DOMUtils.getValue('password', '');
     const code2fa = window.DOMUtils.getValue('code2fa', '').trim();
-    
-    await performLogin(email, password, code2fa);
+
+    // Disable login button during login
+    const loginButton = window.DOMUtils.getElement('btnLogin', false);
+    if (loginButton) {
+      loginButton.disabled = true;
+      loginButton.textContent = 'Connexion en cours...';
+    }
+
+    try {
+      await performLogin(email, password, code2fa);
+    } finally {
+      loginInProgress = false;
+      // Re-enable login button
+      if (loginButton) {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Se connecter';
+      }
+    }
   });
   
   // "Se connecter avec Eminium" button
@@ -217,11 +307,43 @@ function initAuthListeners() {
     if (e.key === 'Enter') {
       e.preventDefault();
       const btnLogin = window.DOMUtils.getElement('btnLogin', false);
-      if (btnLogin) {
+      if (btnLogin && !btnLogin.disabled) {
         btnLogin.click();
       }
     }
   });
+
+  // Add connection status indicator
+  const statusIndicator = document.createElement('div');
+  statusIndicator.id = 'connectionStatus';
+  statusIndicator.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 10000;
+    display: none;
+    background: rgba(0,0,0,0.8);
+    color: white;
+  `;
+  document.body.appendChild(statusIndicator);
+
+  // Function to show connection status
+  window.AuthManager.showConnectionStatus = (message, type = 'info') => {
+    const indicator = document.getElementById('connectionStatus');
+    if (indicator) {
+      indicator.textContent = message;
+      indicator.style.background = type === 'error' ? 'rgba(220,38,38,0.9)' :
+                                   type === 'success' ? 'rgba(34,197,94,0.9)' :
+                                   'rgba(0,0,0,0.8)';
+      indicator.style.display = 'block';
+      setTimeout(() => {
+        indicator.style.display = 'none';
+      }, 5000);
+    }
+  };
 }
 
 // Initialize authentication manager
@@ -239,5 +361,7 @@ window.AuthManager = {
   performLogout,
   checkAuthStatus,
   updateUIAfterLogin,
-  initAuthManager
+  initAuthManager,
+  testConnection,
+  showConnectionStatus
 };

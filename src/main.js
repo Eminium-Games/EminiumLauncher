@@ -138,8 +138,29 @@ function setPresencePlaying() {
 }
 
 const { loginEminium } = require('./setup.js');
+// Auth handlers with improved timeout and error handling
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
-  return await loginEminium(email, password, code);
+  try {
+    console.log('[Auth] Login attempt for:', email);
+
+    // Add timeout protection
+    const loginPromise = loginEminium(email, password, code);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Login timeout after 15 seconds')), 15000);
+    });
+
+    const result = await Promise.race([loginPromise, timeoutPromise]);
+    console.log('[Auth] Login result:', result?.status || 'unknown');
+
+    return result;
+  } catch (error) {
+    console.error('[Auth] Login error:', error.message);
+    return {
+      status: 'error',
+      reason: 'network',
+      message: 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet.'
+    };
+  }
 });
 
 // (payments notifications removed)

@@ -22,7 +22,7 @@ async function initializeApp() {
 
     // Initialize UI helpers
     if (window.UIHelpers) {
-      window.UIHelpers.init();
+      window.UIHelpers.initUIHelpers();
     }
 
     // Initialize progress UI

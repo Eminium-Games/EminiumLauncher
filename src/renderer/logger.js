@@ -270,7 +270,12 @@ function formatBytes(bytes, decimals = 2) {
 
 // Legacy log function for backward compatibility
 function legacyLog(msg) {
-  Logger.info(msg);
+  try {
+    Logger.info(msg);
+  } catch (error) {
+    // Fallback to console.log if Logger.info fails
+    console.log(`[Legacy] ${msg}`);
+  }
 }
 
 // Initialize logger
