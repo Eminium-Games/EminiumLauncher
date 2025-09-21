@@ -89,8 +89,32 @@ function updateUIAfterLogin(profile) {
   const profileAvatar = document.getElementById('userAvatar');
 
   if (profileName) profileName.textContent = profile.username || profile.pseudo || 'Utilisateur';
-  if (profileRole) profileRole.textContent = profile.grade || 'Membre';
-  if (profileAvatar) profileAvatar.textContent = '👤'; // Placeholder avatar
+  if (profileRole) {
+    const gradeText = profile.grade || 'Membre';
+    profileRole.textContent = gradeText;
+
+    // Apply grade styling if available
+    if (window.UIHelpers && window.UIHelpers.applyGradeStyle) {
+      const gradeColor = window.UIHelpers.paletteColorForGrade(gradeText);
+      window.UIHelpers.applyGradeStyle(profileRole, gradeColor, gradeText);
+    }
+  }
+
+  // Update avatar with Minecraft head
+  if (profileAvatar) {
+    const username = profile.username || profile.pseudo || 'steve';
+    profileAvatar.innerHTML = `<img src="https://minotar.net/helm/${username}/32" alt="Avatar ${username}" onerror="this.src='https://minotar.net/helm/steve/32'">`;
+
+    // Add loading animation
+    const img = profileAvatar.querySelector('img');
+    if (img) {
+      img.style.opacity = '0';
+      img.style.transition = 'opacity 0.3s ease';
+      img.onload = () => {
+        img.style.opacity = '1';
+      };
+    }
+  }
 
   // Show authenticated UI elements
   const userCard = document.getElementById('userCard');
@@ -303,8 +327,14 @@ function resetUIAfterLogout() {
   const profileAvatar = document.getElementById('userAvatar');
 
   if (profileName) profileName.textContent = 'Non connecté';
-  if (profileRole) profileRole.textContent = 'Visiteur';
-  if (profileAvatar) profileAvatar.textContent = '👤';
+  if (profileRole) {
+    profileRole.textContent = 'Visiteur';
+    // Reset grade styling
+    if (window.UIHelpers && window.UIHelpers.applyGradeStyle) {
+      window.UIHelpers.applyGradeStyle(profileRole, '#64748b', 'Visiteur');
+    }
+  }
+  if (profileAvatar) profileAvatar.innerHTML = '👤';
 
   // Hide authenticated UI elements
   const userCard = document.getElementById('userCard');
