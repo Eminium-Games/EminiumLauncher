@@ -82,32 +82,46 @@ async function testConnection() {
 // Update UI after successful login
 function updateUIAfterLogin(profile) {
   if (!profile) return;
-  
+
   // Update profile display
-  const profileName = document.querySelector('.profile-name');
-  const profileUuid = document.querySelector('.profile-uuid');
-  const profileGrade = document.querySelector('.profile-grade');
-  const profileAvatar = document.querySelector('.profile-avatar img');
-  
+  const profileName = document.getElementById('userName');
+  const profileRole = document.getElementById('userRole');
+  const profileAvatar = document.getElementById('userAvatar');
+
   if (profileName) profileName.textContent = profile.username || profile.pseudo || 'Utilisateur';
-  if (profileUuid) profileUuid.textContent = profile.uuid || profile.id || '';
-  if (profileGrade) {
-    const gradeText = window.UIHelpers.formatGrade(profile.grade);
-    profileGrade.textContent = gradeText;
-    const gradeColor = window.UIHelpers.paletteColorForGrade(gradeText);
-    window.UIHelpers.applyGradeStyle(profileGrade, gradeColor, gradeText);
-  }
-  if (profileAvatar) {
-    profileAvatar.src = profile.avatar || `https://minotar.net/helm/${profile.username || 'steve'}/64`;
-  }
-  
-  // Update tabs
-  const isAdmin = window.UIHelpers.isAdminClient(profile);
-  window.UIHelpers.setTabsForAuth(true, isAdmin);
-  window.UIHelpers.setPlayRestricted(false);
-  
-  // Switch to play tab
-  window.UIHelpers.switchToPlayTab();
+  if (profileRole) profileRole.textContent = profile.grade || 'Membre';
+  if (profileAvatar) profileAvatar.textContent = '👤'; // Placeholder avatar
+
+  // Show authenticated UI elements
+  const userCard = document.getElementById('userCard');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const playTab = document.getElementById('navPlay');
+  const logsTab = document.getElementById('navLogs');
+
+  if (userCard) userCard.style.display = 'flex';
+  if (logoutBtn) logoutBtn.style.display = 'flex';
+  if (playTab) playTab.style.display = 'flex';
+  if (logsTab) logsTab.style.display = 'flex';
+
+  // Hide auth UI elements
+  const authTab = document.getElementById('navAuth');
+  if (authTab) authTab.style.display = 'none';
+
+  // Switch to play section
+  const authSection = document.getElementById('authSection');
+  const playSection = document.getElementById('playSection');
+  const logsSection = document.getElementById('logsSection');
+
+  if (authSection) authSection.style.display = 'none';
+  if (playSection) playSection.style.display = 'block';
+  if (logsSection) logsSection.style.display = 'none';
+
+  // Update navigation active state
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => item.classList.remove('active'));
+  if (playTab) playTab.classList.add('active');
+
+  console.log('[Auth] UI updated for logged in user:', profile.username);
 }
 
 // Action de connexion unifiée avec protection contre le blocage
@@ -208,46 +222,129 @@ async function performLogin(email, pass, code2fa, options = {}) {
 async function performLogout() {
   try {
     await window.eminium.logout();
-    window.Logger.success('Déconnexion réussie');
-    
+    console.log('[Auth] Logout successful');
+
     // Reset UI
-    window.UIHelpers.setTabsForAuth(false);
-    window.UIHelpers.setPlayRestricted(true);
-    window.UIHelpers.setProfileSkeleton(false);
-    
-    // Clear profile display
-    const profileName = document.querySelector('.profile-name');
-    const profileUuid = document.querySelector('.profile-uuid');
-    const profileGrade = document.querySelector('.profile-grade');
-    const profileAvatar = document.querySelector('.profile-avatar img');
-    
-    if (profileName) profileName.textContent = 'Non connecté';
-    if (profileUuid) profileUuid.textContent = '';
-    if (profileGrade) profileGrade.textContent = 'Visiteur';
-    if (profileAvatar) profileAvatar.src = 'https://minotar.net/helm/steve/64';
-    
-    // Switch to auth tab
-    const authTab = document.querySelector('.nav-item[data-tab="auth"]');
-    if (authTab) authTab.click();
-    
+    resetUIAfterLogout();
+
+    // Update app state if available
+    if (window.App && window.App.getState) {
+      const state = window.App.getState();
+      if (state) {
+        state.authenticated = false;
+      }
+    }
+
   } catch (error) {
-    window.Logger.error('Erreur lors de la déconnexion: ' + error.message);
+    console.error('[Auth] Logout error:', error.message);
   }
 }
 
-// Check if user is logged in
+// Check if user is logged in and update UI accordingly
 async function checkAuthStatus() {
   try {
+    console.log('[Auth] Checking authentication status...');
+
     const result = await window.eminium.getProfile();
     if (result && result.ok && result.profile) {
+      console.log('[Auth] User is already logged in:', result.profile.username);
+
+      // Update UI to show logged in state
       updateUIAfterLogin(result.profile);
+
+      // Update app state if available
+      if (window.App && window.App.getState) {
+        const state = window.App.getState();
+        if (state) {
+          state.authenticated = true;
+        }
+      }
+
       return true;
+    } else {
+      console.log('[Auth] No active session found');
+
+      // Update UI to show logged out state
+      resetUIAfterLogout();
+
+      // Update app state if available
+      if (window.App && window.App.getState) {
+        const state = window.App.getState();
+        if (state) {
+          state.authenticated = false;
+        }
+      }
+
+      return false;
     }
-    return false;
   } catch (error) {
-    console.warn('Error checking auth status:', error);
+    console.warn('[Auth] Error checking auth status:', error);
+
+    // If there's an error, assume not logged in and show auth UI
+    resetUIAfterLogout();
+
+    // Update app state if available
+    if (window.App && window.App.getState) {
+      const state = window.App.getState();
+      if (state) {
+        state.authenticated = false;
+      }
+    }
+
     return false;
   }
+}
+
+// Reset UI after logout
+function resetUIAfterLogout() {
+  // Reset profile display
+  const profileName = document.getElementById('userName');
+  const profileRole = document.getElementById('userRole');
+  const profileAvatar = document.getElementById('userAvatar');
+
+  if (profileName) profileName.textContent = 'Non connecté';
+  if (profileRole) profileRole.textContent = 'Visiteur';
+  if (profileAvatar) profileAvatar.textContent = '👤';
+
+  // Hide authenticated UI elements
+  const userCard = document.getElementById('userCard');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const playTab = document.getElementById('navPlay');
+  const logsTab = document.getElementById('navLogs');
+
+  if (userCard) userCard.style.display = 'none';
+  if (logoutBtn) logoutBtn.style.display = 'none';
+  if (playTab) playTab.style.display = 'none';
+  if (logsTab) logsTab.style.display = 'none';
+
+  // Show auth UI elements
+  const authTab = document.getElementById('navAuth');
+  if (authTab) authTab.style.display = 'flex';
+
+  // Switch to auth section
+  const authSection = document.getElementById('authSection');
+  const playSection = document.getElementById('playSection');
+  const logsSection = document.getElementById('logsSection');
+
+  if (authSection) authSection.style.display = 'block';
+  if (playSection) playSection.style.display = 'none';
+  if (logsSection) logsSection.style.display = 'none';
+
+  // Update navigation active state
+  const navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(item => item.classList.remove('active'));
+  if (authTab) authTab.classList.add('active');
+
+  // Clear form fields
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const code2faInput = document.getElementById('code2fa');
+
+  if (emailInput) emailInput.value = '';
+  if (passwordInput) passwordInput.value = '';
+  if (code2faInput) code2faInput.value = '';
+
+  console.log('[Auth] UI reset for logged out state');
 }
 
   // Function to show connection status

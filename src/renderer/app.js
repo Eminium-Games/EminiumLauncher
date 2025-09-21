@@ -7,6 +7,7 @@
 let _appState = {
   initialized: false,
   ready: false,
+  authenticated: false,
   serverUp: false,
   pingTimer: null,
   lastUp: undefined
@@ -20,19 +21,24 @@ async function initializeApp() {
     // Force close any leftover progress modals from previous sessions
     forceCloseAllProgress();
 
-    // Initialize UI helpers
+    // Initialize UI helpers first
     if (window.UIHelpers) {
       window.UIHelpers.initUIHelpers();
+    }
+
+    // Initialize authentication manager FIRST - this will check if user is already logged in
+    if (window.AuthManager) {
+      console.log('[App] Checking authentication status...');
+      await window.AuthManager.initAuthManager();
+
+      // Get authentication status after initialization
+      _appState.authenticated = await window.AuthManager.checkAuthStatus();
+      console.log('[App] Authentication status:', _appState.authenticated);
     }
 
     // Initialize progress UI
     if (window.ProgressUI) {
       window.ProgressUI.initProgressUI();
-    }
-
-    // Initialize authentication manager
-    if (window.AuthManager) {
-      window.AuthManager.initAuthManager();
     }
 
     // Initialize settings manager
@@ -53,10 +59,12 @@ async function initializeApp() {
       window.UpdaterManager.initUpdaterManager();
     }
 
-    // Auto-prepare game files if needed
-    setTimeout(() => {
-      checkAndAutoPrepare();
-    }, 1000);
+    // Auto-prepare game files if needed (only if authenticated)
+    if (_appState.authenticated) {
+      setTimeout(() => {
+        checkAndAutoPrepare();
+      }, 1000);
+    }
 
     console.log('[App] Initialization complete');
   } catch (error) {
