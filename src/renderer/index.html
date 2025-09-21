@@ -8,7 +8,7 @@
 <!-- Premium font import -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./debug.css">
 <style>
 :root {
   --bg-primary: #0a0a0a;
@@ -1946,8 +1946,92 @@ html, body {
 <script src="./error-manager.js"></script>
 <script src="./settings-manager.js"></script>
 <script src="./ui-helpers.js"></script>
-<!-- Test script - remove after testing -->
-<script src="./test-modules.js"></script>
+<!-- Debug script to check module loading -->
+<script>
+  // Debug function to check if modules are loaded
+  function checkModules() {
+    console.log('[DEBUG] Checking module loading...');
 
-</body>
-</html>
+    const modules = [
+      'UIHelpers',
+      'AuthManager',
+      'ErrorManager',
+      'SettingsManager',
+      'UpdaterManager',
+      'DOMUtils',
+      'ProgressUI'
+    ];
+
+    modules.forEach(moduleName => {
+      const isLoaded = typeof window[moduleName] !== 'undefined';
+      console.log(`[DEBUG] ${moduleName}: ${isLoaded ? '✅ Loaded' : '❌ Not loaded'}`);
+    });
+
+    // Check if app.js functions are available
+    const appFunctions = ['App', 'initializeApp'];
+    appFunctions.forEach(func => {
+      const isAvailable = typeof window[func] !== 'undefined';
+      console.log(`[DEBUG] ${func}: ${isAvailable ? '✅ Available' : '❌ Not available'}`);
+    });
+
+    // Check DOM elements
+    const keyElements = ['tabAuth', 'btnLogin', 'email', 'pass', 'loginForm'];
+    keyElements.forEach(elementId => {
+      const element = document.getElementById(elementId);
+      console.log(`[DEBUG] Element #${elementId}: ${element ? '✅ Found' : '❌ Not found'}`);
+    });
+
+    // Update debug panel
+    const debugModules = document.getElementById('debug-modules');
+    const debugAuth = document.getElementById('debug-auth');
+    const debugInterface = document.getElementById('debug-interface');
+
+    if (debugModules) debugModules.textContent = modules.filter(m => typeof window[m] !== 'undefined').length + '/' + modules.length;
+    if (debugAuth) debugAuth.textContent = authSection ? '✅ Found' : '❌ Not found';
+    if (debugInterface) debugInterface.textContent = computedStyle.backgroundColor !== 'transparent' ? '✅ Loaded' : '❌ Not loaded';
+
+    // Auto-initialize if not done
+    if (typeof window.App !== 'undefined' && typeof window.App.initializeApp === 'function') {
+      console.log('[DEBUG] Auto-initializing app...');
+      window.App.initializeApp();
+    }
+
+    // Force show auth tab
+    const authTab = document.querySelector('.nav-item[data-tab="auth"]');
+    if (authTab) {
+      authTab.click();
+      console.log('[DEBUG] Auth tab activated');
+    }
+  }
+
+  // Run debug check when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkModules);
+  } else {
+    setTimeout(checkModules, 1000); // Give time for all scripts to load
+  }
+
+  // Force display of auth section
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+      const authSection = document.getElementById('auth');
+      if (authSection) {
+        authSection.classList.add('active');
+        console.log('[DEBUG] Auth section activated');
+      }
+    }, 500);
+  });
+
+  // Add debug info panel to DOM
+  document.addEventListener('DOMContentLoaded', function() {
+    const debugPanel = document.createElement('div');
+    debugPanel.className = 'debug-info';
+    debugPanel.innerHTML = `
+      <div><strong>🔧 Debug Mode</strong></div>
+      <div>Modules loaded: <span id="debug-modules">Checking...</span></div>
+      <div>Auth section: <span id="debug-auth">Checking...</span></div>
+      <div>Interface: <span id="debug-interface">Checking...</span></div>
+    `;
+    document.body.appendChild(debugPanel);
+  });
+</script>
