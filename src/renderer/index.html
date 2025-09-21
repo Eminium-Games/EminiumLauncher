@@ -377,7 +377,7 @@ html, body { overflow: hidden; }
               console.log('[Croissant] Ouverture de la popup OAuth...');
               
               const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
-              const redirectUri = 'http://localhost:8080/callback';
+              const redirectUri = 'http://localhost:8080/callback?tab=play';
               const state = Math.random().toString(36).substring(7);
               
               // Stocker l'état pour la vérification
@@ -1707,6 +1707,96 @@ async function runUpdaterIfNeeded() {
     if (res && res.ok && res.settings) await applySettings(res.settings);
   } catch {}
 })();
+
+// Gestion du callback OAuth pour redirection vers l'onglet Jouer
+function handleCallbackParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tab = urlParams.get('tab');
+  const code = urlParams.get('code');
+  const state = urlParams.get('state');
+  
+  // Si on a un paramètre tab=play, rediriger vers l'onglet Jouer
+  if (tab === 'play') {
+    console.log('[Callback] Redirection vers l\'onglet Jouer demandée');
+    
+    // Attendre un peu pour que l'UI soit prête
+    setTimeout(() => {
+      switchToPlayTab();
+    }, 500);
+  }
+  
+  // Si on a un code OAuth, le traiter
+  if (code && state) {
+    console.log('[Callback] Code OAuth détecté, traitement...');
+    handleOAuthCallback(code, state);
+  }
+}
+
+// Fonction pour basculer vers l'onglet Jouer
+function switchToPlayTab() {
+  try {
+    // Masquer l'onglet Auth
+    const authTab = document.querySelector('.tab[data-tab="auth"]');
+    const authContent = document.getElementById('auth');
+    if (authTab) authTab.classList.remove('active');
+    if (authContent) authContent.classList.remove('active');
+    
+    // Afficher l'onglet Play
+    const playTab = document.querySelector('.tab[data-tab="play"]');
+    const playContent = document.getElementById('play');
+    if (playTab) playTab.classList.add('active');
+    if (playContent) playContent.classList.add('active');
+    
+    // Mettre à jour l'état de l'application
+    if (typeof setAuthTabHidden === 'function') {
+      setAuthTabHidden(true);
+    }
+    
+    if (typeof setTabsForAuth === 'function') {
+      const isAdmin = window.eminium && window.eminium.getProfile ? 
+        isAdminClient(window.eminium.getProfile()) : false;
+      setTabsForAuth(true, isAdmin);
+    }
+    
+    console.log('[Callback] Redirection vers l\'onglet Jouer réussie');
+    
+  } catch (error) {
+    console.error('[Callback] Erreur lors de la redirection:', error);
+  }
+}
+
+// Gérer le callback OAuth
+async function handleOAuthCallback(code, state) {
+  try {
+    // Vérifier le state
+    const savedState = sessionStorage.getItem('croissant_oauth_state');
+    if (state !== savedState) {
+      console.error('[Callback] State invalide');
+      return;
+    }
+    
+    // Nettoyer le state
+    sessionStorage.removeItem('croissant_oauth_state');
+    
+    // Traiter le code OAuth
+    const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
+    const redirectUri = 'http://localhost:8080/callback?tab=play';
+    
+    await processOAuthCode(code, clientId, redirectUri);
+    
+    // Nettoyer l'URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+  } catch (error) {
+    console.error('[Callback] Erreur traitement OAuth:', error);
+  }
+}
+
+// Appeler au chargement de la page
+document.addEventListener('DOMContentLoaded', handleCallbackParams);
+
+// Appeler aussi si la page change (pour les SPA)
+window.addEventListener('popstate', handleCallbackParams);
 
 </script>
 
