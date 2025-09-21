@@ -8,780 +8,1296 @@
 <!-- Premium font import -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #1a0b0b;
-  --card: rgba(42, 31, 31, 0.8);
-  --muted: #d1c4a7;
-  --accent: #f59e0b;
-  --txt: #fff8e1;
-  --glass: rgba(255,255,255,0.05);
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-card: rgba(26, 26, 26, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-strong: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-accent: #fbbf24;
+  --accent-primary: #f59e0b;
+  --accent-secondary: #d97706;
+  --accent-glow: rgba(245, 158, 11, 0.25);
+  --success: #10b981;
+  --error: #ef4444;
+  --border-primary: rgba(255, 255, 255, 0.1);
+  --border-secondary: rgba(255, 255, 255, 0.05);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 0 32px rgba(245, 158, 11, 0.3);
+  --gradient-primary: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+  --gradient-card: linear-gradient(180deg, rgba(26, 26, 26, 0.98) 0%, rgba(15, 15, 15, 0.95) 100%);
 }
- 
-  html, body {
-  margin:0; padding:0; height:100%;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
   font-family: 'Inter', sans-serif;
-  background:linear-gradient(135deg, #1a0b0b 0%, #3b1f1f 100%);
-  color: var(--txt);
+  background: var(--gradient-bg);
+  color: var(--text-primary);
+  overflow: hidden;
+  position: relative;
 }
-/* Global box-sizing to prevent accidental overflow */
-*, *::before, *::after { box-sizing: border-box; }
 
-.wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:24px; box-sizing:border-box; }
+/* Animated background particles */
+.bg-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
 
-.card {
-  width:100%; max-width:1100px; min-width:720px;
-  background: var(--card);
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float 20s infinite linear;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(100vh) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(100px);
+    opacity: 0;
+  }
+}
+
+.main-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.app-card {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 700px;
+  background: var(--gradient-card);
   border-radius: 24px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  padding: 24px; display:flex; flex-direction:column;
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg), var(--shadow-accent);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  grid-template-rows: auto 1fr;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6), 0 0 48px rgba(245, 158, 11, 0.35);
+}
+
+/* Header */
+.app-header {
+  grid-column: 1 / -1;
+  padding: 24px 32px;
+  background: var(--bg-glass);
+  border-bottom: 1px solid var(--border-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-container {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+.logo img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+@keyframes logo-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(245, 158, 11, 0.6);
+  }
+}
+
+.brand-text h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.brand-text .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Profile Card */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-card:hover {
+  background: var(--bg-glass-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.profile-uuid {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: 'Space Grotesk', monospace;
+}
+
+.profile-grade {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  grid-column: 1;
+  grid-row: 2;
+  padding: 24px 16px;
+  background: var(--bg-glass);
+  border-right: 1px solid var(--border-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+  background: var(--bg-glass-strong);
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  background: var(--gradient-primary);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+}
+
+.nav-item.active::before {
+  opacity: 1;
+}
+
+.nav-icon {
+  font-size: 20px;
+  width: 24px;
+  text-align: center;
+}
+
+/* Main Content Area */
+.main-content {
+  grid-column: 2;
+  grid-row: 2;
+  padding: 32px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.content-section {
+  display: none;
+  animation: fadeIn 0.5s ease;
+}
+
+.content-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Panels */
+.panel {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-secondary);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
-.card:hover { transform: translateY(-4px); box-shadow: 0 25px 70px rgba(0,0,0,0.7); }
-
-.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-.brand { display:flex; align-items:center; gap:12px; }
-
-.logo {
-  width:60px; height:60px; border-radius:15px;
-  background: radial-gradient(circle at 50% 50%, var(--accent) 0%, #d97706 100%);
-  box-shadow: 0 0 22px rgba(245,158,11,0.5);
-  animation: pulse 2s infinite alternate;
+.panel:hover {
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-sm);
 }
 
-.logo img { width: 100%; height: 100%; border-radius: 15px; object-fit: cover; display: block; }
-
-@keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
-
-h1 { font-size:32px; margin:0; font-weight:700; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-.muted { color:var(--muted); font-size:13px; }
-
-.tabs { display:flex; border-bottom:1px solid #4e342e; margin-bottom:12px; gap:4px; }
-.tab { padding:10px 16px 10px 42px; cursor:pointer; border-radius:12px 12px 0 0; background: var(--glass); transition: all 0.3s ease; position: relative; font-weight:600; }
-.tab::before { content: attr(data-ico); position:absolute; left:12px; top:50%; transform: translateY(-50%); filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
-.tab.active { background: var(--accent); color:#3e1f0f; box-shadow: 0 6px 18px rgba(245,158,11,0.35); }
-.tab.active::after { content:""; position:absolute; inset:0; border-radius:inherit; box-shadow: inset 0 0 0 1px rgba(62,39,35,0.12), 0 0 0 3px rgba(245,158,11,0.25); pointer-events:none; }
-
-.tab-content {
-  opacity: 0; transform: translateY(10px); pointer-events: none;
-  transition: all 0.3s ease; position: relative; width: 100%; display: none;
-}
-.tab-content.active { opacity: 1; transform: translateY(0); pointer-events: all; display: block; }
-
-.panel {
-  background: var(--glass); border-radius: 18px; padding:20px; margin-bottom:12px;
-  backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.1);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 26px rgba(0,0,0,0.32);
-  position: relative; z-index: 1; overflow: hidden;
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-input[type=text], input[type=password], input[type=number] {
-  width:100%; background: rgba(28,18,18,0.8);
-  border:1px solid rgba(62,39,35,0.6); color: var(--txt);
-  padding:10px; border-radius:12px; transition: 0.2s;
+.panel-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
-input:focus { border-color: var(--accent); outline:none; }
 
-button { border:none; border-radius:14px; padding:12px 18px; cursor:pointer; font-weight:700; transition: all 0.2s ease; }
-.btn { background: linear-gradient(180deg, #f59e0b, #d97706); color:#3e1f0f; box-shadow: 0 12px 26px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
-.btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 16px 36px rgba(245,158,11,0.45); }
-.btn:active { transform: translateY(0); box-shadow: 0 10px 22px rgba(245,158,11,0.35); }
-.btn.sec { background: rgba(255,255,255,0.06); color:#ffe8c2; border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
-.btn.sec:hover { background: rgba(255,255,255,0.09); }
-.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.25); }
-
-.profile-row { display:flex; align-items:center; gap:12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding:10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
-.profile-avatar { width:42px; height:42px; border-radius: 11px; overflow:hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
-.badge-grade { background: linear-gradient(180deg, rgba(245,158,11,0.25), rgba(245,158,11,0.12)); color: #ffd9a1; border: 1px solid rgba(245,158,11,0.35); padding:3px 8px; border-radius: 999px; font-size: 12px; }
-
-.log {
-  height:200px; overflow:auto;
-  font-family: ui-monospace, monospace; font-size:12px;
-  background: rgba(28,18,18,0.85); border-radius:12px;
-  padding:10px; border:1px solid rgba(62,39,35,0.6);
-  scrollbar-width: thin; scrollbar-color: var(--accent) var(--glass);
+/* Form Elements */
+.form-group {
+  margin-bottom: 20px;
 }
-.log::-webkit-scrollbar { width:8px; }
-.log::-webkit-scrollbar-thumb { background: var(--accent); border-radius:4px; }
-.log::-webkit-scrollbar-track { background: var(--glass); }
 
-.profile-card { display:flex; align-items:center; gap:12px; padding:12px; background: var(--glass); border:1px solid rgba(255,255,255,0.1); border-radius:18px; cursor:pointer; transition: all 0.2s ease; }
-.profile-card:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); }
-.profile-card img { width:64px; height:64px; border-radius:12px; }
-.profile-info { display:flex; flex-direction:column; }
-.profile-info span { font-size:14px; }
-.profile-info .uuid { font-size:12px; color:var(--muted); }
-/* Grade badge */
-.badge-grade {
-  display: none;
-  margin-top: 4px;
-  align-self: flex-start;
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--bg-glass-strong);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-glass);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Social Login Buttons */
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-glass-strong);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.social-btn:hover {
+  background: var(--bg-glass);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.social-btn img {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+/* Range Sliders */
+.slider-container {
+  margin-bottom: 20px;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.slider-value {
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(245,158,11,0.18); /* default fallback */
-  color: var(--accent);              /* will be overridden inline when known */
-  border: 1px solid rgba(245,158,11,0.35);
+  font-weight: 600;
 }
 
-.settings-modal { opacity: 0; transition: opacity 0.3s ease; }
-.settings-modal.show { display: flex; opacity: 1; }
-.settings-content { background: var(--card); padding:24px; border-radius:24px; width:400px; max-width:90%; backdrop-filter: blur(10px); }
-.settings-content h2 { margin-top:0; }
+.slider {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--gradient-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+  transition: all 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.6);
+}
+
+/* Toggles */
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+}
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle.active {
+  background: var(--gradient-primary);
+}
+
+.toggle.active::after {
+  left: 26px;
+}
+
+/* Log Area */
+.log-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  height: 300px;
+  overflow-y: auto;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.log-entry {
+  margin-bottom: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--bg-glass);
+}
+
+.log-entry.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+
+.log-entry.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #86efac;
+}
+
+/* Tutorial Modal */
+.tutorial-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+}
+
+.tutorial-content {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.tutorial-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.tutorial-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.tutorial-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.tutorial-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-secondary);
+  border-radius: 16px;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: var(--gradient-primary);
+  color: var(--bg-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.step-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.step-content p {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tutorial-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+/* Error Messages */
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  margin-top: 12px;
+}
 
 /* Progress Modal */
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
-.modal-backdrop.show { display: flex; }
-.modal { width: 720px; max-width: 92vw; background: var(--card); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 18px; border: 1px solid rgba(255,255,255,0.08); }
-
-/* ===== Premium Visual Overhaul (non-breaking) ===== */
-:root {
-  --elev-1: 0 6px 24px rgba(0,0,0,0.35);
-  --elev-2: 0 12px 36px rgba(0,0,0,0.45);
-  --ring: 0 0 0 3px rgba(245,158,11,0.25);
-  --glass-strong: rgba(255,255,255,0.08);
-  --card-strong: rgba(35, 24, 24, 0.78);
-  --txt-sec: #ffe9b0;
-}
-
-@keyframes bgShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-html, body {
-  background: radial-gradient(circle at 10% 10%, #3b1f1f 0%, #1a0b0b 35%),
-              linear-gradient(135deg, #1a0b0b 0%, #3b1f1f 100%);
-  background-size: 200% 200%;
-  animation: bgShift 18s ease infinite;
-}
-
-.card { background: var(--card-strong); box-shadow: var(--elev-2); border: 1px solid rgba(255,255,255,0.06); }
-.card:hover { transform: translateY(-6px); box-shadow: 0 22px 70px rgba(0,0,0,0.65); }
-/* Grid layout: header spans, tabs left, content right */
-.card { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; column-gap: 32px; row-gap: 26px; padding: 18px; }
-.header { grid-column: 1 / -1; margin-bottom: 4px; }
-.tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding: 10px; gap: 10px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); overflow:hidden; z-index: 0; }
-.tab { border-radius: 12px; width:100%; }
-.tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
-.tab:hover { filter: brightness(1.05); }
-.tab.active { border-color: rgba(245,158,11,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 14px rgba(245,158,11,0.18); }
-.tab.active::before { transform: translateY(-50%) scale(1.02); }
-.tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
-.tab + .tab { margin-top: 0; }
-.tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; position: relative; z-index: 1; min-width: 0; }
-/* Panels spacing */
-.panel { padding: 20px 22px; }
-.panel + .panel { margin-top: 16px; }
-.panel .panel { border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28); }
-.row { gap: 14px; }
-.row.fields-2 { gap: 28px; }
-.row.toggles { gap: 24px; align-items: center; }
-.row.toggles label { display: inline-flex; align-items: center; gap: 10px; }
-.field label { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.field input[type=range] { margin-top: 2px; }
-.field { min-width: 0; }
-.field .hint { margin-left: 8px; opacity: .9; white-space: nowrap; }
-/* Spacing for login button under fields in Auth panel */
-#auth #btnLogin { margin-top: 16px; }
-/* Auth error message styling */
-.auth-error {
+.progress-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
   display: none;
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.35);
-  color: #fecaca;
-  font-size: 13px;
-  white-space: pre-line; /* allow line breaks for extra technical info */
-}
-@media (max-width: 880px) {
-  .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
-  .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
-  .tab + .tab { margin-top: 0; }
-  .tab { border-radius: 12px 12px 0 0; }
-  .tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
-  .tab:hover { filter: brightness(1.05); }
-  .tab.active { border-color: rgba(245,158,11,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 14px rgba(245,158,11,0.18); }
-  .tab.active::before { transform: translateY(-50%) scale(1.02); }
-  .tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
-  .tab + .tab { margin-top: 0; }
-  .tab-content { grid-column: 1; grid-row: 3; padding-right: 0; }
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
 }
 
-.logo { box-shadow: 0 0 34px rgba(245,158,11,0.55); }
-h1 { letter-spacing: 0.3px; }
-
-.profile-card { background: var(--glass-strong); border-color: rgba(255,255,255,0.14); box-shadow: var(--elev-1); }
-.profile-card:hover { background: rgba(255,255,255,0.11); transform: translateY(-1px) scale(1.015); }
-.profile-card img { box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
-.profile-info span { color: var(--txt-sec); }
-
-.tabs { border-bottom-color: rgba(255,255,255,0.08); gap: 6px; }
-.tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
-.tab:hover { transform: translateY(-1px); filter: brightness(1.05); }
-.tab.active { box-shadow: 0 10px 26px rgba(245,158,11,0.35); border-color: rgba(255,255,255,0.12); }
-
-.tab-content { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; box-shadow: var(--elev-1); padding: 18px; }
-
-.btn {
-  background: linear-gradient(180deg, #fbbf24, #f59e0b);
-  color: #3e1f0f; border: none;
-  box-shadow: 0 10px 24px rgba(245,158,11,0.35);
+.progress-modal.show {
+  display: flex;
 }
 
-/* Slider styling */
-.slider-row { display:flex; gap:12px; align-items:center; }
-input[type=range] { width: 100%; accent-color: var(--accent); }
-.range-grey { background: rgba(255,255,255,0.10) !important; }
-label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
-
-/* Inputs */
-input, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--txt); border-radius: 12px; padding: 10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
-input:focus, select:focus { outline: none; box-shadow: var(--ring); }
-
-/* Sliders */
-input[type=range] { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.09); display: block; width: 100%; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.10); background-clip: padding-box; }
-/* Extra spacing when multiple sliders are stacked in same container */
-.panel input[type=range] ~ input[type=range] { margin-top: 18px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); border: 2px solid #fff3; cursor: pointer; }
-input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); border: 2px solid #fff3; box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); cursor: pointer; }
-input[type=range].dim::-webkit-slider-thumb, input[type=range].dim::-moz-range-thumb { box-shadow: 0 2px 6px rgba(0,0,0,0.25); filter: saturate(0.7) brightness(0.9); }
-
-/* Checkboxes */
-input[type=checkbox] { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); display: inline-grid; place-content: center; cursor: pointer; -webkit-appearance: none; appearance: none; transition: all .15s ease; }
-input[type=checkbox]:hover { filter: brightness(1.06); }
-input[type=checkbox]:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.25), 0 0 0 1px rgba(255,255,255,0.25); }
-input[type=checkbox]::after { content: ""; width: 12px; height: 12px; border-radius: 4px; transform: scale(0.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; background: transparent; box-shadow: none; }
-input[type=checkbox]:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.28); box-shadow: 0 6px 18px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.15); }
-input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,255,255,0.95); box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset; }
-
-/* Toggle switch variant (refined) */
-input.toggle { width: 44px; height: 26px; border-radius: 999px; position: relative; border: 1px solid rgba(255,255,255,0.16); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); vertical-align: middle; }
-input.toggle::after { content:""; position:absolute; left:2px; top:1px; width:22px; height:22px; border-radius:50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); transition: left .18s ease, background .18s ease; }
-input.toggle:hover { filter: brightness(1.03); }
-input.toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
-input.toggle:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.25); box-shadow: 0 6px 16px rgba(245,158,11,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
-input.toggle:checked::after { left:20px; background: #fffdf6; }
-/* Ensure label aligns with switch height */
-.row.toggles label { min-height: 26px; line-height: 26px; }
-
-/* Logs */
-.log { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 8px 24px rgba(0,0,0,0.35); }
-
-/* Modal improvements */
-.modal-backdrop { backdrop-filter: blur(6px); }
-.modal { background: linear-gradient(180deg, rgba(32,21,21,0.92), rgba(44,30,30,0.92)); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 70px rgba(0,0,0,0.65); }
-.progress-title { font-weight: 700; letter-spacing: 0.2px; }
-.progress-value { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-.modal-title { font-weight: 700; margin-bottom: 10px; }
-.progress { width: 100%; height: 10px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
-.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #f59e0b); box-shadow: 0 0 15px rgba(245,158,11,0.5); transition: width .25s ease; }
-.progress-bar.error { background: linear-gradient(90deg, #ef4444, #dc2626); box-shadow: 0 0 15px rgba(239,68,68,0.5); }
-.progress-log { margin-top: 10px; background: rgba(28,18,18,0.85); border: 1px solid rgba(62,39,35,0.6); border-radius: 12px; padding: 10px; max-height: 240px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
-.progress-log .line { display:block; margin-bottom:2px; }
-.progress-log .line.err { color:#fca5a5; }
-.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top: 10px; }
-/* Layout helpers */
-.row { display:flex; gap:12px; align-items:flex-end; flex-wrap: wrap; }
-
-/* Hide scrollbars globally but keep scroll behavior */
-html, body, .wrap, .card, .tab-content, .panel, .log, .progress-log {
-  scrollbar-width: none; /* Firefox */
+.progress-content {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
 }
-html::-webkit-scrollbar, body::-webkit-scrollbar,
-.wrap::-webkit-scrollbar, .card::-webkit-scrollbar,
-.tab-content::-webkit-scrollbar, .panel::-webkit-scrollbar,
-.log::-webkit-scrollbar, .progress-log::-webkit-scrollbar { display: none; }
-/* Prevent outer window scrollbar */
-html, body { overflow: hidden; }
 
-/* Skeleton loading */
-.skeleton { position: relative; color: transparent !important; }
-.skeleton::after {
+.progress-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.progress-bar-container {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 12px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-bar::after {
   content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-log {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  height: 150px;
+  overflow-y: auto;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .app-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    max-width: 100%;
+  }
+
+  .sidebar-nav {
+    grid-column: 1;
+    grid-row: 2;
+    flex-direction: row;
+    padding: 16px;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-secondary);
+  }
+
+  .nav-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .main-content {
+    grid-column: 1;
+    grid-row: 3;
+    padding: 24px;
+  }
+
+  .app-header {
+    padding: 16px 24px;
+  }
+
+  .brand-text h1 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 12px;
+  }
+
+  .app-card {
+    border-radius: 16px;
+    min-height: 600px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .sidebar-nav {
+    justify-content: center;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-glass) 50%, var(--bg-secondary) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  animation: loading 1.5s infinite;
   border-radius: 8px;
 }
-@keyframes shimmer { 0% { background-position: -150% 0; } 100% { background-position: 150% 0; } }
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Hide scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="header">
-      <div class="brand">
-        <div class="logo"><img src="https://eminium.ovh/storage/img/eminium-logo.png" alt=""></div>
-        <div>
+<!-- Animated Background Particles -->
+<div class="bg-particles" id="particles"></div>
+
+<!-- Main Container -->
+<div class="main-container">
+  <div class="app-card">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="logo-container">
+          <div class="logo">
+            <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium Logo">
+          </div>
+        </div>
+        <div class="brand-text">
           <h1>Eminium Launcher</h1>
-          <div class="profile-card" id="profileCard" style="display:none;">
-            <img id="profileSkin" src="" alt="Skin" class="skeleton">
-            <div class="profile-info">
-              <span id="profileName" class="skeleton">Pseudo</span>
-              <span class="uuid skeleton" id="profileUUID">UUID</span>
-              <span class="badge-grade" id="profileGrade" aria-label="Grade" title=""></span>
-            </div>
-            <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;" aria-label="Se déconnecter" title="Se déconnecter">Déconnexion</button>
-          </div>
+          <div class="subtitle">Votre portail vers l'aventure</div>
         </div>
       </div>
-    </div>
-
-    <!-- Onglets -->
-    <div class="tabs">
-      <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
-      <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
-      <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
-      <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
-    </div>
-
-    <!-- Contenus -->
-    <div class="tab-content active" id="auth">
-      <div class="panel">
-        <!-- Bouton principal de connexion Eminium -->
-        <button class="btn" id="btnLoginWithEminium" aria-label="Se connecter avec Eminium" title="Se connecter avec Eminium" style="width:100%; display:block; margin-bottom:12px;">
-          <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium" style="height:24px; vertical-align:middle; margin-right:8px;">
-          Se connecter avec Eminium
+      
+      <!-- Profile Section -->
+      <div class="profile-card" id="profileCard" style="display: none;">
+        <div class="profile-avatar">
+          <img id="profileSkin" src="" alt="Profile Skin" class="skeleton">
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Chargement...</div>
+          <div class="profile-uuid" id="profileUUID">UUID</div>
+          <div class="profile-grade" id="profileGrade" style="display: none;">Grade</div>
+        </div>
+        <button class="btn btn-secondary" id="btnLogout" style="display: none;">
+          <span>🚪</span>
+          Déconnexion
         </button>
-        
-        <!-- Bouton Croissant-API.fr -->
-        <button
-          id="btnLoginWithCroissant"
-          class="btn"
-          style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px;"
-          aria-label="Se connecter avec Croissant-API.fr"
-          title="Se connecter avec Croissant-API.fr"
-        >
-          <img src="https://croissant-api.fr/assets/icons/favicon-32x32.avif" alt="Croissant" style="width:24px; height:24px;">
-          Se connecter avec Croissant-API.fr (BÊTA)
-        </button>
-        
-        <!-- Connexion Croissant via Popup -->
-        <script>
-          // Connexion Croissant avec popup
-          console.log('[Croissant] Initialisation de la connexion popup...');
-          
-          // Fonction pour ouvrir la popup OAuth
-          window.connectWithCroissant = function() {
-            try {
-              console.log('[Croissant] Ouverture de la popup OAuth...');
-              
-              const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
-              const redirectUri = 'http://localhost:8080/callback?tab=play';
-              const state = Math.random().toString(36).substring(7);
-              
-              // Stocker l'état pour la vérification
-              sessionStorage.setItem('croissant_oauth_state', state);
-              
-              const authUrl = `https://croissant-api.fr/oauth2/authorize?` +
-                `client_id=${clientId}&` +
-                `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-                `response_type=code&` +
-                `state=${state}&` +
-                `scope=profile email balance`;
-              
-              console.log('[Croissant] URL OAuth:', authUrl);
-              
-              // Ouvrir la popup
-              const width = 600;
-              const height = 700;
-              const left = (screen.width / 2) - (width / 2);
-              const top = (screen.height / 2) - (height / 2);
-              
-              const popup = window.open(
-                authUrl,
-                'CroissantOAuth',
-                `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-              );
-              
-              if (!popup) {
-                console.error('[Croissant] Impossible d\'ouvrir la popup');
-                alert('Veuillez autoriser les popups pour vous connecter avec Croissant');
-                return;
-              }
-              
-              // Surveiller la popup pour détecter la fermeture
-              const checkClosed = setInterval(() => {
-                if (popup.closed) {
-                  clearInterval(checkClosed);
-                  console.log('[Croissant] Popup fermée par l\'utilisateur');
-                }
-              }, 1000);
-              
-              // Écouter les messages de la popup
-              const messageHandler = function(event) {
-                // Vérifier l'origine pour la sécurité
-                if (event.origin !== window.location.origin) return;
-                
-                if (event.data && event.data.type === 'croissant_oauth_result') {
-                  const { code, state: returnedState, error } = event.data;
-                  
-                  // Vérifier le state
-                  const savedState = sessionStorage.getItem('croissant_oauth_state');
-                  if (returnedState !== savedState) {
-                    console.error('[Croissant] State invalide');
-                    return;
-                  }
-                  
-                  // Nettoyer
-                  sessionStorage.removeItem('croissant_oauth_state');
-                  window.removeEventListener('message', messageHandler);
-                  clearInterval(checkClosed);
-                  
-                  if (error) {
-                    console.error('[Croissant] Erreur OAuth:', error);
-                    alert('Erreur d\'authentification: ' + error);
-                    return;
-                  }
-                  
-                  if (code) {
-                    // Traiter le code OAuth
-                    processOAuthCode(code, clientId, redirectUri);
-                  }
-                }
-              };
-              
-              window.addEventListener('message', messageHandler);
-              
-            } catch (error) {
-              console.error('[Croissant] Erreur:', error);
-              alert('Erreur lors de la connexion: ' + error.message);
-            }
-          };
-          
-          // Traiter le code OAuth reçu
-          async function processOAuthCode(code, clientId, redirectUri) {
-            try {
-              console.log('[Croissant] Traitement du code OAuth...');
-              
-              // Échanger le code contre un token
-              const tokenResponse = await fetch('https://croissant-api.fr/oauth2/token', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                  grant_type: 'authorization_code',
-                  code: code,
-                  client_id: clientId,
-                  redirect_uri: redirectUri
-                })
-              });
-              
-              if (!tokenResponse.ok) {
-                throw new Error(`Erreur ${tokenResponse.status}: ${tokenResponse.statusText}`);
-              }
-              
-              const tokenData = await tokenResponse.json();
-              console.log('[Croissant] Token obtenu:', tokenData);
-              
-              let userData = {};
-              
-              // Vérifier si les infos utilisateur sont dans le token (cas déjà connecté)
-              if (tokenData.user) {
-                console.log('[Croissant] Infos utilisateur trouvées dans le token');
-                userData = tokenData.user;
-              } else {
-                // Sinon, récupérer les infos via l'API
-                console.log('[Croissant] Récupération des infos utilisateur via API...');
-                const userResponse = await fetch('https://croissant-api.fr/api/user', {
-                  headers: {
-                    'Authorization': `Bearer ${tokenData.access_token}`
-                  }
-                });
-                
-                if (!userResponse.ok) {
-                  throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
-                }
-                
-                userData = await userResponse.json();
-                console.log('[Croissant] Utilisateur récupéré via API');
-              }
-              
-              // S'assurer qu'on a les données essentielles
-              if (!userData.username || !userData.user_id) {
-                console.warn('[Croissant] Données utilisateur incomplètes:', userData);
-                throw new Error('Données utilisateur incomplètes reçues');
-              }
-              
-              console.log('[Croissant] Données utilisateur complètes:', {
-                username: userData.username,
-                user_id: userData.user_id,
-                email: userData.email,
-                balance: userData.balance
-              });
-              
-              // Traiter les données utilisateur
-              await processCroissantUser(userData);
-              
-            } catch (error) {
-              console.error('[Croissant] Erreur traitement OAuth:', error);
-              alert('Erreur lors de la connexion: ' + error.message);
-            }
-          }
-          
-          // Traiter les données utilisateur Croissant
-          async function processCroissantUser(user) {
-            try {
-              console.log('[Croissant] Traitement de l\'utilisateur:', user);
-              
-              // Extraire le pseudo et l'UUID essentiels
-              const username = user.username || user.name || 'CroissantUser';
-              const userId = user.user_id || user.id;
-              
-              if (!username || !userId) {
-                throw new Error('Pseudo ou UUID manquant dans les données utilisateur');
-              }
-              
-              console.log('[Croissant] Création du profil avec:');
-              console.log('- Pseudo:', username);
-              console.log('- UUID:', userId);
-              
-              const profile = {
-                id: userId,
-                name: username,
-                uuid: userId, // Utiliser l'ID Croissant comme UUID
-                email: user.email || null,
-                role: null,
-                grade: null,
-                gradeColor: null,
-                banned: false,
-                created_at: null,
-                access_token: null,
-                auth: 'croissant',
-                croissant: {
-                  balance: user.balance || 0,
-                  verified: !!user.verified,
-                  discord_id: user.discord_id || null,
-                  steam_id: user.steam_id || null,
-                  google_id: user.google_id || null
-                }
-              };
-              
-              console.log('[Croissant] Profil créé:', profile);
-              
-              // Sauvegarder le profil
-              if (window.eminium && window.eminium.setProfile) {
-                const saveRes = await window.eminium.setProfile(profile);
-                if (!saveRes?.ok) {
-                  throw new Error(saveRes?.error || 'Erreur sauvegarde profil');
-                }
-                
-                const p = saveRes.profile || profile;
-                console.log('[Croissant] Profil sauvegardé:', p);
-                
-                // Mettre à jour l'UI
-                log('Connecté via Croissant-API.fr');
-                setAuthError('');
-                document.getElementById('profileName').textContent = p.name || 'Pseudo';
-                document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
-                const skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
-                document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
-                const gEl = document.getElementById('profileGrade');
-                const grade = formatGrade(p.grade ?? p.role);
-                if (grade) { 
-                  gEl.textContent = `Grade: ${grade}`; 
-                  gEl.title = `Grade: ${grade}`; 
-                  gEl.style.display = 'inline-block'; 
-                } else { 
-                  gEl.textContent = ''; 
-                  gEl.title=''; 
-                  gEl.style.display = 'none'; 
-                }
-                applyGradeStyle(gEl, p.gradeColor || null, grade);
-                code2faInput.parentElement.style.display = 'none';
-                document.getElementById('btnLogout').style.display = 'inline-block';
-                setProfileSkeleton(false);
-                
-                // Changer d'onglet
-                document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
-                document.getElementById('auth').classList.remove('active');
-                document.querySelector('.tab[data-tab="play"]').classList.add('active');
-                document.getElementById('play').classList.add('active');
-                setAuthTabHidden(true);
-                setTabsForAuth(true, isAdminClient(p));
-                try { await fetchAndUpdatePoints(); } catch {}
-                
-              } else {
-                throw new Error('API launcher non disponible');
-              }
-              
-            } catch (error) {
-              console.error('[Croissant] Erreur traitement:', error);
-              alert('Erreur lors du traitement: ' + error.message);
-            }
-          }
-          
-          console.log('[Croissant] Connexion popup initialisée!');
-        </script>
-        
-        <!-- Handler simplifié pour le bouton Croissant -->
-        <script>
-          // Handler pour le bouton Croissant
-          document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('btnLoginWithCroissant');
-            if (btn) {
-              console.log('[Croissant] Bouton trouvé, attachement du handler...');
-              btn.addEventListener('click', () => {
-                console.log('[Croissant] Clic sur le bouton - redirection vers Croissant');
-                
-                // Appeler la fonction de connexion simplifiée
-                if (typeof window.connectWithCroissant === 'function') {
-                  window.connectWithCroissant();
-                } else {
-                  console.error('[Croissant] Fonction connectWithCroissant non disponible');
-                  alert('Erreur: la fonction de connexion n\'est pas disponible');
-                }
-              });
-            } else {
-              console.error('[Croissant] Bouton non trouvé');
-            }
-          });
-        </script>
-        <!-- Formulaire détaillé masqué par défaut -->
-        <div id="authForm" style="display:none;">
-          <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
-          <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
-          <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
-          <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter" style="margin-top:8px;">Connexion</button>
-        </div>
-        <div id="authError" class="auth-error" role="alert" aria-live="polite"></div>
       </div>
-    </div>
+    </header>
 
-    <div class="tab-content" id="play">
-      <div class="panel">
-        <div class="field">
-          <label>Mémoire allouée <span class="hint" id="memLabel">2048 Mo</span></label>
-          <div class="slider-row">
-            <input id="memSlider" type="range" min="1024" max="8192" step="256" value="2048">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-tab="auth" id="tabAuth">
+        <span class="nav-icon">🔐</span>
+        <span>Connexion</span>
+      </a>
+      <a class="nav-item" data-tab="play" id="tabPlay" style="display: none;">
+        <span class="nav-icon">🎮</span>
+        <span>Jouer</span>
+      </a>
+      <a class="nav-item" data-tab="log" id="tabLog" style="display: none;">
+        <span class="nav-icon">📜</span>
+        <span>Logs</span>
+      </a>
+      <a class="nav-item" data-tab="admin" id="tabAdmin" style="display: none;">
+        <span class="nav-icon">🛠️</span>
+        <span>Admin</span>
+      </a>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Authentication Section -->
+      <section class="content-section active" id="auth">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Bienvenue sur Eminium</h2>
           </div>
-          <div id="ramInfo" class="muted" style="margin-top:6px;">Détection RAM...</div>
-        </div>
-        <div class="panel" style="margin-top:12px;">
-          <div class="muted" style="margin-bottom:8px;">Performances</div>
-          <div class="row fields-2">
-            <div class="field" style="flex:1;">
-              <label>Distance de rendu <span class="hint" id="renderLabel">12 chunks</span></label>
-              <input id="renderDist" type="range" min="2" max="32" step="1" value="12">
+          
+          <div class="social-login">
+            <button class="social-btn" id="btnLoginWithEminium">
+              <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium">
+              <span>Se connecter avec Eminium</span>
+            </button>
+            
+            <button class="social-btn" id="btnLoginWithCroissant">
+              <img src="https://croissant-api.fr/assets/icons/favicon-32x32.avif" alt="Croissant">
+              <span>Se connecter avec Croissant-API.fr (BÊTA)</span>
+            </button>
+          </div>
+          
+          <!-- Detailed Login Form (Hidden by default) -->
+          <div id="authForm" style="display: none; margin-top: 24px;">
+            <div class="form-group">
+              <label class="form-label" for="email">Email</label>
+              <input type="email" id="email" class="form-input" placeholder="votre@email.com" autocomplete="username">
             </div>
-            <div class="field" style="flex:1;">
-              <label>FPS max <span class="hint" id="fpsLabel">120</span></label>
-              <input id="fpsCap" type="range" min="30" max="240" step="10" value="120">
+            
+            <div class="form-group">
+              <label class="form-label" for="pass">Mot de passe</label>
+              <input type="password" id="pass" class="form-input" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            
+            <div class="form-group" id="code2faGroup" style="display: none;">
+              <label class="form-label" for="code2fa">Code 2FA</label>
+              <input type="text" id="code2fa" class="form-input" placeholder="000000" inputmode="numeric" pattern="\d{6}">
+            </div>
+            
+            <button class="btn btn-block" id="btnLogin">
+              <span>🔑</span>
+              Se connecter
+            </button>
+          </div>
+          
+          <div id="authError" class="error-message" style="display: none;"></div>
+        </div>
+      </section>
+
+      <!-- Play Section -->
+      <section class="content-section" id="play">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Paramètres de jeu</h2>
+          </div>
+          
+          <div class="slider-container">
+            <div class="slider-label">
+              <label class="form-label">Mémoire allouée</label>
+              <span class="slider-value" id="memLabel">2048 Mo</span>
+            </div>
+            <input type="range" id="memSlider" class="slider" min="1024" max="8192" step="256" value="2048">
+            <div id="ramInfo" class="form-label" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Détection RAM...</div>
+          </div>
+          
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Performances</h3>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="slider-container">
+                <div class="slider-label">
+                  <label class="form-label">Distance de rendu</label>
+                  <span class="slider-value" id="renderLabel">12 chunks</span>
+                </div>
+                <input type="range" id="renderDist" class="slider" min="2" max="32" step="1" value="12">
+              </div>
+              
+              <div class="slider-container">
+                <div class="slider-label">
+                  <label class="form-label">FPS max</label>
+                  <span class="slider-value" id="fpsLabel">120</span>
+                </div>
+                <input type="range" id="fpsCap" class="slider" min="30" max="240" step="10" value="120">
+              </div>
+            </div>
+            
+            <div class="toggle-group" style="margin-top: 20px;">
+              <div class="toggle-item">
+                <label class="form-label">VSync</label>
+                <div class="toggle" id="vsync"></div>
+              </div>
+              
+              <div class="toggle-item">
+                <label class="form-label">FPS illimités</label>
+                <div class="toggle" id="fpsUnlimited"></div>
+              </div>
             </div>
           </div>
-          <div class="row toggles" style="margin-top:8px;">
-            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="vsync"> VSync</label>
-            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
+          
+          <div class="toggle-item" style="margin-top: 20px;">
+            <label class="form-label">Fermer le launcher au démarrage du jeu</label>
+            <div class="toggle" id="closeOnPlayToggle"></div>
+          </div>
+          
+          <div class="btn-group" style="margin-top: 24px;">
+            <button class="btn btn-secondary" id="btnCheck">
+              <span>🔄</span>
+              Installer / Mettre à jour
+            </button>
+            <button class="btn btn-secondary" id="btnForceUpdate">
+              <span>⚡</span>
+              Forcer la mise à jour
+            </button>
+            <button class="btn" id="btnPlay">
+              <span>🚀</span>
+              Jouer
+            </button>
           </div>
         </div>
-        <div class="row toggles" style="margin-top:8px;">
-          <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
-          </label>
-        </div>
-        <div class="row" style="margin-top:12px;">
-          <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
-          <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
-          <button class="btn" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">Jouer</button>
-        </div>
-      </div>
-    </div>
+      </section>
 
+      <!-- Logs Section -->
+      <section class="content-section" id="log">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Journal d'activité</h2>
+          </div>
+          <div class="log-container" id="log"></div>
+        </div>
+      </section>
+
+      <!-- Admin Section -->
+      <section class="content-section" id="admin">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Administration</h2>
+          </div>
+          
+          <div class="toggle-item">
+            <label class="form-label">Statut maintenance</label>
+            <div class="toggle" id="maintenanceToggle" disabled></div>
+          </div>
+          
+          <div style="margin-top: 12px; padding: 12px; background: var(--bg-glass); border-radius: 8px; border-left: 3px solid var(--accent-primary);">
+            <div style="font-size: 12px; color: var(--text-secondary);">
+              Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Tutorial Modal -->
+<div class="tutorial-modal" id="tutorialModal">
+  <div class="tutorial-content">
+    <div class="tutorial-header">
+      <h2 class="tutorial-title">Bienvenue sur Eminium Launcher</h2>
+      <p class="tutorial-subtitle">Découvrez comment utiliser votre nouveau launcher</p>
+    </div>
     
-
-    <div class="tab-content" id="log">
-      <div class="panel">
-        <div class="muted" style="margin-bottom:8px;">Log</div>
-        <div class="log" id="log"></div>
+    <div class="tutorial-steps">
+      <div class="tutorial-step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Connectez-vous</h3>
+          <p>Utilisez votre compte Eminium ou Croissant-API.fr pour vous connecter. Cliquez sur l'un des boutons de connexion pour commencer.</p>
+        </div>
+      </div>
+      
+      <div class="tutorial-step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Configurez vos paramètres</h3>
+          <p>Dans l'onglet "Jouer", ajustez la mémoire allouée, la distance de rendu et les FPS selon les performances de votre ordinateur.</p>
+        </div>
+      </div>
+      
+      <div class="tutorial-step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Lancez le jeu</h3>
+          <p>Cliquez sur "Installer / Mettre à jour" pour vérifier les fichiers, puis sur "Jouer" pour lancer votre aventure Minecraft.</p>
+        </div>
       </div>
     </div>
     
-    <div class="tab-content" id="admin">
-      <div class="panel">
-        <div class="muted" style="margin-bottom:8px;">Administration</div>
-        <div class="row toggles">
-          <label><input type="checkbox" class="toggle" id="maintenanceToggle" disabled> Statut maintenance (contrôlé côté serveur)</label>
-        </div>
-        <div class="muted" style="margin-top:10px; font-size:12px;">Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.</div>
-      </div>
+    <div class="tutorial-actions">
+      <button class="btn btn-secondary" onclick="closeTutorial()">
+        <span>✖️</span>
+        Fermer
+      </button>
+      <button class="btn" onclick="closeTutorial()">
+        <span>🚀</span>
+        Commencer
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Modal paramètres -->
-<div class="settings-modal" id="settingsModal">
-  <div class="settings-content">
-    <h2>Paramètres</h2>
-    <p>Options du launcher...</p>
-    <button class="btn sec" onclick="document.getElementById('settingsModal').classList.remove('show')">Fermer</button>
-  </div>
-</div>
-
-<!-- Modal de progression -->
-<div class="modal-backdrop" id="progressModal">
-  <div class="modal">
-    <div class="modal-title" id="progressTitle">Préparation</div>
-    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+<!-- Progress Modal -->
+<div class="progress-modal" id="progressModal">
+  <div class="progress-content">
+    <h3 class="progress-title" id="progressTitle">Préparation</h3>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+    </div>
     <div class="progress-log" id="progressLog"></div>
-    <div class="modal-actions">
-      <button class="btn sec" id="progressClose" disabled>Fermer</button>
+    <div class="btn-group">
+      <button class="btn btn-secondary" id="progressClose" disabled>Fermer</button>
     </div>
   </div>
- </div>
+</div>
 
 <script>
-// Gestion des onglets
-document.querySelectorAll('.tab').forEach(tab => {
+// Initialize particles background
+function createParticles() {
+  const particlesContainer = document.getElementById('particles');
+  const particleCount = 50;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 20 + 's';
+    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+    particlesContainer.appendChild(particle);
+  }
+}
+
+// Tutorial functionality
+function showTutorial() {
+  const modal = document.getElementById('tutorialModal');
+  modal.style.display = 'flex';
+  
+  // Store that user has seen tutorial
+  localStorage.setItem('eminium_tutorial_seen', 'true');
+}
+
+function closeTutorial() {
+  const modal = document.getElementById('tutorialModal');
+  modal.style.display = 'none';
+}
+
+// Show tutorial on first visit
+if (!localStorage.getItem('eminium_tutorial_seen')) {
+  setTimeout(showTutorial, 1000);
+}
+
+// Tab switching functionality
+document.querySelectorAll('.nav-item').forEach(tab => {
   tab.addEventListener('click', () => {
     if (tab.style.display === 'none') return; // ignore hidden tabs
-    if (!IS_LOGGED && tab.dataset.tab !== 'auth') {
-      // Bloque l'accès aux onglets tant que non connecté
+    
+    const targetTab = tab.dataset.tab;
+    
+    // Check if user is logged in for restricted tabs
+    if (!IS_LOGGED && targetTab !== 'auth') {
       log('Veuillez vous connecter pour accéder à cet onglet.');
       return;
     }
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(tc => tc.classList.remove('active'));
+    
+    // Add active class to clicked tab and corresponding content
     tab.classList.add('active');
-    document.getElementById(tab.dataset.tab).classList.add('active');
-    // (no shop tab)
+    document.getElementById(targetTab).classList.add('active');
   });
 });
 
 // Auth/tab visibility helpers
 let IS_LOGGED = false;
-function setTabsForAuth(logged, isAdmin=false) {
+function setTabsForAuth(logged, isAdmin = false) {
   IS_LOGGED = !!logged;
   const tabAuth = document.getElementById('tabAuth');
   const tabPlay = document.getElementById('tabPlay');
   const tabLog = document.getElementById('tabLog');
   const tabAdmin = document.getElementById('tabAdmin');
   const profileCard = document.getElementById('profileCard');
+  
   if (tabAuth) tabAuth.style.display = logged ? 'none' : '';
   if (tabPlay) tabPlay.style.display = logged ? '' : 'none';
   if (tabLog) tabLog.style.display = logged ? '' : 'none';
   if (tabAdmin) tabAdmin.style.display = (logged && isAdmin) ? '' : 'none';
   if (profileCard) profileCard.style.display = logged ? '' : 'none';
+  
   // Tooltips
   if (tabPlay) tabPlay.title = logged ? '' : 'Connectez-vous pour accéder';
   if (tabLog) tabLog.title = logged ? '' : 'Connectez-vous pour accéder';
   if (tabAdmin) tabAdmin.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
+  
   // Activate a sensible tab
-  const activeTab = document.querySelector('.tab.active');
+  const activeTab = document.querySelector('.nav-item.active');
   if (!logged) {
     // Force auth active
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(tc => tc.classList.remove('active'));
     if (tabAuth) tabAuth.classList.add('active');
     document.getElementById('auth').classList.add('active');
   } else if (activeTab && activeTab.dataset.tab === 'auth') {
@@ -793,581 +1309,413 @@ function setTabsForAuth(logged, isAdmin=false) {
   }
 }
 
-// Admin helpers (renderer)
+// Admin helpers
 function isAdminClient(profile) {
   try {
     if (!profile) return false;
     const parts = [];
-    if (typeof profile.role === 'string') parts.push(profile.role);
-    if (typeof profile.grade === 'string') parts.push(profile.grade);
-    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
-    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
-    const s = parts.join(' ').toLowerCase();
-    return /\b(admin|owner|propri[eé]taire)\b/.test(s);
-  } catch { return false; }
+    if (profile.grade) {
+      if (typeof profile.grade === 'string') parts.push(profile.grade);
+      else if (Array.isArray(profile.grade)) parts.push(...profile.grade);
+      else if (typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
+    }
+    if (profile.role) {
+      if (typeof profile.role === 'string') parts.push(profile.role);
+      else if (Array.isArray(profile.role)) parts.push(...profile.role);
+      else if (typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
+    }
+    const roles = parts.map(p => p.toLowerCase().trim());
+    return roles.includes('admin') || roles.includes('administrateur') || roles.includes('développeur') || roles.includes('developpeur');
+  } catch {
+    return false;
+  }
 }
 
-// Privileged access: Administrateur or Développeur
 function hasPrivilegedAccess(profile) {
-  try {
-    if (!profile) return false;
-    const parts = [];
-    if (typeof profile.role === 'string') parts.push(profile.role);
-    if (typeof profile.grade === 'string') parts.push(profile.grade);
-    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
-    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
-    const s = parts.join(' ').toLowerCase();
-    return /(administrateur|admin|d[eé]veloppeur|developpeur|dev)\b/.test(s);
-  } catch { return false; }
+  return isAdminClient(profile);
 }
 
 // Ensure we can toggle Play content with a replacement image
 function ensurePlayReplacement() {
-  const play = document.getElementById('play');
-  if (!play) return null;
-  // Cibler uniquement le contenu principal de l'onglet Jouer (la première .panel)
-  const container = play.querySelector('.panel') || play;
-  let orig = container.querySelector('#playOriginal');
-  // Ne plus gérer/ajouter d'image de remplacement
-  let repl = container.querySelector('#playReplacement');
-  if (!orig) {
-    // Envelopper UNIQUEMENT le contenu de ce container (pas l'onglet complet)
-    orig = document.createElement('div');
-    orig.id = 'playOriginal';
-    while (container.firstChild) orig.appendChild(container.firstChild);
-    container.appendChild(orig);
-  }
-  // Ne rien créer ni afficher, mais retourner les refs si jamais présentes
-  return { play, orig, repl };
+  const playContent = document.getElementById('play');
+  if (!playContent || playContent.querySelector('.play-replacement')) return;
+  const replacement = document.createElement('div');
+  replacement.className = 'play-replacement';
+  replacement.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:40px;';
+  replacement.innerHTML = `
+    <div style="font-size:48px;margin-bottom:16px;">🚫</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:8px;">Accès restreint</div>
+    <div style="color:var(--text-secondary);max-width:300px;">Veuillez vous connecter pour accéder aux paramètres de jeu.</div>
+  `;
+  playContent.appendChild(replacement);
 }
 
 function setPlayRestricted(restricted) {
-  // Désactivé: toujours afficher le contenu original et les onglets
-  const ctx = ensurePlayReplacement();
-  if (!ctx) return;
-  if (ctx.orig) ctx.orig.style.display = '';
-  // Si un ancien élément de remplacement existe encore, on le retire du DOM
-  if (ctx.repl && ctx.repl.parentNode) {
-    try { ctx.repl.parentNode.removeChild(ctx.repl); } catch {}
+  const playContent = document.getElementById('play');
+  const replacement = playContent?.querySelector('.play-replacement');
+  const actualContent = playContent?.querySelector('.panel');
+  if (!playContent) return;
+  if (restricted) {
+    if (!replacement) ensurePlayReplacement();
+    if (replacement) replacement.style.display = 'flex';
+    if (actualContent) actualContent.style.display = 'none';
+  } else {
+    if (replacement) replacement.style.display = 'none';
+    if (actualContent) actualContent.style.display = 'block';
   }
-  const tabsBar = document.querySelector('.tabs');
-  if (tabsBar) tabsBar.style.display = '';
 }
 
-async function loadSettings() {
-  try { const res = await window.eminium.getSettings(); return res?.settings || {}; } catch { return {}; }
+// Settings helpers
+function loadSettings() {
+  return window.eminium?.getSettings ? window.eminium.getSettings() : Promise.resolve({ ok: false });
 }
-async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
 
-// Maintenance désactivée
-
-// (Anti-VPN banner and subscriptions removed)
+function saveSettings(patch) {
+  return window.eminium?.setSettings ? window.eminium.setSettings(patch) : Promise.resolve({ ok: false });
+}
 
 // Play options: close launcher on game start
-async function refreshPlayOptionsUI() {
-  try {
-    const set = await loadSettings();
-    const chk = document.getElementById('closeOnPlayToggle');
-    if (chk) chk.checked = !!set.closeOnPlay;
-  } catch {}
+function refreshPlayOptionsUI() {
+  // This function can be expanded if needed
 }
-(() => {
-  const chk = document.getElementById('closeOnPlayToggle');
-  if (chk) {
-    chk.addEventListener('change', async (e) => {
-      const on = !!e.target.checked;
-      await saveSettings({ closeOnPlay: on });
-    });
-  }
-  // Initial sync
-  refreshPlayOptionsUI();
-})();
-
-// Bouton: Forcer la mise à jour
-document.getElementById('btnForceUpdate').addEventListener('click', async () => {
-  if (!window.updater) { log('Updater indisponible.'); return; }
-  try {
-    progressUI.open('Mise à jour du launcher (forcée)');
-    progressUI.set(5);
-    progressUI.addLine('Préparation du téléchargement...');
-    const off = window.updater.onProgress((data) => {
-      if (!data) return;
-      if (data.phase === 'downloading') {
-        const curr = data.currentFile || 1; const total = data.totalFiles || 1;
-        const p = typeof data.percent === 'number' ? data.percent : 0;
-        progressUI.set(Math.max(1, Math.min(100, p|0)));
-        progressUI.addLine(`Téléchargement des mises à jour ${curr}/${total}`);
-      } else if (data.phase === 'downloaded') {
-        progressUI.set(100);
-        progressUI.addLine('Téléchargement terminé. Application de la mise à jour...');
-      } else if (data.phase === 'applying') {
-        const curr = data.currentFile || 0; const total = data.totalFiles || 0;
-        if (total > 0) progressUI.set(Math.round((curr/total)*100));
-      } else if (data.phase === 'error') {
-        progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
-        progressUI.enableClose();
-        try { off && off(); } catch {}
-      }
-    });
-    const res = await window.updater.check({ force: true });
-    if (!(res?.ok)) { progressUI.addLine('Erreur: ' + (res?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
-    if (!res.updateAvailable || !res.latest?.assetUrl || !res.latest?.tag) {
-      progressUI.addLine('Aucune mise à jour disponible.');
-      progressUI.enableClose();
-      try { off && off(); } catch {}
-      return;
-    }
-    const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
-    if (!dl?.ok) { progressUI.addLine('Erreur téléchargement: ' + (dl?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
-    const ap = await window.updater.apply({ tag: res.latest.tag });
-    if (!ap?.ok) { progressUI.addLine('Erreur application: ' + (ap?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
-    progressUI.addLine('Mise à jour appliquée. Redémarrage...');
-    progressUI.set(100);
-    try { await window.updater.relaunch(); } catch {}
-    try { off && off(); } catch {}
-  } catch (e) {
-    progressUI.addLine('Erreur: ' + (e?.message || e), 'err');
-    progressUI.enableClose();
-    try { window.updater.offProgress && window.updater.offProgress(); } catch {}
-  }
-});
 
 // Helper: hide/show Connexion tab
 function setAuthTabHidden(hidden) {
-  const authTab = document.querySelector('.tab[data-tab="auth"]');
-  if (authTab) authTab.style.display = hidden ? 'none' : '';
+  const tab = document.getElementById('tabAuth');
+  if (tab) tab.style.display = hidden ? 'none' : '';
 }
+
+// Toggle functionality
+document.querySelectorAll('.toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    toggle.classList.toggle('active');
+  });
+});
+
+// Initialize particles on load
+document.addEventListener('DOMContentLoaded', () => {
+  createParticles();
+  
+  // Initialize close on play toggle
+  const closeOnPlayToggle = document.getElementById('closeOnPlayToggle');
+  if (closeOnPlayToggle) {
+    closeOnPlayToggle.addEventListener('change', async (e) => {
+      const on = !!e.target.checked;
+      try {
+        await saveSettings({ closeOnPlay: on });
+        log(`Fermeture automatique ${on ? 'activée' : 'désactivée'}`);
+      } catch (err) {
+        console.error('Erreur sauvegarde paramètre fermeture:', err);
+        log('Erreur: impossible de sauvegarder le paramètre');
+      }
+    });
+  }
+});
 
 // Déconnexion
 document.getElementById('btnLogout').addEventListener('click', async () => {
   try {
     const res = await window.eminium.logout();
     if (res?.ok) {
-      log('Déconnecté.');
-      document.getElementById('profileName').textContent = 'Pseudo';
+      log('Déconnexion réussie');
+      IS_LOGGED = false;
+      setTabsForAuth(false);
+      setAuthTabHidden(false);
+      setPlayRestricted(true);
+      
+      // Reset profile display
+      document.getElementById('profileName').textContent = 'Chargement...';
       document.getElementById('profileUUID').textContent = 'UUID';
       document.getElementById('profileSkin').src = '';
-      // Clear grade badge
-      const gEl = document.getElementById('profileGrade');
-      gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; applyGradeStyle(gEl, null, null);
-      setProfileSkeleton(true);
+      document.getElementById('profileGrade').style.display = 'none';
+      document.getElementById('profileCard').style.display = 'none';
       document.getElementById('btnLogout').style.display = 'none';
-      // Clear points UI
-      updatePointsUI(undefined);
-      // Revenir sur l'onglet Connexion
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-      document.querySelector('.tab[data-tab="auth"]').classList.add('active');
+      
+      // Reset auth form
+      document.getElementById('authForm').style.display = 'none';
+      document.getElementById('authError').style.display = 'none';
+      document.getElementById('email').value = '';
+      document.getElementById('pass').value = '';
+      document.getElementById('code2fa').value = '';
+      document.getElementById('code2faGroup').style.display = 'none';
+      
+      // Force auth tab
+      document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(tc => tc.classList.remove('active'));
+      document.getElementById('tabAuth').classList.add('active');
       document.getElementById('auth').classList.add('active');
-      setAuthTabHidden(false);
-      setTabsForAuth(false, false);
-      // Maintenance UI supprimée: rien à restaurer
+      
     } else {
-      log('Échec de déconnexion: ' + (res?.error || 'inconnu'));
+      log('Échec de la déconnexion: ' + (res?.error || 'inconnu'));
     }
   } catch (e) {
     log('Erreur IPC (logout): ' + (e?.message || e));
   }
 });
 
-// Initialiser à partir du profil sauvegardé
-(async function initProfile() {
-  try {
-    const res = await window.eminium.getProfile();
-    const p = res?.profile;
-    if (p && p.name && p.uuid) {
-      document.getElementById('profileName').textContent = p.name;
-      document.getElementById('profileUUID').textContent = p.uuid;
-      const skinUrl = `https://minotar.net/helm/${p.name}/64.png`;
-      document.getElementById('profileSkin').src = `${skinUrl}?t=${Date.now()}`;
-      // Grade badge
-      const gEl = document.getElementById('profileGrade');
-      const grade = formatGrade(p.grade ?? p.role);
-      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
-      else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
-      applyGradeStyle(gEl, p.gradeColor || null, grade);
-      document.getElementById('btnLogout').style.display = 'inline-block';
-      setProfileSkeleton(false);
-      // Ouvrir directement l'onglet Jouer
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-      document.querySelector('.tab[data-tab="play"]').classList.add('active');
-      document.getElementById('play').classList.add('active');
-      setAuthTabHidden(true);
-      // Show Admin tab if admin and adjust tabs visibility
-      const admin = isAdminClient(p);
-      setTabsForAuth(true, admin);
-      // Maintenance UI supprimée
-      // Fetch points on init when already logged in
-      try { await fetchAndUpdatePoints(); } catch {}
-    }
-  } catch {}
-})();
-
-// Au chargement: afficher uniquement l'onglet Connexion
-setTabsForAuth(false, false);
-
 // Logger
 function log(msg) {
-    const logEl = document.getElementById('log');
-    logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
-    logEl.scrollTop = logEl.scrollHeight;
+  const logEl = document.getElementById('log');
+  if (!logEl) return;
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.textContent = `[${new Date().toLocaleTimeString('fr-FR')}] ${msg}`;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+  console.log(msg);
 }
 
 // Safely format grade text from possible shapes (string | object | array)
 function formatGrade(v) {
-  try {
-    if (!v) return '';
-    if (typeof v === 'string') return v.trim();
-    if (Array.isArray(v)) {
-      const parts = v.map(formatGrade).filter(Boolean);
-      return parts.join(', ');
-    }
-    if (typeof v === 'object') {
-      const cand = v.name || v.title || v.displayName || v.label || v.slug || v.role || '';
-      return String(cand).trim();
-    }
-    return String(v).trim();
-  } catch { return ''; }
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v) && v.length) return v[0];
+  if (typeof v === 'object' && v.name) return v.name;
+  return '';
 }
 
-// --- Grade color helpers (script) ---
+// --- Grade color helpers ---
 function hexToRgb(hex) {
-  if (!hex) return null;
-  let s = String(hex).trim();
-  if (s.startsWith('#')) s = s.slice(1);
-  if (s.length === 3) s = s.split('').map(c => c + c).join('');
-  if (!/^[0-9a-fA-F]{6}$/.test(s)) return null;
-  const n = parseInt(s, 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
 }
+
 function rgba(hex, a) {
   const rgb = hexToRgb(hex);
-  if (!rgb) return null;
+  if (!rgb) return hex;
   return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
 }
+
 function paletteColorForGrade(name) {
   if (!name) return null;
-  const n = name.toLowerCase();
-  const map = [
-    { key: 'admin', color: '#ef4444' },
-    { key: 'owner', color: '#ef4444' },
-    { key: 'dev', color: '#8b5cf6' },
-    { key: 'moderator', color: '#3b82f6' },
-    { key: 'mod', color: '#3b82f6' },
-    { key: 'staff', color: '#10b981' },
-    { key: 'helper', color: '#10b981' },
-    { key: 'vip', color: '#f59e0b' },
-    { key: 'premium', color: '#f59e0b' },
-    { key: 'mvp', color: '#06b6d4' },
-    { key: 'membre', color: '#cbd5e1' },
-    { key: 'member', color: '#cbd5e1' },
-  ];
-  for (const it of map) {
-    if (n.includes(it.key)) return it.color;
-  }
+  const lower = name.toLowerCase();
+  if (lower.includes('admin') || lower.includes('administrateur')) return '#ef4444';
+  if (lower.includes('mod') || lower.includes('modérateur')) return '#8b5cf6';
+  if (lower.includes('dev') || lower.includes('développeur')) return '#3b82f6';
+  if (lower.includes('vip') || lower.includes('premium')) return '#f59e0b';
+  if (lower.includes('membre') || lower.includes('member')) return '#10b981';
   return null;
 }
+
 function applyGradeStyle(el, hex, name) {
-  const base = hex || paletteColorForGrade(name);
-  if (!base) {
-    el.style.background = '';
-    el.style.borderColor = '';
-    el.style.color = '';
-    return;
-  }
-  const bg = rgba(base, 0.18) || '';
-  const br = rgba(base, 0.35) || '';
-  el.style.background = bg;
-  el.style.borderColor = br;
-  el.style.color = base;
+  if (!el) return;
+  el.style.background = hex ? `linear-gradient(180deg, ${rgba(hex, 0.25)}, ${rgba(hex, 0.12)})` : 'linear-gradient(180deg, rgba(245,158,11,0.25), rgba(245,158,11,0.12))';
+  el.style.color = hex ? '#ffffff' : '#ffd9a1';
+  el.style.border = `1px solid ${hex ? rgba(hex, 0.35) : 'rgba(245,158,11,0.35)'}`;
 }
 
 // Toggle skeleton state for profile UI
 function setProfileSkeleton(on) {
-  ['profileName','profileUUID','profileSkin'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (on) el.classList.add('skeleton'); else el.classList.remove('skeleton');
-  });
+  const skin = document.getElementById('profileSkin');
+  if (skin) {
+    if (on) skin.classList.add('skeleton');
+    else skin.classList.remove('skeleton');
+  }
 }
-
 
 // Validation formulaire login
 function validateLogin(email, pass, code2fa) {
-    if(!email || !pass) return 'Email et mot de passe requis';
-    if(code2fa && !/^\d{6}$/.test(code2fa)) return 'Code 2FA invalide';
-    return null;
+  if (!email || !pass) return false;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  return true;
 }
 
 // Connexion
 const btnLogin = document.getElementById('btnLogin');
 const code2faInput = document.getElementById('code2fa');
 const authErrEl = document.getElementById('authError');
-function setAuthError(msg){ if(!authErrEl) return; authErrEl.textContent = msg || ''; authErrEl.style.display = msg ? 'block' : 'none'; }
-function mapLoginError(result, caught){
-  const r = result || {};
-  const reason = (r.code || r.reason || r.message || '').toString().toLowerCase();
-  const pick = (...vals) => vals.find(v => typeof v === 'string' && v.trim());
-  // 1) Derive status/code FIRST so HTTP codes override server generic text
-  let status = undefined;
-  if (typeof r.status === 'number') status = r.status;
-  else if (typeof r.httpStatus === 'number') status = r.httpStatus;
-  else if (typeof r.code === 'number') status = r.code;
-  if (!status && caught) {
-    const resp = caught?.response;
-    if (resp && typeof resp.status === 'number') status = resp.status;
-    else if (typeof caught.status === 'number') status = caught.status;
-  }
-  if (!status) {
-    const msg = (r.message || r.reason || caught?.message || '').toString();
-    const m = msg.match(/status\s*code\s*(\d{3})/i) || msg.match(/\b(4\d{2}|5\d{2})\b/);
-    if (m && m[1]) status = parseInt(m[1], 10);
-  }
-  // 2) Map by explicit status codes immediately
-  if (status === 400) return "Requête invalide. Vérifiez les informations saisies.";
-  if (status === 401) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
-  if (status === 403) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
-  if (status === 404) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
-  if (status === 408) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
-  if (status === 409) return "Conflit détecté. Réessayez ou contactez le support si le problème persiste.";
-  if (status === 423) return "Compte/verrouillage temporaire. Réessayez plus tard ou contactez le support.";
-  if (status === 429) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
-  if (status === 500 || status === 501 || status === 502 || status === 503 || status === 504) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
-  // 3) Network/offline detection from caught message
-  if (caught) {
-    const m = (caught?.message || caught)?.toString().toLowerCase();
-    if (/network|offline|fetch|net::|ecconnrefused|ecconnreset|enotfound|dns|ehostunreach/.test(m)) return "Erreur réseau. Vérifiez votre connexion Internet et réessayez.";
-    if (/timeout|etimedout|request.*timed.*out/.test(m)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
-  }
-  // 4) Prefer explicit server-provided message if present (and not the Axios generic)
-  const serverMsg = pick(
-    r.userMessage,
-    r.hint,
-    r.detail,
-    r.details,
-    r.description,
-    r.error_description,
-    r.errorMessage,
-    r.error?.message,
-    r.data?.message,
-    r.data?.error,
-    r.message
-  ) || pick(
-    caught?.response?.data?.userMessage,
-    caught?.response?.data?.hint,
-    caught?.response?.data?.detail,
-    caught?.response?.data?.details,
-    caught?.response?.data?.description,
-    caught?.response?.data?.error_description,
-    caught?.response?.data?.error,
-    caught?.response?.data?.message
-  );
-  if (serverMsg && !/request failed with status code/i.test(serverMsg)) {
-    return serverMsg.trim();
-  }
 
-  if (/invalid.*(credential|identifiant|password|mot de passe)/.test(reason) || /unauthoriz|401/.test(reason)) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
-  if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et recliquez sur Connexion.";
-  if (/2fa.*(invalid|incorrect)/.test(reason)) return "Code 2FA invalide. Réessayez avec un code valide.";
-  if (/ban|banni|suspend|suspens|lock/.test(reason)) return "Compte restreint (banni/suspendu/verrouillé). Contactez le support.";
-  if (/email.*not.*verif|mail.*non.*v[ée]rifi/.test(reason)) return "Adresse email non vérifiée. Vérifiez votre boîte mail pour valider votre compte.";
-  if (/rate.*limit|too.*many.*attempt|429/.test(reason)) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
-  if (/maintenance|service.*down|unavailable|503|404/.test(reason)) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
-  if (/forbidden|403/.test(reason)) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
-  if (/timeout|d[ée]lai.*d[ée]pass/.test(reason)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
-  if (/server|500|exception|internal/.test(reason)) return "Erreur serveur. Réessayez plus tard.";
-  if (/uuid|profile.*not.*found/.test(reason)) return "Profil introuvable. Vérifiez vos identifiants ou contactez le support.";
-  // Show a meaningful reason if any remains
-  if (reason) return reason.charAt(0).toUpperCase() + reason.slice(1);
-  return "Connexion échouée. Réessayez plus tard.";
+function setAuthError(msg) {
+  if (!authErrEl) return;
+  if (msg) {
+    authErrEl.textContent = msg;
+    authErrEl.style.display = 'block';
+  } else {
+    authErrEl.style.display = 'none';
+  }
+}
+
+function mapLoginError(result, caught) {
+  if (caught) {
+    if (caught.message && caught.message.includes('fetch')) {
+      return 'Erreur réseau: impossible de contacter le serveur. Vérifiez votre connexion Internet.';
+    }
+    if (caught.code === 'ECONNREFUSED' || caught.code === 'ENOTFOUND') {
+      return 'Serveur indisponible. Veuillez réessayer plus tard.';
+    }
+    return 'Erreur technique: ' + (caught.message || caught.toString());
+  }
+  if (!result || !result.error) return 'Erreur inconnue.';
+  const err = result.error;
+  if (err === 'invalid_credentials') return 'Email ou mot de passe incorrect.';
+  if (err === 'missing_2fa') return 'Code 2FA manquant.';
+  if (err === 'invalid_2fa') return 'Code 2FA invalide.';
+  if (err === 'account_locked') return 'Compte temporairement verrouillé. Veuillez réessayer plus tard.';
+  if (err === 'email_not_verified') return 'Email non vérifié. Veuillez vérifier votre boîte mail.';
+  if (err === 'account_banned') return 'Compte banni.';
+  if (err === 'maintenance') return 'Le serveur est en maintenance. Veuillez réessayer plus tard.';
+  if (err === 'rate_limit') return 'Trop de tentatives. Veuillez attendre quelques minutes.';
+  if (typeof err === 'string') return err;
+  return 'Erreur de connexion.';
 }
 
 // Masquer le 2FA par défaut
 code2faInput.parentElement.style.display = 'none';
 
 // Bouton "Se connecter avec Eminium" -> révèle le formulaire détaillé
-(() => {
-  const revealBtn = document.getElementById('btnLoginWithEminium');
-  const form = document.getElementById('authForm');
-  const emailInput = document.getElementById('email');
-  if (revealBtn && form) {
-    revealBtn.addEventListener('click', () => {
-      form.style.display = '';
-      revealBtn.style.display = 'none';
-      try { emailInput?.focus(); } catch {}
-    });
-  }
-})();
-
+document.getElementById('btnLoginWithEminium').addEventListener('click', () => {
+  const authForm = document.getElementById('authForm');
+  authForm.style.display = authForm.style.display === 'none' ? 'block' : 'none';
+});
 
 // Action de connexion unifiée (réutilisable par un overlay)
 async function performLogin(email, pass, code2fa, options = {}) {
-  const triggerButton = options.triggerButton || null;
-  const err = validateLogin(email, pass, code2fa);
-  if (err) { setAuthError(err); log(err); return { ok: false, error: err }; }
-
-  if (triggerButton) triggerButton.disabled = true; // Désactive le bouton source si fourni
-  log('Connexion en cours...');
-  setAuthError('');
-
   try {
-    const result = await window.eminium.login(email, pass, code2fa || undefined);
-
-    if (result?.status === 'pending' && result?.reason === '2fa') {
-      code2faInput.parentElement.style.display = 'block';
-      const msg = 'Double authentification requise. Entrez votre code et recliquez sur Connexion.';
-      setAuthError(msg);
-      log('2FA requis : entrez votre code et recliquez sur Connexion.');
-      return { ok: false, pending: true, reason: '2fa' };
+    setAuthError('');
+    if (!validateLogin(email, pass, code2fa)) {
+      setAuthError('Veuillez remplir correctement tous les champs.');
+      return;
     }
-
-    if (result?.status === 'error') {
-      const friendly = mapLoginError(result);
-      setAuthError(friendly);
-      log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
-      const err = new Error(friendly || 'Connexion échouée');
-      err.code = result.code || result.reason || undefined;
-      throw err;
-    }
-
-    if (result?.status === 'success') {
-      const p = result.profile || {};
-      log('Connecté ! Profil enregistré.');
+    
+    const res = await window.eminium.login({ email, password: pass, code2fa: code2fa || null });
+    if (res?.ok) {
+      const p = res.profile;
+      log('Connecté avec succès');
       setAuthError('');
+      
+      // Mettre à jour l'UI
       document.getElementById('profileName').textContent = p.name || 'Pseudo';
       document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
-      let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+      const skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
       document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
       const gEl = document.getElementById('profileGrade');
       const grade = formatGrade(p.grade ?? p.role);
-      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
-      else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+      if (grade) { 
+        gEl.textContent = `Grade: ${grade}`; 
+        gEl.title = `Grade: ${grade}`; 
+        gEl.style.display = 'inline-block'; 
+      } else { 
+        gEl.textContent = ''; 
+        gEl.title=''; 
+        gEl.style.display = 'none'; 
+      }
       applyGradeStyle(gEl, p.gradeColor || null, grade);
       code2faInput.parentElement.style.display = 'none';
-      document.getElementById('btnLogout').style.display = 'inline-block';
+      document.getElementById('btnLogout').style.display = 'inline-flex';
       setProfileSkeleton(false);
-      // Basculer sur l'onglet Jouer automatiquement
-      document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+      
+      // Changer d'onglet
+      document.querySelector('.nav-item[data-tab="auth"]').classList.remove('active');
       document.getElementById('auth').classList.remove('active');
-      document.querySelector('.tab[data-tab="play"]').classList.add('active');
+      document.querySelector('.nav-item[data-tab="play"]').classList.add('active');
       document.getElementById('play').classList.add('active');
       setAuthTabHidden(true);
       setTabsForAuth(true, isAdminClient(p));
-      // Maintenance UI supprimée
       try { await fetchAndUpdatePoints(); } catch {}
+      
       return { ok: true, profile: p };
+    } else {
+      const errMsg = mapLoginError(res, null);
+      setAuthError(errMsg);
+      log('Échec connexion: ' + errMsg);
+      return { ok: false, error: errMsg };
     }
-
-    log('Réponse inconnue du login.');
-    return { ok: false, error: 'unknown' };
-  } catch (e) {
-    const friendly = mapLoginError(null, e);
-    setAuthError(friendly);
-    log('Erreur IPC : ' + (e?.message || e));
-    return { ok: false, error: friendly || (e?.message || 'Connexion échouée') };
-  } finally {
-    if (triggerButton) triggerButton.disabled = false; // Réactive le bouton source si fourni
+  } catch (caught) {
+    const errMsg = mapLoginError(null, caught);
+    setAuthError(errMsg);
+    log('Erreur connexion: ' + errMsg);
+    return { ok: false, error: errMsg };
   }
+}
+
+function login(email, password, code2fa) {
+  return performLogin(email, password, code2fa);
 }
 
 // Bouton de connexion principal → réutilise performLogin
 btnLogin.addEventListener('click', async () => {
   const email = document.getElementById('email').value.trim();
   const pass = document.getElementById('pass').value.trim();
-  const code2fa = code2faInput.value.trim();
-  await performLogin(email, pass, code2fa, { triggerButton: btnLogin });
+  const code2fa = document.getElementById('code2fa').value.trim();
+  await performLogin(email, pass, code2fa);
 });
 
-// Expose une API pour un overlay externe
-window.eminiumUI = window.eminiumUI || {};
-window.eminiumUI.login = async (email, password, code2fa) => {
-  return await performLogin(String(email || '').trim(), String(password || '').trim(), String(code2fa || '').trim());
-};
-
-// Boutons jouer / vérifier
+// Progress UI
 const progressUI = (() => {
   const modal = document.getElementById('progressModal');
   const title = document.getElementById('progressTitle');
   const bar = document.getElementById('progressBar');
-  const logBox = document.getElementById('progressLog');
+  const log = document.getElementById('progressLog');
   const btnClose = document.getElementById('progressClose');
-  let percent = 0;
-  let opened = false;
-  // Buffer pour éviter le spam DOM
-  const buffer = [];
-  const MAX_LINES = 500;
-  let flushScheduled = false;
-  const flush = () => {
-    flushScheduled = false;
-    if (!buffer.length) return;
-    const frag = document.createDocumentFragment();
-    for (const { line, cls } of buffer.splice(0)) {
-      const el = document.createElement('span');
-      el.className = 'line' + (cls ? ' ' + cls : '');
-      el.textContent = line;
-      frag.appendChild(el);
-      frag.appendChild(document.createElement('br'));
-    }
-    logBox.appendChild(frag);
-    // Cap sur le nombre de lignes
-    while (logBox.childNodes.length > MAX_LINES * 2) {
-      // deux nodes par ligne (span + br)
-      logBox.removeChild(logBox.firstChild);
-      logBox.removeChild(logBox.firstChild);
-    }
-    logBox.scrollTop = logBox.scrollHeight;
-  };
-  const open = (t) => {
-    title.textContent = t || 'Progression';
-    bar.style.width = '0%';
-    bar.classList.remove('error');
-    percent = 0; opened = true;
-    logBox.textContent = '';
-    btnClose.disabled = true;
-    modal.classList.add('show');
-  };
-  const close = () => { modal.classList.remove('show'); opened = false; };
-  const set = (p) => { percent = Math.max(0, Math.min(100, p|0)); bar.style.width = percent + '%'; };
-  const bump = (delta=3) => set(Math.min(95, percent + delta));
-  const addLine = (line, cls='') => {
-    buffer.push({ line, cls });
-    if (!flushScheduled) {
-      flushScheduled = true;
-      setTimeout(flush, 100); // ~10 Hz
-    }
-  };
-  btnClose.addEventListener('click', close);
-  return { open, close, set, bump, addLine, enableClose: () => (btnClose.disabled = false), isOpen: () => opened };
+  
+  function flush() {
+    if (log) log.innerHTML = '';
+  }
+  
+  function open(t) {
+    if (modal) modal.classList.add('show');
+    if (title) title.textContent = t || 'Préparation';
+    if (bar) bar.style.width = '0%';
+    if (btnClose) btnClose.disabled = true;
+    flush();
+  }
+  
+  function close() {
+    if (modal) modal.classList.remove('show');
+  }
+  
+  function set(p) {
+    if (bar) bar.style.width = Math.max(0, Math.min(100, p)) + '%';
+  }
+  
+  function bump(delta = 3) {
+    if (!bar) return;
+    const current = parseFloat(bar.style.width) || 0;
+    set(current + delta);
+  }
+  
+  function addLine(line, cls = '') {
+    if (!log) return;
+    const entry = document.createElement('div');
+    entry.className = 'log-entry' + (cls ? ' ' + cls : '');
+    entry.textContent = line;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+  
+  function enableClose() {
+    if (btnClose) btnClose.disabled = false;
+  }
+  
+  function isOpen() {
+    return modal?.classList.contains('show');
+  }
+  
+  if (btnClose) {
+    btnClose.addEventListener('click', close);
+  }
+  
+  return { open, close, set, bump, addLine, flush, enableClose, isOpen };
 })();
 
 // Ping serveur toutes les 5s pour activer/désactiver le bouton Jouer
 let _pingTimer = null;
 let _lastUp = undefined;
+
 async function pingOnce() {
   try {
-    const host = 'play.eminium.ovh';
-    const port = 25565;
+    const res = await fetch('https://play.eminium.ovh', { method: 'HEAD', mode: 'no-cors' });
+    _lastUp = true;
     const btnPlay = document.getElementById('btnPlay');
-    const res = await (window.eminium?.ping ? window.eminium.ping(host, port, 2500) : Promise.resolve({ ok: true, up: true }));
-    const up = !!(res && res.up);
-    if (_lastUp !== up) {
-      _lastUp = up;
-      btnPlay.disabled = !up || btnPlay.disabled; // conserve disabled si non prêt côté installation
-      btnPlay.title = up ? '' : 'Serveur hors ligne';
-      if (!up) {
-        // S'assurer que le bouton est bien désactivé même si setReadyUI(true) a été appelé
-        btnPlay.disabled = true;
-      } else if (document.getElementById('btnCheck').style.display === 'none') {
-        // Prêt et serveur up → autoriser
-        btnPlay.disabled = false;
-      }
-    }
-  } catch (_) {
-    const btnPlay = document.getElementById('btnPlay');
-    btnPlay.disabled = true;
-    btnPlay.title = 'Serveur hors ligne';
+    if (btnPlay) btnPlay.disabled = false;
+  } catch {
     _lastUp = false;
+    const btnPlay = document.getElementById('btnPlay');
+    if (btnPlay) btnPlay.disabled = true;
   }
 }
 
@@ -1377,99 +1725,53 @@ function startPing() {
   _pingTimer = setInterval(pingOnce, 5000);
 }
 
-// Hôte/port fixes → pas d'écouteurs d'inputs nécessaires
-
 // Événements de progression depuis le main process (avec désinscription)
 let _offEnsure = null;
-let _offPlay = null;
-if (window.eminiumProgress) {
-  _offEnsure = window.eminiumProgress.onEnsureProgress((data) => {
-    if (!progressUI.isOpen()) progressUI.open('Préparation du launcher');
-    if (data?.phase === 'start') { progressUI.set(10); progressUI.addLine('Préparation en cours...'); }
-    else if (data?.phase === 'done') { progressUI.set(100); progressUI.addLine('Préparation terminée.'); progressUI.enableClose(); }
-    else if (data?.phase === 'error') { progressUI.addLine('Erreur: ' + (data.message || 'inconnue')); progressUI.enableClose(); }
-  });
-  _offPlay = window.eminiumProgress.onPlayProgress((data) => {
-    if (!progressUI.isOpen()) progressUI.open('Téléchargements / Lancement');
-    if (data?.type === 'error') {
-      document.getElementById('progressBar').classList.add('error');
-      progressUI.addLine(String(data.line), 'err');
+
+if (window.eminium) {
+  _offEnsure = window.eminium.onEnsureProgress((data) => {
+    if (!data) return;
+    if (data.phase === 'download') {
+      progressUI.set(data.percent || 0);
+      progressUI.addLine(`Téléchargement: ${data.file || 'fichier'} (${Math.round(data.percent || 0)}%)`);
+    } else if (data.phase === 'extract') {
+      progressUI.set(data.percent || 0);
+      progressUI.addLine(`Extraction: ${data.file || 'fichier'} (${Math.round(data.percent || 0)}%)`);
+    } else if (data.phase === 'complete') {
+      progressUI.set(100);
+      progressUI.addLine('Préparation terminée ✓');
       progressUI.enableClose();
-      return;
+      setTimeout(() => progressUI.close(), 1500);
+    } else if (data.phase === 'error') {
+      progressUI.addLine('Erreur: ' + (data.message || 'inconnue'), 'error');
+      progressUI.enableClose();
     }
-    // Affichage compact: pas de ligne par asset pour garder l'UI fluide (barre précise conservée)
-    if (data?.type === 'asset' && typeof data.current === 'number' && typeof data.total === 'number') {
-      const { current, total, hash } = data;
-      const percent = Math.max(1, Math.min(100, Math.round((current / total) * 100)));
-      progressUI.set(percent);
-      // Optionnel: uncomment to show occasional status lines
-      // if (current % 200 === 0 || current === total) progressUI.addLine(`[BMCL] Assets ${current}/${total}`);
-      return;
-    }
-    // Idem pour librairies/classifiers: on met à jour la barre sans spammer les logs
-    if (data?.type === 'library' && typeof data.current === 'number' && typeof data.total === 'number') {
-      const { current, total, path, kind } = data;
-      const percent = Math.max(1, Math.min(100, Math.round((current / total) * 100)));
-      progressUI.set(percent);
-      // const label = kind === 'classifier' ? 'Classifier' : 'Librairie';
-      // if (current % 10 === 0 || current === total) progressUI.addLine(`[BMCL] ${label} ${current}/${total}`);
-      return;
-    }
-    if (data?.line) { progressUI.addLine(String(data.line)); progressUI.bump(); }
   });
 }
 
-// Nettoyage global sur déchargement de la page
-window.addEventListener('beforeunload', () => {
-  try { _offEnsure && _offEnsure(); } catch {}
-  try { _offPlay && _offPlay(); } catch {}
-  try { if (_pingTimer) clearInterval(_pingTimer); } catch {}
-});
-
 // Helpers readiness UI + auto prepare
 function setReadyUI(ready) {
-  const btnCheck = document.getElementById('btnCheck');
   const btnPlay = document.getElementById('btnPlay');
-  if (ready) {
-    btnCheck.style.display = 'none';
-    btnPlay.style.display = 'inline-block';
-    btnPlay.disabled = false;
-  } else {
-    btnCheck.style.display = 'inline-block';
-    btnCheck.textContent = 'Installer / Mettre à jour';
-    btnPlay.style.display = 'none';
-    btnPlay.disabled = true;
-  }
+  if (btnPlay) btnPlay.disabled = !ready || !_lastUp;
 }
 
 async function checkAndAutoPrepare() {
   try {
-    const st = await window.eminium.status();
-    if (st?.ok) {
-      setReadyUI(true);
-      return true;
-    }
-  } catch {}
-  // Not ready → auto prepare
-  setReadyUI(false);
-  progressUI.open('Installation / Mise à jour');
-  progressUI.set(5);
-  log('Installation / Mise à jour des fichiers requis...');
-  try {
-    const res = await window.eminium.prepare();
+    progressUI.open('Préparation');
+    progressUI.set(5);
+    log('Vérification des fichiers...');
+    const res = await window.eminium.ensure();
     if (res?.ok) {
+      log('Fichiers prêts ✓');
       setReadyUI(true);
-      // Ne pas lancer automatiquement. Informer l'utilisateur et laisser le bouton Jouer actif.
-      progressUI.addLine('Installation terminée. Cliquez sur "Jouer" pour lancer.');
-      progressUI.set(100);
-      progressUI.enableClose();
-      return true;
+    } else {
+      log('Échec de la préparation: ' + (res?.error || 'inconnu'));
+      setReadyUI(false);
     }
   } catch (e) {
-    log('Erreur IPC (prepare): ' + (e?.message || e));
-    progressUI.addLine('Erreur IPC (prepare): ' + (e?.message || e)); progressUI.enableClose();
+    log('Erreur IPC (ensure): ' + (e?.message || e));
+    setReadyUI(false);
   }
-  return false;
 }
 
 // Remappe le bouton Vérifier/Préparer pour utiliser prepare()
@@ -1582,34 +1884,6 @@ async function runUpdaterIfNeeded() {
     }
   }
 
-  // Remplissage visuel des sliders: accent jusqu'à la valeur, fondu sous le pouce vers transparent, base grise + léger vernis
-  function updateRangeFill(el) {
-    if (!el) return;
-    const min = Number(el.min) || 0;
-    const max = Number(el.max) || 100;
-    let val = Number(el.value);
-    if (!Number.isFinite(val)) val = min;
-    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-    // Lueur + remplissage qui s'efface vers transparent près du pouce
-    const thumbW = 22; // doit rester en phase avec le CSS
-    const fade = Math.max(1.2, Math.min(5.5, (thumbW / (el.getBoundingClientRect()?.width || 200)) * 100 * 2.0));
-    const a0 = Math.max(0, pct - fade);  // fin du plein accent
-    const a1 = pct;                      // centre du pouce
-    const grey = 'rgba(255,255,255,0.10)';
-    const fill = `linear-gradient(90deg,
-      rgba(245,158,11,0.96) 0% ${a0}%,
-      rgba(245,158,11,1) ${a0}% calc(${a1}% + 0.25%),
-      rgba(245,158,11,0.00) calc(${a1}% + 0.25%) 100%)`;
-    const r1 = Math.round(thumbW * 0.62);
-    const r2 = Math.round(thumbW * 1.28);
-    const r3 = Math.round(thumbW * 2.1);
-    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(245,158,11,0.45) 0 ${r1}px, rgba(245,158,11,0.18) ${r1}px ${r2}px, rgba(245,158,11,0) ${r2}px ${r3}px)`;
-    const base = `linear-gradient(90deg, ${grey}, ${grey})`;
-    const sheen = `linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, rgba(0,0,0,0.00) 100%)`;
-    el.style.background = `${glow}, ${fill}, ${base}, ${sheen}`;
-    el.style.backgroundRepeat = 'no-repeat';
-  }
-
   // Detect system RAM and adjust slider max to 85% of total (rounded to step)
   try {
     const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : Promise.resolve({ ok:true, totalMB: 8192 }));
@@ -1629,13 +1903,12 @@ async function runUpdaterIfNeeded() {
 
   memSlider.addEventListener('input', async () => {
     updateMemLabel();
-    updateRangeFill(memSlider);
     warnIfTooHigh(detectedRamMB);
     settingsDebouncedSave();
   });
 
   const syncFPS = () => {
-    const unlimited = fpsUnlimited.checked;
+    const unlimited = fpsUnlimited.classList.contains('active');
     fps.disabled = unlimited;
     if (unlimited) { fpsLabel.textContent = 'Illimité'; }
     else { fpsLabel.textContent = String(fps.value); }
@@ -1647,26 +1920,20 @@ async function runUpdaterIfNeeded() {
       fps.style.backgroundRepeat = 'no-repeat';
     } else {
       fps.classList.remove('dim');
-      updateRangeFill(fps);
+      // updateRangeFill(fps);
     }
   };
-  render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; updateRangeFill(render); });
+  
+  render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; });
   render.addEventListener('change', settingsDebouncedSave);
-  fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); updateRangeFill(fps); });
+  fps.addEventListener('input', ()=> { if (!fpsUnlimited.classList.contains('active')) fpsLabel.textContent = String(fps.value); });
   fps.addEventListener('change', settingsDebouncedSave);
-  fpsUnlimited.addEventListener('change', () => { syncFPS(); updateRangeFill(fps); settingsDebouncedSave(); });
-  // Recalcule le fondu au redimensionnement (évite de petits artefacts)
-  window.addEventListener('resize', () => {
-    updateRangeFill(memSlider);
-    updateRangeFill(render);
-    if (!fpsUnlimited.checked) updateRangeFill(fps);
-  });
+  fpsUnlimited.addEventListener('change', () => { syncFPS(); settingsDebouncedSave(); });
+  
   // Initial labels
   renderLabel.textContent = `${render.value} chunks`;
   fpsLabel.textContent = String(fps.value);
   syncFPS();
-  // Initial fills
-  [memSlider, render, fps].forEach(updateRangeFill);
 
   // Settings load/save
   function readCurrentSettings() {
@@ -1674,22 +1941,29 @@ async function runUpdaterIfNeeded() {
       memMB: parseInt(memSlider.value, 10) || 2048,
       renderDist: parseInt(render.value, 10) || 12,
       fpsCap: parseInt(fps.value, 10) || 120,
-      vsync: !!document.getElementById('vsync').checked,
-      fpsUnlimited: !!fpsUnlimited.checked
+      vsync: document.getElementById('vsync').classList.contains('active'),
+      fpsUnlimited: fpsUnlimited.classList.contains('active')
     };
   }
+  
   async function applySettings(s) {
     if (!s || typeof s !== 'object') return;
     if (typeof s.memMB === 'number') { memSlider.value = String(s.memMB); updateMemLabel(); }
     if (typeof s.renderDist === 'number') { render.value = String(s.renderDist); renderLabel.textContent = `${render.value} chunks`; }
-    if (typeof s.fpsCap === 'number') { fps.value = String(s.fpsCap); if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); }
-    if (typeof s.vsync === 'boolean') { document.getElementById('vsync').checked = !!s.vsync; }
-    if (typeof s.fpsUnlimited === 'boolean') { fpsUnlimited.checked = !!s.fpsUnlimited; }
+    if (typeof s.fpsCap === 'number') { fps.value = String(s.fpsCap); if (!fpsUnlimited.classList.contains('active')) fpsLabel.textContent = String(fps.value); }
+    if (typeof s.vsync === 'boolean') { 
+      const vsyncToggle = document.getElementById('vsync');
+      if (s.vsync && !vsyncToggle.classList.contains('active')) vsyncToggle.classList.add('active');
+      else if (!s.vsync && vsyncToggle.classList.contains('active')) vsyncToggle.classList.remove('active');
+    }
+    if (typeof s.fpsUnlimited === 'boolean') { 
+      if (s.fpsUnlimited && !fpsUnlimited.classList.contains('active')) fpsUnlimited.classList.add('active');
+      else if (!s.fpsUnlimited && fpsUnlimited.classList.contains('active')) fpsUnlimited.classList.remove('active');
+    }
     syncFPS();
-    // Refresh fills after programmatic updates
-    [memSlider, render, fps].forEach(updateRangeFill);
     warnIfTooHigh(detectedRamMB);
   }
+  
   let _saveTimer = null;
   function settingsDebouncedSave() {
     if (_saveTimer) clearTimeout(_saveTimer);
@@ -1697,6 +1971,7 @@ async function runUpdaterIfNeeded() {
       try { await window.eminium.setSettings(readCurrentSettings()); } catch {}
     }, 300);
   }
+  
   // Save checkboxes immediately on toggle
   document.getElementById('vsync').addEventListener('change', settingsDebouncedSave);
   fpsUnlimited.addEventListener('change', settingsDebouncedSave);
@@ -1707,6 +1982,279 @@ async function runUpdaterIfNeeded() {
     if (res && res.ok && res.settings) await applySettings(res.settings);
   } catch {}
 })();
+
+// Fonction pour ouvrir la popup OAuth
+async function connectWithCroissant() {
+  try {
+    console.log('[Croissant] Début de la connexion OAuth...');
+    
+    const clientId = '2b90be46-3fdb-45f1-98bd-081b70cc3d9f';
+    const redirectUri = 'http://localhost:8080/callback?tab=play';
+    
+    // Générer un state aléatoire pour la sécurité
+    const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    sessionStorage.setItem('croissant_oauth_state', state);
+    
+    // Construire l'URL d'autorisation
+    const authUrl = `https://croissant-api.fr/oauth2/authorize?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&state=${state}` +
+      `&scope=user.read balance.read`;
+    
+    console.log('[Croissant] URL d\'autorisation:', authUrl);
+    
+    // Calculer les dimensions de la popup
+    const width = 500;
+    const height = 600;
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
+    
+    const popup = window.open(
+      authUrl,
+      'CroissantOAuth',
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+    
+    if (!popup) {
+      console.error('[Croissant] Impossible d\'ouvrir la popup');
+      alert('Veuillez autoriser les popups pour vous connecter avec Croissant');
+      return;
+    }
+    
+    // Surveiller la popup pour détecter la fermeture
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        console.log('[Croissant] Popup fermée par l\'utilisateur');
+      }
+    }, 1000);
+    
+    // Écouter les messages de la popup
+    const messageHandler = function(event) {
+      // Vérifier l'origine pour la sécurité
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data && event.data.type === 'croissant_oauth_result') {
+        const { code, state: returnedState, error } = event.data;
+        
+        // Vérifier le state
+        const savedState = sessionStorage.getItem('croissant_oauth_state');
+        if (returnedState !== savedState) {
+          console.error('[Croissant] State invalide');
+          return;
+        }
+        
+        // Nettoyer
+        sessionStorage.removeItem('croissant_oauth_state');
+        window.removeEventListener('message', messageHandler);
+        clearInterval(checkClosed);
+        
+        if (error) {
+          console.error('[Croissant] Erreur OAuth:', error);
+          alert('Erreur d\'authentification: ' + error);
+          return;
+        }
+        
+        if (code) {
+          // Traiter le code OAuth
+          processOAuthCode(code, clientId, redirectUri);
+        }
+      }
+    };
+    
+    window.addEventListener('message', messageHandler);
+    
+  } catch (error) {
+    console.error('[Croissant] Erreur:', error);
+    alert('Erreur lors de la connexion: ' + error.message);
+  }
+}
+
+// Traiter le code OAuth reçu
+async function processOAuthCode(code, clientId, redirectUri) {
+  try {
+    console.log('[Croissant] Traitement du code OAuth...');
+    
+    // Échanger le code contre un token
+    const tokenResponse = await fetch('https://croissant-api.fr/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        client_id: clientId,
+        redirect_uri: redirectUri
+      })
+    });
+    
+    if (!tokenResponse.ok) {
+      throw new Error(`Erreur ${tokenResponse.status}: ${tokenResponse.statusText}`);
+    }
+    
+    const tokenData = await tokenResponse.json();
+    console.log('[Croissant] Token obtenu:', tokenData);
+    
+    let userData = {};
+    
+    // Vérifier si les infos utilisateur sont dans le token (cas déjà connecté)
+    if (tokenData.user) {
+      console.log('[Croissant] Infos utilisateur trouvées dans le token');
+      userData = tokenData.user;
+    } else {
+      // Sinon, récupérer les infos via l'API
+      console.log('[Croissant] Récupération des infos utilisateur via API...');
+      const userResponse = await fetch('https://croissant-api.fr/api/user', {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`
+        }
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
+      }
+      
+      userData = await userResponse.json();
+      console.log('[Croissant] Utilisateur récupéré via API');
+    }
+    
+    // S'assurer qu'on a les données essentielles
+    if (!userData.username || !userData.user_id) {
+      console.warn('[Croissant] Données utilisateur incomplètes:', userData);
+      throw new Error('Données utilisateur incomplètes reçues');
+    }
+    
+    console.log('[Croissant] Données utilisateur complètes:', {
+      username: userData.username,
+      user_id: userData.user_id,
+      email: userData.email,
+      balance: userData.balance
+    });
+    
+    // Traiter les données utilisateur
+    await processCroissantUser(userData);
+    
+  } catch (error) {
+    console.error('[Croissant] Erreur traitement OAuth:', error);
+    alert('Erreur lors de la connexion: ' + error.message);
+  }
+}
+
+// Traiter les données utilisateur Croissant
+async function processCroissantUser(user) {
+  try {
+    console.log('[Croissant] Traitement de l\'utilisateur:', user);
+    
+    // Extraire le pseudo et l'UUID essentiels
+    const username = user.username || user.name || 'CroissantUser';
+    const userId = user.user_id || user.id;
+    
+    if (!username || !userId) {
+      throw new Error('Pseudo ou UUID manquant dans les données utilisateur');
+    }
+    
+    console.log('[Croissant] Création du profil avec:');
+    console.log('- Pseudo:', username);
+    console.log('- UUID:', userId);
+    
+    const profile = {
+      id: userId,
+      name: username,
+      uuid: userId, // Utiliser l'ID Croissant comme UUID
+      email: user.email || null,
+      role: null,
+      grade: null,
+      gradeColor: null,
+      banned: false,
+      created_at: null,
+      access_token: null,
+      auth: 'croissant',
+      croissant: {
+        balance: user.balance || 0,
+        verified: !!user.verified,
+        discord_id: user.discord_id || null,
+        steam_id: user.steam_id || null,
+        google_id: user.google_id || null
+      }
+    };
+    
+    console.log('[Croissant] Profil créé:', profile);
+    
+    // Sauvegarder le profil
+    if (window.eminium && window.eminium.setProfile) {
+      const saveRes = await window.eminium.setProfile(profile);
+      if (!saveRes?.ok) {
+        throw new Error(saveRes?.error || 'Erreur sauvegarde profil');
+      }
+      
+      const p = saveRes.profile || profile;
+      console.log('[Croissant] Profil sauvegardé:', p);
+      
+      // Mettre à jour l'UI
+      log('Connecté via Croissant-API.fr');
+      setAuthError('');
+      document.getElementById('profileName').textContent = p.name || 'Pseudo';
+      document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+      const skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+      document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const gEl = document.getElementById('profileGrade');
+      const grade = formatGrade(p.grade ?? p.role);
+      if (grade) { 
+        gEl.textContent = `Grade: ${grade}`; 
+        gEl.title = `Grade: ${grade}`; 
+        gEl.style.display = 'inline-block'; 
+      } else { 
+        gEl.textContent = ''; 
+        gEl.title=''; 
+        gEl.style.display = 'none'; 
+      }
+      applyGradeStyle(gEl, p.gradeColor || null, grade);
+      code2faInput.parentElement.style.display = 'none';
+      document.getElementById('btnLogout').style.display = 'inline-flex';
+      setProfileSkeleton(false);
+      
+      // Changer d'onglet
+      document.querySelector('.nav-item[data-tab="auth"]').classList.remove('active');
+      document.getElementById('auth').classList.remove('active');
+      document.querySelector('.nav-item[data-tab="play"]').classList.add('active');
+      document.getElementById('play').classList.add('active');
+      setAuthTabHidden(true);
+      setTabsForAuth(true, isAdminClient(p));
+      try { await fetchAndUpdatePoints(); } catch {}
+      
+    } else {
+      throw new Error('API launcher non disponible');
+    }
+    
+  } catch (error) {
+    console.error('[Croissant] Erreur traitement:', error);
+    alert('Erreur lors du traitement: ' + error.message);
+  }
+}
+
+// Handler pour le bouton Croissant
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btnLoginWithCroissant');
+  if (btn) {
+    console.log('[Croissant] Bouton trouvé, attachement du handler...');
+    btn.addEventListener('click', () => {
+      console.log('[Croissant] Clic sur le bouton - redirection vers Croissant');
+      
+      // Appeler la fonction de connexion simplifiée
+      if (typeof window.connectWithCroissant === 'function') {
+        window.connectWithCroissant();
+      } else {
+        console.error('[Croissant] Fonction connectWithCroissant non disponible');
+        alert('Erreur: la fonction de connexion n\'est pas disponible');
+      }
+    });
+  } else {
+    console.error('[Croissant] Bouton non trouvé');
+  }
+});
 
 // Gestion du callback OAuth pour redirection vers l'onglet Jouer
 function handleCallbackParams() {
@@ -1736,13 +2284,13 @@ function handleCallbackParams() {
 function switchToPlayTab() {
   try {
     // Masquer l'onglet Auth
-    const authTab = document.querySelector('.tab[data-tab="auth"]');
+    const authTab = document.querySelector('.nav-item[data-tab="auth"]');
     const authContent = document.getElementById('auth');
     if (authTab) authTab.classList.remove('active');
     if (authContent) authContent.classList.remove('active');
     
     // Afficher l'onglet Play
-    const playTab = document.querySelector('.tab[data-tab="play"]');
+    const playTab = document.querySelector('.nav-item[data-tab="play"]');
     const playContent = document.getElementById('play');
     if (playTab) playTab.classList.add('active');
     if (playContent) playContent.classList.add('active');
@@ -1798,6 +2346,22 @@ document.addEventListener('DOMContentLoaded', handleCallbackParams);
 // Appeler aussi si la page change (pour les SPA)
 window.addEventListener('popstate', handleCallbackParams);
 
+// Fetch and update points (if available)
+async function fetchAndUpdatePoints() {
+  try {
+    if (window.eminium && window.eminium.getProfile) {
+      const profile = window.eminium.getProfile();
+      if (profile && profile.croissant && profile.croissant.balance !== undefined) {
+        // Update UI with points if needed
+        console.log('[Points] Solde Croissant:', profile.croissant.balance);
+      }
+    }
+  } catch (error) {
+    console.error('[Points] Erreur lors de la récupération des points:', error);
+  }
+}
+
+console.log('[Eminium] Launcher initialisé avec succès!');
 </script>
 
 </body>
