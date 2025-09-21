@@ -30,9 +30,9 @@ async function initializeApp() {
       window.ProgressUI.initProgressUI();
     }
 
-    // Initialize error manager
-    if (window.ErrorManager) {
-      // ErrorManager is already initialized
+    // Initialize authentication manager
+    if (window.AuthManager) {
+      window.AuthManager.initAuthManager();
     }
 
     // Initialize settings manager

@@ -1702,7 +1702,7 @@ html, body {
             </div>
             
             <!-- Traditional Login Form -->
-            <form id="loginForm" class="login-form">
+            <form id="loginForm" class="login-form" novalidate>
               <div class="form-group">
                 <input type="email" id="email" class="form-input" placeholder="Adresse email" required>
               </div>
@@ -1715,7 +1715,7 @@ html, body {
                 <input type="text" id="code2fa" class="form-input" placeholder="Code 2FA" maxlength="6">
               </div>
               
-              <button type="submit" class="btn-login" id="btnLogin">
+              <button type="button" class="btn-login" id="btnLogin">
                 <span class="btn-text">Se connecter</span>
               </button>
               
