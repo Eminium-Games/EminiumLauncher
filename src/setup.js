@@ -67,29 +67,44 @@ function ensureDir(p) {
 // Migration: déplacer l'ancien contenu de ~/.eminium-core vers ~/.eminium
 function migrateFromOldHiddenBase(log) {
   try {
-    ensureDir(hiddenBase);
+    // Note: ensureDir(hiddenBase) will be called by ensureBaseFolders, no need to call it here
 
     const moveAll = (srcBase, label) => {
       if (!srcBase || srcBase === hiddenBase) return;
       if (!fs.existsSync(srcBase)) return;
+      
+      console.log(`[migrateFromOldHiddenBase] Starting migration from ${label}: ${srcBase}`);
       const entries = fs.readdirSync(srcBase, { withFileTypes: true });
+      
       for (const e of entries) {
         const src = path.join(srcBase, e.name);
         const dst = path.join(hiddenBase, e.name);
+        
         try {
           if (e.isDirectory()) {
-            try { fs.renameSync(src, dst); }
-            catch {
+            try { 
+              fs.renameSync(src, dst);
+              console.log(`[migrateFromOldHiddenBase] Renamed directory: ${e.name}`);
+            } catch (renameError) {
+              console.log(`[migrateFromOldHiddenBase] Rename failed, copying directory: ${e.name}`, renameError.message);
               copyDir(src, dst);
               try { fs.rmSync(src, { recursive: true, force: true }); } catch {}
             }
           } else if (e.isFile()) {
             ensureDir(path.dirname(dst));
-            try { fs.renameSync(src, dst); }
-            catch { try { fs.copyFileSync(src, dst); fs.unlinkSync(src); } catch {} }
+            try { 
+              fs.renameSync(src, dst);
+              console.log(`[migrateFromOldHiddenBase] Renamed file: ${e.name}`);
+            } catch (renameError) {
+              console.log(`[migrateFromOldHiddenBase] Rename failed, copying file: ${e.name}`, renameError.message);
+              try { fs.copyFileSync(src, dst); fs.unlinkSync(src); } catch {}
+            }
           }
-        } catch {}
+        } catch (error) {
+          console.warn(`[migrateFromOldHiddenBase] Error processing ${e.name}:`, error.message);
+        }
       }
+      
       // cleanup if empty
       try { fs.rmdirSync(srcBase); } catch {}
       try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `[Migration] Données déplacées de ${label} vers AppData/.eminium` }); } catch {}
@@ -100,7 +115,11 @@ function migrateFromOldHiddenBase(log) {
     moveAll(OLD_HIDDEN_BASE, '.eminium-core');
     // Migrer depuis l'ancien ~/.eminium (home) si différent d'AppData
     if (OLD_EMINIUM_HOME !== eminiumDir) moveAll(OLD_EMINIUM_HOME, 'home/.eminium');
-  } catch {}
+    
+    console.log('[migrateFromOldHiddenBase] Migration completed');
+  } catch (error) {
+    console.warn('[migrateFromOldHiddenBase] Error during migration:', error.message);
+  }
 }
 
 // Fallback: récupérer l'URL du JSON de version via le manifest
@@ -215,9 +234,47 @@ function ensureMirrorsFile() {
 }
 
 async function importBundledModpackIfAny() {
-  if (fs.existsSync(bundledModpack)) {
+  try {
+    if (!fs.existsSync(bundledModpack)) return;
+    
+    console.log('[importBundledModpackIfAny] Starting bundled modpack import...');
     const zip = new AdmZip(bundledModpack);
-    zip.extractAllTo(hiddenBase, true);
+    
+    // Extract to a temporary directory first to avoid potential conflicts
+    const tempExtractDir = path.join(hiddenBase, 'temp_extract_' + Date.now());
+    try {
+      ensureDir(tempExtractDir);
+      zip.extractAllTo(tempExtractDir, true);
+      
+      // Now copy from temp to final destination using our safe copyDir function
+      const entries = fs.readdirSync(tempExtractDir, { withFileTypes: true });
+      for (const entry of entries) {
+        const src = path.join(tempExtractDir, entry.name);
+        const dst = path.join(hiddenBase, entry.name);
+        
+        if (entry.isDirectory()) {
+          copyDir(src, dst);
+        } else if (entry.isFile()) {
+          ensureDir(path.dirname(dst));
+          fs.copyFileSync(src, dst);
+        }
+      }
+      
+      console.log('[importBundledModpackIfAny] Bundled modpack import completed');
+    } catch (error) {
+      console.warn('[importBundledModpackIfAny] Error during import:', error.message);
+    } finally {
+      // Clean up temporary directory
+      try {
+        if (fs.existsSync(tempExtractDir)) {
+          fs.rmSync(tempExtractDir, { recursive: true, force: true });
+        }
+      } catch (cleanupError) {
+        console.warn('[importBundledModpackIfAny] Error cleaning up temp directory:', cleanupError.message);
+      }
+    }
+  } catch (error) {
+    console.warn('[importBundledModpackIfAny] Error in importBundledModpackIfAny:', error.message);
   }
 }
 
@@ -232,6 +289,19 @@ function copyDir(src, dst) {
     console.warn(`[copyDir] Skipping recursive copy: ${src} -> ${dst}`);
     return;
   }
+  
+  // Prevent infinite recursion by tracking processed paths
+  if (!globalThis._copyDirProcessedPaths) {
+    globalThis._copyDirProcessedPaths = new Set();
+  }
+  
+  const pathKey = `${normalizedSrc}->${normalizedDst}`;
+  if (globalThis._copyDirProcessedPaths.has(pathKey)) {
+    console.warn(`[copyDir] Skipping already processed path: ${src} -> ${dst}`);
+    return;
+  }
+  
+  globalThis._copyDirProcessedPaths.add(pathKey);
   
   try {
     ensureDir(dst);
@@ -249,6 +319,9 @@ function copyDir(src, dst) {
     }
   } catch (error) {
     console.warn(`[copyDir] Error copying ${src} -> ${dst}:`, error.message);
+  } finally {
+    // Clean up the processed path tracking for this specific copy operation
+    globalThis._copyDirProcessedPaths.delete(pathKey);
   }
 }
 
@@ -905,14 +978,26 @@ async function fetchWithFallback(urls, dest, label='resource', validateJar=false
 
 
 async function ensureAll() {
-  await ensureBaseFolders();
-  await ensureUserOptions();
-  ensureMirrorsFile();
-  await importBundledModpackIfAny();
-  return {
-    ok: true,
-    paths: { hiddenBase, eminiumDir }
-  };
+  // Prevent recursive calls
+  if (globalThis._ensureAllInProgress) {
+    console.warn('[ensureAll] Already in progress, skipping recursive call');
+    return { ok: true, paths: { hiddenBase, eminiumDir } };
+  }
+  
+  globalThis._ensureAllInProgress = true;
+  
+  try {
+    await ensureBaseFolders();
+    await ensureUserOptions();
+    ensureMirrorsFile();
+    await importBundledModpackIfAny();
+    return {
+      ok: true,
+      paths: { hiddenBase, eminiumDir }
+    };
+  } finally {
+    globalThis._ensureAllInProgress = false;
+  }
 }
 
 // Test de connexion au serveur
