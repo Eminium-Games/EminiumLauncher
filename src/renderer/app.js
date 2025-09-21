@@ -80,40 +80,137 @@ function initializeGameFunctionality() {
     console.error('DOMUtils not available');
     return;
   }
-  
+
   // Game control buttons
   window.DOMUtils.addEventListener('btnCheck', 'click', async () => {
     await checkAndAutoPrepare();
   });
-  
+
   window.DOMUtils.addEventListener('btnPlay', 'click', async () => {
     await launchGame();
   });
-  
+
   // Update management buttons
   window.DOMUtils.addEventListener('btnCheckUpdates', 'click', async () => {
     if (window.UpdaterManager) {
       await window.UpdaterManager.checkForUpdates(true);
     }
   });
-  
+
   window.DOMUtils.addEventListener('btnInstallUpdate', 'click', async () => {
     if (window.UpdaterManager) {
       await window.UpdaterManager.installUpdateManual();
     }
   });
-  
+
   window.DOMUtils.addEventListener('btnUpdateSettings', 'click', () => {
     if (window.UpdaterManager) {
       window.UpdaterManager.showUpdateSettings();
     }
   });
-  
+
   window.DOMUtils.addEventListener('btnForceUpdate', 'click', async () => {
     if (window.UpdaterManager) {
       await window.UpdaterManager.forceUpdate();
     }
   });
+
+  // Initialize real-time slider updates
+  initializeSliderUpdates();
+}
+
+// Initialize real-time slider value updates
+function initializeSliderUpdates() {
+  // Memory slider
+  const memSlider = document.getElementById('memSlider');
+  const memValue = document.getElementById('memValue');
+
+  if (memSlider && memValue) {
+    memSlider.addEventListener('input', () => {
+      updateSliderValue(memSlider, memValue, 'Mo');
+    });
+  }
+
+  // Render distance slider
+  const renderSlider = document.getElementById('renderSlider');
+  const renderValue = document.getElementById('renderValue');
+
+  if (renderSlider && renderValue) {
+    renderSlider.addEventListener('input', () => {
+      updateSliderValue(renderSlider, renderValue, 'chunks');
+    });
+  }
+
+  // FPS slider
+  const fpsSlider = document.getElementById('fpsSlider');
+  const fpsValue = document.getElementById('fpsValue');
+
+  if (fpsSlider && fpsValue) {
+    fpsSlider.addEventListener('input', () => {
+      updateSliderValue(fpsSlider, fpsValue, 'FPS', fpsSlider.max);
+    });
+  }
+
+  // Initialize toggle functionality
+  initializeToggleFunctionality();
+}
+
+// Initialize toggle functionality
+function initializeToggleFunctionality() {
+  // VSync toggle
+  const vsyncToggle = document.getElementById('vsyncToggle');
+  const vsyncInput = document.getElementById('vsyncInput');
+
+  if (vsyncToggle && vsyncInput) {
+    vsyncToggle.addEventListener('click', () => {
+      vsyncInput.checked = !vsyncInput.checked;
+      console.log(`[Settings] VSync: ${vsyncInput.checked ? 'ON' : 'OFF'}`);
+    });
+  }
+
+  // Unlimited FPS toggle
+  const unlimitedFpsToggle = document.getElementById('unlimitedFpsToggle');
+  const unlimitedFpsInput = document.getElementById('unlimitedFpsInput');
+
+  if (unlimitedFpsToggle && unlimitedFpsInput) {
+    unlimitedFpsToggle.addEventListener('click', () => {
+      unlimitedFpsInput.checked = !unlimitedFpsInput.checked;
+      console.log(`[Settings] Unlimited FPS: ${unlimitedFpsInput.checked ? 'ON' : 'OFF'}`);
+    });
+  }
+
+  // Close on play toggle
+  const closeOnPlayToggle = document.getElementById('closeOnPlayToggle');
+  const closeOnPlayInput = document.getElementById('closeOnPlayInput');
+
+  if (closeOnPlayToggle && closeOnPlayInput) {
+    closeOnPlayToggle.addEventListener('click', () => {
+      closeOnPlayInput.checked = !closeOnPlayInput.checked;
+      console.log(`[Settings] Close on play: ${closeOnPlayInput.checked ? 'ON' : 'OFF'}`);
+    });
+  }
+}
+
+// Update slider value display
+function updateSliderValue(slider, valueElement, unit, maxForUnlimited = null) {
+  const value = parseInt(slider.value);
+  let displayValue;
+
+  if (unit === 'Mo') {
+    displayValue = `${value} Mo`;
+  } else if (unit === 'chunks') {
+    displayValue = `${value} chunks`;
+  } else if (unit === 'FPS') {
+    displayValue = value === parseInt(maxForUnlimited) ? 'Illimité' : `${value} FPS`;
+  } else {
+    displayValue = value;
+  }
+
+  if (valueElement) {
+    valueElement.textContent = displayValue;
+  }
+
+  console.log(`[Settings] ${unit} updated: ${displayValue}`);
 }
 
 // Initialize server monitoring

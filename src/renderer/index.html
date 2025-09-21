@@ -294,8 +294,9 @@
 
         /* Authentication Section */
         .auth-section {
-            max-width: 400px;
+            max-width: 450px;
             margin: 2rem auto;
+            padding: 0 1rem;
         }
 
         .auth-header {
@@ -325,6 +326,7 @@
             padding: 2rem;
             backdrop-filter: blur(20px);
             box-shadow: var(--shadow-lg);
+            width: 100%;
         }
 
         .form-group {
@@ -509,15 +511,17 @@
 
         /* Game Section */
         .game-section {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
         .settings-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
+            justify-items: center;
         }
 
         .settings-card {
@@ -527,6 +531,9 @@
             padding: 1.5rem;
             backdrop-filter: blur(20px);
             transition: all 0.2s ease;
+            width: 100%;
+            max-width: 400px;
+            min-width: 280px;
         }
 
         .settings-card:hover {
@@ -540,6 +547,7 @@
             font-weight: 600;
             margin-bottom: 1rem;
             color: var(--text-primary);
+            text-align: center;
         }
 
         .slider-container {
@@ -552,6 +560,7 @@
             align-items: center;
             margin-bottom: 0.5rem;
             font-size: 0.875rem;
+            padding: 0 0.5rem;
         }
 
         .slider-value {
@@ -563,6 +572,7 @@
             font-weight: 600;
             min-width: 60px;
             text-align: center;
+            transition: all 0.2s ease;
         }
 
         .slider {
@@ -596,7 +606,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 0;
+            padding: 0.75rem 0.5rem;
             border-bottom: 1px solid var(--border-secondary);
         }
 
@@ -661,6 +671,7 @@
             flex-wrap: wrap;
             justify-content: center;
             margin-top: 2rem;
+            padding: 0 1rem;
         }
 
         .btn-primary {
@@ -1074,10 +1085,10 @@
 
             <div class="user-info">
                 <div class="user-card" id="userCard" style="display: none;">
-                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="user-avatar" id="userAvatar"><img src="" alt=""></div>
                     <div class="user-details">
-                        <div class="user-name" id="userName">Utilisateur</div>
-                        <div class="user-role" id="userRole">Membre</div>
+                        <div class="user-name" id="userName">${user.name}</div>
+                        <div class="user-role" id="userRole">${user.role}</div>
                     </div>
                 </div>
                 <button class="btn-secondary" id="logoutBtn" style="display: none;">
