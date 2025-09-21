@@ -208,78 +208,80 @@ function handleUpdateProgress(data) {
 
 // Check for updates
 async function checkForUpdates(showProgress = true) {
-  // Prevent multiple simultaneous calls
-  if (_updaterState.checking || !window.updater) {
-    console.log('[Updater] Check already in progress or updater not available');
-    return { ok: false, error: 'Updater not available or already checking' };
-  }
-  
-  try {
-    _updaterState.checking = true;
-    _updaterState.lastCheck = new Date();
-    
-    console.log('[Updater] Checking for updates...');
-    
-    if (showProgress) {
-      window.ProgressUI.open('Vérification des mises à jour');
-      window.ProgressUI.set(10);
-      window.ProgressUI.addLine('Recherche de mises à jour...');
+  // Use global call stack protection
+  return await CallStackProtection.safeExecuteAsync('checkForUpdates', async () => {
+    if (_updaterState.checking || !window.updater) {
+      console.log('[Updater] Check already in progress or updater not available');
+      return { ok: false, error: 'Updater not available or already checking' };
     }
-    
-    const result = await window.updater.check({
-      allowPrerelease: UPDATE_CONFIG.allowPrerelease
-    });
-    
-    _updaterState.checking = false;
-    
-    if (showProgress) {
-      window.ProgressUI.set(100);
-      window.ProgressUI.enableClose();
-      setTimeout(() => window.ProgressUI.close(), 1500);
-    }
-    
-    if (result?.ok) {
-      if (result.updateAvailable) {
-        console.log('[Updater] Update available:', result.latest);
-        _updaterState.updateAvailable = true;
-        _updaterState.updateInfo = result.latest;
-        _updaterState.latestVersion = result.latest.version;
-        
-        if (showProgress) {
-          window.ProgressUI.addLine(`Nouvelle version disponible: ${result.latest.version}`);
-        }
-        
-        // Show notification
-        if (UPDATE_CONFIG.showNotifications) {
-          showUpdateNotification(result.latest);
+
+    try {
+      _updaterState.checking = true;
+      _updaterState.lastCheck = new Date();
+
+      console.log('[Updater] Checking for updates...');
+
+      if (showProgress) {
+        window.ProgressUI.open('Vérification des mises à jour');
+        window.ProgressUI.set(10);
+        window.ProgressUI.addLine('Recherche de mises à jour...');
+      }
+
+      const result = await window.updater.check({
+        allowPrerelease: UPDATE_CONFIG.allowPrerelease
+      });
+
+      _updaterState.checking = false;
+
+      if (showProgress) {
+        window.ProgressUI.set(100);
+        window.ProgressUI.enableClose();
+        setTimeout(() => window.ProgressUI.close(), 1500);
+      }
+
+      if (result?.ok) {
+        if (result.updateAvailable) {
+          console.log('[Updater] Update available:', result.latest);
+          _updaterState.updateAvailable = true;
+          _updaterState.updateInfo = result.latest;
+          _updaterState.latestVersion = result.latest.version;
+
+          if (showProgress) {
+            window.ProgressUI.addLine(`Nouvelle version disponible: ${result.latest.version}`);
+          }
+
+          // Show notification
+          if (UPDATE_CONFIG.showNotifications) {
+            showUpdateNotification(result.latest);
+          }
+        } else {
+          console.log('[Updater] No updates available');
+          _updaterState.updateAvailable = false;
+
+          if (showProgress) {
+            window.ProgressUI.addLine('Aucune mise à jour disponible');
+          }
         }
       } else {
-        console.log('[Updater] No updates available');
-        _updaterState.updateAvailable = false;
-        
-        if (showProgress) {
-          window.ProgressUI.addLine('Aucune mise à jour disponible');
-        }
+        throw new Error(result?.error || 'Failed to check for updates');
       }
-    } else {
-      throw new Error(result?.error || 'Failed to check for updates');
+
+      updateUpdateUI();
+      return result;
+
+    } catch (error) {
+      _updaterState.checking = false;
+
+      console.error('[Updater] Error checking for updates:', error);
+
+      if (showProgress) {
+        window.ProgressUI.addLine('Erreur lors de la vérification: ' + error.message, 'error');
+        window.ProgressUI.enableClose();
+      }
+
+      return { ok: false, error: error.message };
     }
-    
-    updateUpdateUI();
-    return result;
-    
-  } catch (error) {
-    _updaterState.checking = false;
-    
-    console.error('[Updater] Error checking for updates:', error);
-    
-    if (showProgress) {
-      window.ProgressUI.addLine('Erreur lors de la vérification: ' + error.message, 'error');
-      window.ProgressUI.enableClose();
-    }
-    
-    return { ok: false, error: error.message };
-  }
+  });
 }
 
 // Download and install update

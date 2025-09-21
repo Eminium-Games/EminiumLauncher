@@ -195,18 +195,21 @@ function resolveJavaPath() {
 }
 
 function ensureBaseFolders() {
-  // Exécuter la migration avant de créer les dossiers
-  try { migrateFromOldHiddenBase(); } catch {}
-  
-  // Créer tous les dossiers nécessaires (éviter les doublons)
-  const uniqueDirs = new Set([
-    ...Object.values(dirs),
-    eminiumDir,
-    jreRoot
-  ]);
-  
-  uniqueDirs.forEach(ensureDir);
-  setHiddenWindows(hiddenBase);
+  // Use global call stack protection
+  return CallStackProtection.safeExecute('ensureBaseFolders', () => {
+    // Exécuter la migration avant de créer les dossiers
+    try { migrateFromOldHiddenBase(); } catch {}
+
+    // Créer tous les dossiers nécessaires (éviter les doublons)
+    const uniqueDirs = new Set([
+      ...Object.values(dirs),
+      eminiumDir,
+      jreRoot
+    ]);
+
+    uniqueDirs.forEach(ensureDir);
+    setHiddenWindows(hiddenBase);
+  });
 }
 
 function ensureUserOptions() {
@@ -234,95 +237,101 @@ function ensureMirrorsFile() {
 }
 
 async function importBundledModpackIfAny() {
-  try {
-    if (!fs.existsSync(bundledModpack)) return;
-    
-    console.log('[importBundledModpackIfAny] Starting bundled modpack import...');
-    const zip = new AdmZip(bundledModpack);
-    
-    // Extract to a temporary directory first to avoid potential conflicts
-    const tempExtractDir = path.join(hiddenBase, 'temp_extract_' + Date.now());
+  // Use global call stack protection
+  return await CallStackProtection.safeExecuteAsync('importBundledModpackIfAny', async () => {
     try {
-      ensureDir(tempExtractDir);
-      zip.extractAllTo(tempExtractDir, true);
-      
-      // Now copy from temp to final destination using our safe copyDir function
-      const entries = fs.readdirSync(tempExtractDir, { withFileTypes: true });
-      for (const entry of entries) {
-        const src = path.join(tempExtractDir, entry.name);
-        const dst = path.join(hiddenBase, entry.name);
-        
-        if (entry.isDirectory()) {
-          copyDir(src, dst);
-        } else if (entry.isFile()) {
-          ensureDir(path.dirname(dst));
-          fs.copyFileSync(src, dst);
-        }
-      }
-      
-      console.log('[importBundledModpackIfAny] Bundled modpack import completed');
-    } catch (error) {
-      console.warn('[importBundledModpackIfAny] Error during import:', error.message);
-    } finally {
-      // Clean up temporary directory
+      if (!fs.existsSync(bundledModpack)) return;
+
+      console.log('[importBundledModpackIfAny] Starting bundled modpack import...');
+      const zip = new AdmZip(bundledModpack);
+
+      // Extract to a temporary directory first to avoid potential conflicts
+      const tempExtractDir = path.join(hiddenBase, 'temp_extract_' + Date.now());
       try {
-        if (fs.existsSync(tempExtractDir)) {
-          fs.rmSync(tempExtractDir, { recursive: true, force: true });
+        ensureDir(tempExtractDir);
+        zip.extractAllTo(tempExtractDir, true);
+
+        // Now copy from temp to final destination using our safe copyDir function
+        const entries = fs.readdirSync(tempExtractDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const src = path.join(tempExtractDir, entry.name);
+          const dst = path.join(hiddenBase, entry.name);
+
+          if (entry.isDirectory()) {
+            copyDir(src, dst);
+          } else if (entry.isFile()) {
+            ensureDir(path.dirname(dst));
+            fs.copyFileSync(src, dst);
+          }
         }
-      } catch (cleanupError) {
-        console.warn('[importBundledModpackIfAny] Error cleaning up temp directory:', cleanupError.message);
+
+        console.log('[importBundledModpackIfAny] Bundled modpack import completed');
+      } catch (error) {
+        console.warn('[importBundledModpackIfAny] Error during import:', error.message);
+      } finally {
+        // Clean up temporary directory
+        try {
+          if (fs.existsSync(tempExtractDir)) {
+            fs.rmSync(tempExtractDir, { recursive: true, force: true });
+          }
+        } catch (cleanupError) {
+          console.warn('[importBundledModpackIfAny] Error cleaning up temp directory:', cleanupError.message);
+        }
       }
+    } catch (error) {
+      console.warn('[importBundledModpackIfAny] Error in importBundledModpackIfAny:', error.message);
     }
-  } catch (error) {
-    console.warn('[importBundledModpackIfAny] Error in importBundledModpackIfAny:', error.message);
-  }
+  });
 }
 
 // Utilitaire: copier récursivement (overwrite)
 function copyDir(src, dst) {
-  // Normalize paths to prevent issues with different path formats
-  const normalizedSrc = path.normalize(src);
-  const normalizedDst = path.normalize(dst);
-  
-  // Prevent copying a directory into itself or its parent
-  if (normalizedSrc === normalizedDst || normalizedDst.startsWith(normalizedSrc + path.sep)) {
-    console.warn(`[copyDir] Skipping recursive copy: ${src} -> ${dst}`);
-    return;
-  }
-  
-  // Prevent infinite recursion by tracking processed paths
-  if (!globalThis._copyDirProcessedPaths) {
-    globalThis._copyDirProcessedPaths = new Set();
-  }
-  
-  const pathKey = `${normalizedSrc}->${normalizedDst}`;
-  if (globalThis._copyDirProcessedPaths.has(pathKey)) {
-    console.warn(`[copyDir] Skipping already processed path: ${src} -> ${dst}`);
-    return;
-  }
-  
-  globalThis._copyDirProcessedPaths.add(pathKey);
-  
-  try {
-    ensureDir(dst);
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-    for (const entry of entries) {
-      const s = path.join(src, entry.name);
-      const d = path.join(dst, entry.name);
-      
-      if (entry.isDirectory()) {
-        copyDir(s, d);
-      } else if (entry.isFile()) {
-        ensureDir(path.dirname(d));
-        fs.copyFileSync(s, d);
-      }
+  // Use global call stack protection
+  return CallStackProtection.safeExecute('copyDir', () => {
+    // Normalize paths to prevent issues with different path formats
+    const normalizedSrc = path.normalize(src);
+    const normalizedDst = path.normalize(dst);
+
+    // Prevent copying a directory into itself or its parent
+    if (normalizedSrc === normalizedDst || normalizedDst.startsWith(normalizedSrc + path.sep)) {
+      console.warn(`[copyDir] Skipping recursive copy: ${src} -> ${dst}`);
+      return;
     }
-  } catch (error) {
-    console.warn(`[copyDir] Error copying ${src} -> ${dst}:`, error.message);
-  } finally {
-    // Clean up the processed path tracking for this specific copy operation
-    globalThis._copyDirProcessedPaths.delete(pathKey);
-  }
+
+    // Prevent infinite recursion by tracking processed paths
+    if (!globalThis._copyDirProcessedPaths) {
+      globalThis._copyDirProcessedPaths = new Set();
+    }
+
+    const pathKey = `${normalizedSrc}->${normalizedDst}`;
+    if (globalThis._copyDirProcessedPaths.has(pathKey)) {
+      console.warn(`[copyDir] Skipping already processed path: ${src} -> ${dst}`);
+      return;
+    }
+
+    globalThis._copyDirProcessedPaths.add(pathKey);
+
+    try {
+      ensureDir(dst);
+      const entries = fs.readdirSync(src, { withFileTypes: true });
+      for (const entry of entries) {
+        const s = path.join(src, entry.name);
+        const d = path.join(dst, entry.name);
+
+        if (entry.isDirectory()) {
+          copyDir(s, d);
+        } else if (entry.isFile()) {
+          ensureDir(path.dirname(d));
+          fs.copyFileSync(s, d);
+        }
+      }
+    } catch (error) {
+      console.warn(`[copyDir] Error copying ${src} -> ${dst}:`, error.message);
+    } finally {
+      // Clean up the processed path tracking for this specific copy operation
+      globalThis._copyDirProcessedPaths.delete(pathKey);
+    }
+  });
 }
 
 // Synchroniser le modpack depuis un ZIP distant
@@ -978,26 +987,29 @@ async function fetchWithFallback(urls, dest, label='resource', validateJar=false
 
 
 async function ensureAll() {
-  // Prevent recursive calls
-  if (globalThis._ensureAllInProgress) {
-    console.warn('[ensureAll] Already in progress, skipping recursive call');
-    return { ok: true, paths: { hiddenBase, eminiumDir } };
-  }
-  
-  globalThis._ensureAllInProgress = true;
-  
-  try {
-    await ensureBaseFolders();
-    await ensureUserOptions();
-    ensureMirrorsFile();
-    await importBundledModpackIfAny();
-    return {
-      ok: true,
-      paths: { hiddenBase, eminiumDir }
-    };
-  } finally {
-    globalThis._ensureAllInProgress = false;
-  }
+  // Use global call stack protection
+  return await CallStackProtection.safeExecuteAsync('ensureAll', async () => {
+    // Prevent recursive calls
+    if (globalThis._ensureAllInProgress) {
+      console.warn('[ensureAll] Already in progress, skipping recursive call');
+      return { ok: true, paths: { hiddenBase, eminiumDir } };
+    }
+
+    globalThis._ensureAllInProgress = true;
+
+    try {
+      await ensureBaseFolders();
+      await ensureUserOptions();
+      ensureMirrorsFile();
+      await importBundledModpackIfAny();
+      return {
+        ok: true,
+        paths: { hiddenBase, eminiumDir }
+      };
+    } finally {
+      globalThis._ensureAllInProgress = false;
+    }
+  });
 }
 
 // Test de connexion au serveur

@@ -267,6 +267,176 @@ function createErrorNotification(error, errorType, severity) {
   return notification;
 }
 
+// Global protection against stack overflow and recursive calls
+const CallStackProtection = {
+  _activeCalls: new Map(),
+  _maxStackDepth: 50,
+  _currentStackDepth: 0,
+  _functionTimeouts: new Map(),
+  _maxExecutionTime: 30000, // 30 seconds max per function
+  _callCounts: new Map(),
+
+  // Execute a function safely with stack protection
+  safeExecute: function(functionName, fn, ...args) {
+    const startTime = Date.now();
+    const timeoutId = setTimeout(() => {
+      console.error(`[CallStackProtection] Function ${functionName} timed out after ${this._maxExecutionTime}ms`);
+      this._forceCleanup(functionName);
+    }, this._maxExecutionTime);
+
+    this._functionTimeouts.set(functionName, timeoutId);
+
+    const callId = `${functionName}_${Date.now()}_${Math.random()}`;
+
+    // Check if we're in a recursive loop
+    if (this._activeCalls.has(functionName)) {
+      const callCount = this._activeCalls.get(functionName);
+      if (callCount > 5) { // Max 5 simultaneous calls per function
+        console.warn(`[CallStackProtection] Blocking recursive call to ${functionName} (${callCount} active calls)`);
+        clearTimeout(timeoutId);
+        this._functionTimeouts.delete(functionName);
+        return null;
+      }
+      this._activeCalls.set(functionName, callCount + 1);
+    } else {
+      this._activeCalls.set(functionName, 1);
+    }
+
+    // Check stack depth
+    this._currentStackDepth++;
+    if (this._currentStackDepth > this._maxStackDepth) {
+      this._currentStackDepth--;
+      const callCount = this._activeCalls.get(functionName) || 1;
+      this._activeCalls.set(functionName, callCount - 1);
+      if (callCount <= 1) this._activeCalls.delete(functionName);
+      clearTimeout(timeoutId);
+      this._functionTimeouts.delete(functionName);
+      console.warn(`[CallStackProtection] Maximum stack depth exceeded for ${functionName}`);
+      return null;
+    }
+
+    try {
+      const result = fn(...args);
+      return result;
+    } catch (error) {
+      console.error(`[CallStackProtection] Error in ${functionName}:`, error);
+      return null;
+    } finally {
+      this._currentStackDepth--;
+      const callCount = this._activeCalls.get(functionName) || 1;
+      this._activeCalls.set(functionName, callCount - 1);
+      if (callCount <= 1) this._activeCalls.delete(functionName);
+      clearTimeout(timeoutId);
+      this._functionTimeouts.delete(functionName);
+    }
+  },
+
+  // Safe async execution
+  safeExecuteAsync: async function(functionName, fn, ...args) {
+    // Check if we're in a recursive loop
+    if (this._activeCalls.has(functionName)) {
+      const callCount = this._activeCalls.get(functionName);
+      if (callCount > 3) { // Max 3 simultaneous async calls per function
+        console.warn(`[CallStackProtection] Blocking recursive async call to ${functionName} (${callCount} active calls)`);
+        return null;
+      }
+      this._activeCalls.set(functionName, callCount + 1);
+    } else {
+      this._activeCalls.set(functionName, 1);
+    }
+
+    try {
+      const result = await fn(...args);
+      return result;
+    } catch (error) {
+      console.error(`[CallStackProtection] Async error in ${functionName}:`, error);
+      return null;
+    } finally {
+      const callCount = this._activeCalls.get(functionName) || 1;
+      this._activeCalls.set(functionName, callCount - 1);
+      if (callCount <= 1) this._activeCalls.delete(functionName);
+    }
+  },
+
+  // Force reset a stuck function
+  _forceResetFunction: function(functionName) {
+    console.error(`[StackOverflowProtection] Force resetting ${functionName}`);
+
+    // Reset global state
+    if (functionName === 'ensureAll') {
+      if (globalThis._ensureAllInProgress) {
+        globalThis._ensureAllInProgress = false;
+        console.log(`[StackOverflowProtection] Reset ensureAll state`);
+      }
+    }
+
+    if (functionName === 'checkForUpdates') {
+      if (typeof window !== 'undefined' && window.UpdaterManager) {
+        const updaterState = window.UpdaterManager.getUpdaterState();
+        if (updaterState.checking) {
+          console.log(`[StackOverflowProtection] Reset checkForUpdates state`);
+          // The function will be reset by the call stack protection timeout
+        }
+      }
+    }
+
+    // Remove from activity tracking
+    this._lastActivity.delete(functionName);
+  },
+
+  // Start monitoring
+  startMonitoring: function() {
+    if (!this._protectionActive) return;
+
+    // Check for stuck functions every 30 seconds
+    setInterval(() => {
+      this.checkForStuckFunctions();
+    }, 30000);
+
+    console.log(`[StackOverflowProtection] Started monitoring ${this._monitoredFunctions.size} functions`);
+  },
+
+  // Stop monitoring
+  stopMonitoring: function() {
+    this._protectionActive = false;
+    console.log('[StackOverflowProtection] Stopped monitoring');
+  },
+
+  // Get status
+  getStatus: function() {
+    const now = Date.now();
+    const status = {
+      monitoredFunctions: Array.from(this._monitoredFunctions),
+      active: this._protectionActive,
+      lastActivities: {}
+    };
+
+    for (const [functionName, lastActivity] of this._lastActivity) {
+      status.lastActivities[functionName] = {
+        lastActivity: lastActivity,
+        timeSinceActivity: now - lastActivity,
+        isStuck: (now - lastActivity) > this._maxIdleTime
+      };
+    }
+
+    return status;
+  }
+};
+
+// Initialize stack overflow protection
+if (typeof window !== 'undefined') {
+  window.StackOverflowProtection = StackOverflowProtection;
+  // Start monitoring when the window loads
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      StackOverflowProtection.startMonitoring();
+    }, 5000); // Wait 5 seconds after page load
+  });
+}
+if (typeof global !== 'undefined') {
+  global.StackOverflowProtection = StackOverflowProtection;
+}
+
 // Handle error with enhanced processing
 function handleError(error, context = '') {
   try {
