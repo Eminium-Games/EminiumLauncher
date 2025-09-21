@@ -8,7 +8,7 @@ let _updaterState = {
   checking: false,
   downloading: false,
   installing: false,
-  currentVersion: null,
+  currentVersion: '1.0.0',
   latestVersion: null,
   updateAvailable: false,
   updateInfo: null,
@@ -525,7 +525,7 @@ async function forceUpdate() {
     // Clear any cached update info
     _updaterState.updateAvailable = false;
     _updaterState.updateInfo = null;
-    _updaterState.latestVersion = null;
+    _updaterState.latestVersion = '1.0.0';
     
     // Force a fresh check
     await checkForUpdates(true);
