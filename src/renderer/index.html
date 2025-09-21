@@ -483,21 +483,43 @@ html, body { overflow: hidden; }
               }
               
               const tokenData = await tokenResponse.json();
-              console.log('[Croissant] Token obtenu');
+              console.log('[Croissant] Token obtenu:', tokenData);
               
-              // Récupérer les infos utilisateur
-              const userResponse = await fetch('https://croissant-api.fr/api/user', {
-                headers: {
-                  'Authorization': `Bearer ${tokenData.access_token}`
+              let userData = {};
+              
+              // Vérifier si les infos utilisateur sont dans le token (cas déjà connecté)
+              if (tokenData.user) {
+                console.log('[Croissant] Infos utilisateur trouvées dans le token');
+                userData = tokenData.user;
+              } else {
+                // Sinon, récupérer les infos via l'API
+                console.log('[Croissant] Récupération des infos utilisateur via API...');
+                const userResponse = await fetch('https://croissant-api.fr/api/user', {
+                  headers: {
+                    'Authorization': `Bearer ${tokenData.access_token}`
+                  }
+                });
+                
+                if (!userResponse.ok) {
+                  throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
                 }
-              });
-              
-              if (!userResponse.ok) {
-                throw new Error(`Erreur ${userResponse.status}: ${userResponse.statusText}`);
+                
+                userData = await userResponse.json();
+                console.log('[Croissant] Utilisateur récupéré via API');
               }
               
-              const userData = await userResponse.json();
-              console.log('[Croissant] Utilisateur récupéré');
+              // S'assurer qu'on a les données essentielles
+              if (!userData.username || !userData.user_id) {
+                console.warn('[Croissant] Données utilisateur incomplètes:', userData);
+                throw new Error('Données utilisateur incomplètes reçues');
+              }
+              
+              console.log('[Croissant] Données utilisateur complètes:', {
+                username: userData.username,
+                user_id: userData.user_id,
+                email: userData.email,
+                balance: userData.balance
+              });
               
               // Traiter les données utilisateur
               await processCroissantUser(userData);
@@ -513,11 +535,23 @@ html, body { overflow: hidden; }
             try {
               console.log('[Croissant] Traitement de l\'utilisateur:', user);
               
+              // Extraire le pseudo et l'UUID essentiels
+              const username = user.username || user.name || 'CroissantUser';
+              const userId = user.user_id || user.id;
+              
+              if (!username || !userId) {
+                throw new Error('Pseudo ou UUID manquant dans les données utilisateur');
+              }
+              
+              console.log('[Croissant] Création du profil avec:');
+              console.log('- Pseudo:', username);
+              console.log('- UUID:', userId);
+              
               const profile = {
-                id: user.user_id || user.id,
-                name: user.username || 'CroissantUser',
-                uuid: null,
-                email: user.email,
+                id: userId,
+                name: username,
+                uuid: userId, // Utiliser l'ID Croissant comme UUID
+                email: user.email || null,
                 role: null,
                 grade: null,
                 gradeColor: null,
@@ -526,13 +560,15 @@ html, body { overflow: hidden; }
                 access_token: null,
                 auth: 'croissant',
                 croissant: {
-                  balance: user.balance,
+                  balance: user.balance || 0,
                   verified: !!user.verified,
                   discord_id: user.discord_id || null,
                   steam_id: user.steam_id || null,
                   google_id: user.google_id || null
                 }
               };
+              
+              console.log('[Croissant] Profil créé:', profile);
               
               // Sauvegarder le profil
               if (window.eminium && window.eminium.setProfile) {
