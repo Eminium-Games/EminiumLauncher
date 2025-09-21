@@ -309,6 +309,8 @@ async function performLogout() {
       logoutBtn.disabled = false;
       logoutBtn.textContent = '🚪 Déconnexion';
     }
+  }
+}
 // Complete logout and reset
 async function completeLogout() {
   try {
