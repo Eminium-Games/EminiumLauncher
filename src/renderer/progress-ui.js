@@ -22,17 +22,26 @@ let _progressElements = {
   percent: null,
   bar: null,
   log: null,
-  close: null
+  close: null,
+  background: null
 };
 
 // Initialize progress UI elements
 function initProgressElements() {
-  _progressElements.modal = document.getElementById('progressModal');
-  _progressElements.title = document.querySelector('.progress-title');
-  _progressElements.percent = document.querySelector('.progress-percent');
-  _progressElements.bar = document.querySelector('.progress-bar-fill');
-  _progressElements.log = document.querySelector('.progress-log');
-  _progressElements.close = document.querySelector('.progress-close');
+  if (window.DOMUtils) {
+    const elements = window.DOMUtils.getElements([
+      'progressModal', 'progressTitle', 'progressPercent', 'progressBar', 
+      'progressLog', 'progressClose', 'progressBackground'
+    ]);
+    
+    _progressElements.modal = elements.progressModal;
+    _progressElements.title = elements.progressTitle;
+    _progressElements.percent = elements.progressPercent;
+    _progressElements.bar = elements.progressBar;
+    _progressElements.log = elements.progressLog;
+    _progressElements.close = elements.progressClose;
+    _progressElements.background = elements.progressBackground;
+  }
 }
 
 // Open progress modal
@@ -57,11 +66,24 @@ function open(title = 'Progression') {
   if (_progressElements.log) {
     _progressElements.log.innerHTML = '';
   }
+  
+  // Initially disable buttons, show close button
+  setButtonsEnabled(false);
   if (_progressElements.close) {
-    _progressElements.close.style.display = 'none';
+    _progressElements.close.style.display = 'inline-block';
   }
   
   updateProgressDisplay();
+}
+
+// Enable/disable progress buttons
+function setButtonsEnabled(enabled) {
+  if (_progressElements.close) {
+    _progressElements.close.disabled = !enabled;
+  }
+  if (_progressElements.background) {
+    _progressElements.background.disabled = !enabled;
+  }
 }
 
 // Close progress modal
@@ -312,6 +334,20 @@ function initProgressListeners() {
   if (_progressElements.close) {
     _progressElements.close.addEventListener('click', close);
   }
+  
+  if (_progressElements.background) {
+    _progressElements.background.addEventListener('click', () => {
+      // Minimize to background/tray
+      if (window.eminium && window.eminium.minimizeToTray) {
+        window.eminium.minimizeToTray();
+      } else {
+        // Fallback: just minimize the window
+        if (window.eminium && window.eminium.minimize) {
+          window.eminium.minimize();
+        }
+      }
+    });
+  }
 }
 
 // Initialize progress UI
@@ -326,7 +362,7 @@ window.ProgressUI = {
   close,
   set,
   addLine,
-  enableClose,
+  setButtonsEnabled,
   isOpen,
   resetPhases,
   updatePhases,

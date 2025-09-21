@@ -411,6 +411,10 @@ ipcMain.handle('settings:set', async (_evt, patch) => {
 });
 
 // Endpoint de maintenance désactivé
+ipcMain.handle('maintenance:get', async () => {
+  // Maintenance est toujours désactivée
+  return { ok: true, maintenance: false };
+});
 
 // Status handler used by renderer to know readiness / rpc state
 ipcMain.handle('launcher:status', async () => {
@@ -749,6 +753,16 @@ function tcpPing(host, port, timeout = 3000) {
     try { socket.connect(port, host); } catch { finalize(false); }
   });
 }
+
+// IPC: ensure all required files are downloaded and prepared
+ipcMain.handle('launcher:ensure', async () => {
+  try {
+    await ensureAll();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
 
 // IPC: ping Minecraft server (port open check)
 ipcMain.handle('launcher:ping', async (_evt, { host, port, timeout }) => {

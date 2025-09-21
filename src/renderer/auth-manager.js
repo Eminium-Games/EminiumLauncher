@@ -19,10 +19,9 @@ function validateLogin(email, pass, code2fa) {
 
 // Set authentication error message
 function setAuthError(msg) {
-  const authErrEl = document.getElementById('authError');
-  if (authErrEl) {
-    authErrEl.textContent = msg || '';
-    authErrEl.style.display = msg ? 'block' : 'none';
+  if (window.DOMUtils) {
+    window.DOMUtils.setText('authError', msg || '');
+    window.DOMUtils.setDisplay('authError', msg ? 'block' : 'none');
   }
 }
 
@@ -185,49 +184,44 @@ async function checkAuthStatus() {
 
 // Initialize authentication event listeners
 function initAuthListeners() {
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLoginWithEminium = document.getElementById('btnLoginWithEminium');
-  const btnLogout = document.getElementById('btnLogout');
+  if (!window.DOMUtils) {
+    console.error('DOMUtils not available');
+    return;
+  }
   
   // Main login button
-  if (btnLogin) {
-    btnLogin.addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const code2fa = document.getElementById('code2fa').value.trim();
-      
-      await performLogin(email, password, code2fa);
-    });
-  }
+  window.DOMUtils.addEventListener('btnLogin', 'click', async () => {
+    const email = window.DOMUtils.getValue('email', '').trim();
+    const password = window.DOMUtils.getValue('password', '');
+    const code2fa = window.DOMUtils.getValue('code2fa', '').trim();
+    
+    await performLogin(email, password, code2fa);
+  });
   
   // "Se connecter avec Eminium" button
-  if (btnLoginWithEminium) {
-    btnLoginWithEminium.addEventListener('click', () => {
-      const detailedForm = document.getElementById('detailedLoginForm');
-      const quickAuth = document.getElementById('quickAuth');
-      
-      if (detailedForm && quickAuth) {
-        detailedForm.style.display = detailedForm.style.display === 'none' ? 'block' : 'none';
-        quickAuth.style.display = quickAuth.style.display === 'none' ? 'block' : 'none';
-      }
-    });
-  }
+  window.DOMUtils.addEventListener('btnLoginWithEminium', 'click', () => {
+    const detailedForm = window.DOMUtils.getElement('detailedLoginForm', false);
+    const quickAuth = window.DOMUtils.getElement('quickAuth', false);
+    
+    if (detailedForm && quickAuth) {
+      window.DOMUtils.toggle('detailedLoginForm', 'block');
+      window.DOMUtils.toggle('quickAuth', 'block');
+    }
+  });
   
   // Logout button
-  if (btnLogout) {
-    btnLogout.addEventListener('click', performLogout);
-  }
+  window.DOMUtils.addEventListener('btnLogout', 'click', performLogout);
   
   // Handle Enter key in login form
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
+  window.DOMUtils.addEventListener('loginForm', 'keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const btnLogin = window.DOMUtils.getElement('btnLogin', false);
+      if (btnLogin) {
         btnLogin.click();
       }
-    });
-  }
+    }
+  });
 }
 
 // Initialize authentication manager

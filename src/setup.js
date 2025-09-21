@@ -178,9 +178,15 @@ function resolveJavaPath() {
 function ensureBaseFolders() {
   // Exécuter la migration avant de créer les dossiers
   try { migrateFromOldHiddenBase(); } catch {}
-  Object.values(dirs).forEach(ensureDir);
-  ensureDir(eminiumDir);
-  ensureDir(jreRoot);
+  
+  // Créer tous les dossiers nécessaires (éviter les doublons)
+  const uniqueDirs = new Set([
+    ...Object.values(dirs),
+    eminiumDir,
+    jreRoot
+  ]);
+  
+  uniqueDirs.forEach(ensureDir);
   setHiddenWindows(hiddenBase);
 }
 
@@ -217,15 +223,32 @@ async function importBundledModpackIfAny() {
 
 // Utilitaire: copier récursivement (overwrite)
 function copyDir(src, dst) {
-  ensureDir(dst);
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const s = path.join(src, entry.name);
-    const d = path.join(dst, entry.name);
-    if (entry.isDirectory()) copyDir(s, d);
-    else if (entry.isFile()) {
-      ensureDir(path.dirname(d));
-      fs.copyFileSync(s, d);
+  // Normalize paths to prevent issues with different path formats
+  const normalizedSrc = path.normalize(src);
+  const normalizedDst = path.normalize(dst);
+  
+  // Prevent copying a directory into itself or its parent
+  if (normalizedSrc === normalizedDst || normalizedDst.startsWith(normalizedSrc + path.sep)) {
+    console.warn(`[copyDir] Skipping recursive copy: ${src} -> ${dst}`);
+    return;
+  }
+  
+  try {
+    ensureDir(dst);
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+    for (const entry of entries) {
+      const s = path.join(src, entry.name);
+      const d = path.join(dst, entry.name);
+      
+      if (entry.isDirectory()) {
+        copyDir(s, d);
+      } else if (entry.isFile()) {
+        ensureDir(path.dirname(d));
+        fs.copyFileSync(s, d);
+      }
     }
+  } catch (error) {
+    console.warn(`[copyDir] Error copying ${src} -> ${dst}:`, error.message);
   }
 }
 

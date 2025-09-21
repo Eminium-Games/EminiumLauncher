@@ -1087,6 +1087,28 @@ html, body {
   animation: progressGlow 3s infinite;
 }
 
+@keyframes slideIn {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
 @keyframes progressGlow {
   0% {
     left: -100%;
@@ -1094,6 +1116,143 @@ html, body {
   100% {
     left: 100%;
   }
+}
+
+/* Enhanced entrance animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Enhanced button hover effects */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Smooth panel entrance */
+.panel {
+  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.panel:nth-child(1) { animation-delay: 0.1s; }
+.panel:nth-child(2) { animation-delay: 0.2s; }
+.panel:nth-child(3) { animation-delay: 0.3s; }
+.panel:nth-child(4) { animation-delay: 0.4s; }
+
+/* Enhanced form inputs */
+.form-input {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-input:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+}
+
+/* Enhanced nav items */
+.nav-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item:hover {
+  transform: translateX(8px) scale(1.02);
+}
+
+.nav-item.active {
+  animation: bounce 0.6s ease;
+}
+
+/* Enhanced profile card */
+.profile-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.2);
+}
+
+/* Enhanced toggle buttons */
+.toggle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle:hover {
+  transform: scale(1.05);
+}
+
+.toggle.active {
+  animation: scaleIn 0.3s ease;
+}
+
+/* Enhanced slider */
+.slider::-webkit-slider-thumb {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
 }
 
 .progress-phases {
@@ -1776,13 +1935,16 @@ html, body {
     </div>
   </div>
 </div>
+<script src="dom-utils.js"></script>
+<script src="common-utils.js"></script>
 <script src="./updater-manager.js"></script>
 <script src="./app.js"></script>
 <script src="./auth-manager.js"></script>
 <script src="./logger.js"></script>
 <script src="./oauth-manager.js"></script>
 <script src="./progress-ui.js"></script>
-<script src="./settings-manager.js"></script>
+<script src="error-manager.js"></script>
+<script src="settings-manager.js"></script>
 <script src="./ui-helpers.js"></script>
 <!-- Test script - remove after testing -->
 <script src="./test-modules.js"></script>

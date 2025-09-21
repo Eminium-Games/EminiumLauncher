@@ -11,7 +11,8 @@ let _settingsState = {
   vsync: false,
   fpsUnlimited: false,
   detectedRamMB: null,
-  saveTimer: null
+  saveTimer: null,
+  isInitialized: false
 };
 
 // Settings DOM elements
@@ -29,15 +30,22 @@ let _settingsElements = {
 
 // Initialize settings elements
 function initSettingsElements() {
-  _settingsElements.memSlider = document.getElementById('memSlider');
-  _settingsElements.memLabel = document.getElementById('memLabel');
-  _settingsElements.ramInfo = document.getElementById('ramInfo');
-  _settingsElements.render = document.getElementById('renderDist');
-  _settingsElements.renderLabel = document.getElementById('renderLabel');
-  _settingsElements.fps = document.getElementById('fpsCap');
-  _settingsElements.fpsLabel = document.getElementById('fpsLabel');
-  _settingsElements.fpsUnlimited = document.getElementById('fpsUnlimited');
-  _settingsElements.vsync = document.getElementById('vsync');
+  if (window.DOMUtils) {
+    const elements = window.DOMUtils.getElements([
+      'memSlider', 'memLabel', 'ramInfo', 'renderDist', 'renderLabel', 
+      'fpsCap', 'fpsLabel', 'fpsUnlimited', 'vsync'
+    ]);
+    
+    _settingsElements.memSlider = elements.memSlider;
+    _settingsElements.memLabel = elements.memLabel;
+    _settingsElements.ramInfo = elements.ramInfo;
+    _settingsElements.render = elements.renderDist;
+    _settingsElements.renderLabel = elements.renderLabel;
+    _settingsElements.fps = elements.fpsCap;
+    _settingsElements.fpsLabel = elements.fpsLabel;
+    _settingsElements.fpsUnlimited = elements.fpsUnlimited;
+    _settingsElements.vsync = elements.vsync;
+  }
 }
 
 // Load settings from storage
@@ -113,19 +121,23 @@ function applySettings(settings) {
   warnIfTooHigh(_settingsState.detectedRamMB);
 }
 
-// Debounced settings save
+// Debounced settings save (optimized performance)
 function settingsDebouncedSave() {
+  // Clear existing timer
   if (_settingsState.saveTimer) {
     clearTimeout(_settingsState.saveTimer);
   }
   
+  // Set new timer with reduced delay for better responsiveness
   _settingsState.saveTimer = setTimeout(async () => {
     try {
-      await saveSettings(readCurrentSettings());
+      const currentSettings = readCurrentSettings();
+      await saveSettings(currentSettings);
+      _settingsState.saveTimer = null;
     } catch (error) {
       console.warn('Error in debounced settings save:', error);
     }
-  }, 300);
+  }, 500); // Reduced from 1000ms to 500ms for better UX
 }
 
 // Update memory label
@@ -255,22 +267,25 @@ function refreshPlayOptionsUI() {
   warnIfTooHigh(_settingsState.detectedRamMB);
 }
 
-// Initialize settings manager
+// Initialize settings manager (optimized to prevent redundant calls)
 async function initSettingsManager() {
-  initSettingsElements();
-  await detectSystemRAM();
-  initSettingsListeners();
-  
-  // Set initial labels
-  updateRenderLabel();
-  if (_settingsElements.fpsLabel) {
-    _settingsElements.fpsLabel.textContent = String(_settingsElements.fps?.value || 120);
+  // Prevent double initialization
+  if (_settingsState.isInitialized) {
+    return;
   }
   
-  syncFPS();
-  
-  // Load saved settings
-  await loadSettings();
+  try {
+    initSettingsElements();
+    await detectSystemRAM();
+    await loadSettings();
+    initSettingsListeners();
+    refreshPlayOptionsUI();
+    
+    _settingsState.isInitialized = true;
+    console.log('[Settings] Settings manager initialized successfully');
+  } catch (error) {
+    console.error('[Settings] Failed to initialize settings manager:', error);
+  }
 }
 
 // Export functions for use in other modules

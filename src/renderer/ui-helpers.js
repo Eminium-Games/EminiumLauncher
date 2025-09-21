@@ -3,42 +3,90 @@
  * Contains all UI-related helper functions and utilities
  */
 
-// Create animated background particles
+// Create animated background particles (optimized for performance)
 function createParticles() {
   const particlesContainer = document.querySelector('.bg-particles');
   if (!particlesContainer) return;
   
+  // Clear existing particles
   particlesContainer.innerHTML = '';
-  const particleCount = 50;
   
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = Math.random() * 100 + '%';
-    particle.style.animationDelay = Math.random() * 20 + 's';
-    particle.style.animationDuration = (15 + Math.random() * 10) + 's';
-    particlesContainer.appendChild(particle);
-  }
+  // Reduce particle count for better performance
+  const particleCount = Math.min(30, Math.floor(window.innerWidth / 50));
+  
+  // Use requestAnimationFrame for smoother animation
+  requestAnimationFrame(() => {
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 20 + 's';
+      particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+      
+      // Add will-change for better performance
+      particle.style.willChange = 'transform, opacity';
+      
+      fragment.appendChild(particle);
+    }
+    
+    particlesContainer.appendChild(fragment);
+  });
 }
 
-// Tab switching functionality
-function initTabSwitching() {
-  document.querySelectorAll('.nav-item').forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Remove active class from all tabs and content sections
-      document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-      
-      // Add active class to clicked tab
-      tab.classList.add('active');
-      
-      // Show corresponding content section
-      const tabId = tab.getAttribute('data-tab');
-      const contentSection = document.getElementById(tabId);
-      if (contentSection) {
-        contentSection.classList.add('active');
+// Lazy loading for images (optimized performance)
+function initLazyLoading() {
+  const images = document.querySelectorAll('img[data-src]');
+  if (!images.length) return;
+  
+  const imageObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        observer.unobserve(img);
+        
+        // Add fade-in effect
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => {
+          img.style.opacity = '1';
+        }, 50);
       }
     });
+  }, {
+    rootMargin: '50px 0px',
+    threshold: 0.1
+  });
+  
+  images.forEach(img => imageObserver.observe(img));
+}
+
+// Tab switching functionality (optimized with event delegation)
+function initTabSwitching() {
+  const navContainer = document.querySelector('.nav-container');
+  if (!navContainer) return;
+  
+  // Use event delegation for better performance
+  navContainer.addEventListener('click', (e) => {
+    const tab = e.target.closest('.nav-item');
+    if (!tab) return;
+    
+    // Remove active class from all tabs and content sections
+    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    
+    // Add active class to clicked tab
+    tab.classList.add('active');
+    
+    // Show corresponding content section
+    const tabId = tab.getAttribute('data-tab');
+    const contentSection = document.getElementById(tabId);
+    if (contentSection) {
+      contentSection.classList.add('active');
+    }
   });
 }
 
@@ -72,14 +120,13 @@ function hasPrivilegedAccess(profile) {
 
 // Ensure we can toggle Play content with a replacement image
 function ensurePlayReplacement() {
-  const playSection = document.getElementById('play');
+  const playSection = window.DOMUtils?.getElement('play', false);
   if (!playSection) return;
   
   const existingReplacement = playSection.querySelector('.play-replacement');
   if (existingReplacement) return;
   
-  const replacement = document.createElement('div');
-  replacement.className = 'play-replacement';
+  const replacement = window.DOMUtils?.createElement('div', { className: 'play-replacement' });
   replacement.innerHTML = `
     <div style="text-align: center; padding: 60px 20px;">
       <img src="https://via.placeholder.com/400x200?text=Connectez-vous+pour+jouer" 
@@ -95,7 +142,7 @@ function ensurePlayReplacement() {
 }
 
 function setPlayRestricted(restricted) {
-  const playSection = document.getElementById('play');
+  const playSection = window.DOMUtils?.getElement('play', false);
   if (!playSection) return;
   
   const replacement = playSection.querySelector('.play-replacement');
@@ -128,18 +175,21 @@ function initToggleButtons() {
       
       // Handle specific toggle behaviors
       if (toggle.id === 'fpsUnlimited') {
-        const fpsSlider = document.getElementById('fps');
-        const fpsLabel = document.getElementById('fpsLabel');
-        if (fpsSlider && fpsLabel) {
-          const isUnlimited = toggle.classList.contains('active');
-          fpsSlider.disabled = isUnlimited;
-          fpsLabel.textContent = isUnlimited ? 'Illimité' : fpsSlider.value;
+        const isUnlimited = toggle.classList.contains('active');
+        
+        if (window.DOMUtils) {
+          window.DOMUtils.setDisabled('fps', isUnlimited);
+          const fpsValue = window.DOMUtils.getValue('fps', '120');
+          window.DOMUtils.setText('fpsLabel', isUnlimited ? 'Illimité' : fpsValue);
           
           if (isUnlimited) {
-            fpsSlider.classList.add('dim');
-            fpsSlider.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10))';
+            window.DOMUtils.addClass('fps', 'dim');
+            const fpsSlider = window.DOMUtils.getElement('fps', false);
+            if (fpsSlider) {
+              fpsSlider.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10))';
+            }
           } else {
-            fpsSlider.classList.remove('dim');
+            window.DOMUtils.removeClass('fps', 'dim');
           }
         }
       }
@@ -218,18 +268,105 @@ function switchToPlayTab() {
   }
 }
 
+// Enhanced animation management for smooth UX
+function initEnhancedAnimations() {
+  // Smooth scroll behavior
+  document.documentElement.style.scrollBehavior = 'smooth';
+  
+  // Add ripple effect to buttons
+  document.querySelectorAll('.btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      const rect = this.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+      
+      ripple.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        left: ${x}px;
+        top: ${y}px;
+        pointer-events: none;
+        transform: scale(0);
+        animation: ripple 0.6s ease-out;
+      `;
+      
+      this.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+  });
+  
+  // Add hover effect to interactive elements
+  document.querySelectorAll('.nav-item, .profile-card, .panel, .toggle').forEach(element => {
+    element.addEventListener('mouseenter', function() {
+      this.style.transform = this.style.transform + ' scale(1.02)';
+    });
+    
+    element.addEventListener('mouseleave', function() {
+      this.style.transform = this.style.transform.replace(' scale(1.02)', '');
+    });
+  });
+  
+  // Add smooth focus transitions to form inputs
+  document.querySelectorAll('.form-input').forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'translateY(-2px)';
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'translateY(0)';
+    });
+  });
+}
+
+// Add ripple animation to CSS
+function addRippleAnimation() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes ripple {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // Initialize all UI helpers
 function initUIHelpers() {
   createParticles();
   initTabSwitching();
-  initToggleButtons();
-  ensurePlayReplacement();
+  initLazyLoading();
+  initEnhancedAnimations();
+  addRippleAnimation();
+  
+  // Optimize resize handling
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      createParticles();
+    }, 250); // Debounced resize handling
+  });
 }
+
+initToggleButtons();
 
 // Export functions for use in other modules
 window.UIHelpers = {
   createParticles,
   initTabSwitching,
+  initLazyLoading,
+  initEnhancedAnimations,
+  addRippleAnimation,
   setTabsForAuth,
   isAdminClient,
   hasPrivilegedAccess,

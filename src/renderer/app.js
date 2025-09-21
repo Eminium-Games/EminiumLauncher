@@ -42,58 +42,51 @@ async function initializeApp() {
     window.Logger.success('Eminium Launcher initialized successfully!');
     
   } catch (error) {
-    window.Logger.error('Failed to initialize application: ' + error.message);
-    console.error('Initialization error:', error);
+    window.ErrorManager.handleError(error, 'initialization');
   }
 }
 
 // Initialize game functionality
 function initializeGameFunctionality() {
-  const btnPlay = document.getElementById('btnPlay');
-  const btnCheck = document.getElementById('btnCheck');
-  
-  // Check/Prepare button
-  if (btnCheck) {
-    btnCheck.addEventListener('click', async () => {
-      await checkAndAutoPrepare();
-    });
+  // Use DOM utilities for better performance and cleaner code
+  if (!window.DOMUtils) {
+    console.error('DOMUtils not available');
+    return;
   }
   
-  // Play button
-  if (btnPlay) {
-    btnPlay.addEventListener('click', async () => {
-      await launchGame();
-    });
-  }
+  // Game control buttons
+  window.DOMUtils.addEventListener('btnCheck', 'click', async () => {
+    await checkAndAutoPrepare();
+  });
   
-  // Update buttons
-  const btnCheckUpdates = document.getElementById('btnCheckUpdates');
-  const btnInstallUpdate = document.getElementById('btnInstallUpdate');
-  const btnUpdateSettings = document.getElementById('btnUpdateSettings');
+  window.DOMUtils.addEventListener('btnPlay', 'click', async () => {
+    await launchGame();
+  });
   
-  if (btnCheckUpdates) {
-    btnCheckUpdates.addEventListener('click', async () => {
-      if (window.UpdaterManager) {
-        await window.UpdaterManager.checkForUpdates(true);
-      }
-    });
-  }
+  // Update management buttons
+  window.DOMUtils.addEventListener('btnCheckUpdates', 'click', async () => {
+    if (window.UpdaterManager) {
+      await window.UpdaterManager.checkForUpdates(true);
+    }
+  });
   
-  if (btnInstallUpdate) {
-    btnInstallUpdate.addEventListener('click', async () => {
-      if (window.UpdaterManager) {
-        await window.UpdaterManager.installUpdateManual();
-      }
-    });
-  }
+  window.DOMUtils.addEventListener('btnInstallUpdate', 'click', async () => {
+    if (window.UpdaterManager) {
+      await window.UpdaterManager.installUpdateManual();
+    }
+  });
   
-  if (btnUpdateSettings) {
-    btnUpdateSettings.addEventListener('click', () => {
-      if (window.UpdaterManager) {
-        window.UpdaterManager.showUpdateSettings();
-      }
-    });
-  }
+  window.DOMUtils.addEventListener('btnUpdateSettings', 'click', () => {
+    if (window.UpdaterManager) {
+      window.UpdaterManager.showUpdateSettings();
+    }
+  });
+  
+  window.DOMUtils.addEventListener('btnForceUpdate', 'click', async () => {
+    if (window.UpdaterManager) {
+      await window.UpdaterManager.forceUpdate();
+    }
+  });
 }
 
 // Initialize server monitoring
@@ -119,7 +112,7 @@ async function autoStartFlow() {
       await checkAndAutoPrepare();
     }
   } catch (error) {
-    window.Logger.error('Error in auto-start flow: ' + error.message);
+    window.ErrorManager.handleError(error, 'auto-start');
   }
 }
 
@@ -136,7 +129,7 @@ async function pingOnce() {
     
     return up;
   } catch (error) {
-    console.warn('Ping error:', error);
+    window.ErrorManager.handleError(error, 'ping');
     return false;
   }
 }
@@ -153,9 +146,8 @@ function startPing() {
 // Set ready UI state
 function setReadyUI(ready) {
   _appState.ready = ready;
-  const btnPlay = document.getElementById('btnPlay');
-  if (btnPlay) {
-    btnPlay.disabled = !ready || !_appState.lastUp;
+  if (window.DOMUtils) {
+    window.DOMUtils.setDisabled('btnPlay', !ready || !_appState.lastUp);
   }
 }
 
@@ -175,13 +167,13 @@ async function checkAndAutoPrepare() {
       window.ProgressUI.addLine('Fichiers prêts ✓');
       window.ProgressUI.enableClose();
     } else {
-      window.Logger.error('Échec de la préparation: ' + (res?.error || 'inconnu'));
+      window.ErrorManager.handleError(new Error(res?.error || 'Échec de la préparation'), 'checkAndAutoPrepare');
       setReadyUI(false);
       window.ProgressUI.addLine('Échec de la préparation: ' + (res?.error || 'inconnu'));
       window.ProgressUI.enableClose();
     }
   } catch (error) {
-    window.Logger.error('Erreur IPC (ensure): ' + (error?.message || error));
+    window.ErrorManager.handleError(error, 'checkAndAutoPrepare');
     setReadyUI(false);
     window.ProgressUI.addLine('Erreur IPC (ensure): ' + (error?.message || error));
     window.ProgressUI.enableClose();
@@ -190,7 +182,7 @@ async function checkAndAutoPrepare() {
 
 // Launch game
 async function launchGame() {
-  const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
+  const memoryMB = parseInt(window.DOMUtils?.getValue('memSlider', '2048'), 10) || 2048;
   const serverHost = 'play.eminium.ovh';
   const serverPort = 25565;
   
@@ -207,12 +199,12 @@ async function launchGame() {
       window.ProgressUI.addLine('Client lancé ✓');
       window.ProgressUI.enableClose();
     } else {
-      window.Logger.error('Échec du lancement: ' + (res?.error || 'inconnu'));
+      window.ErrorManager.handleError(new Error(res?.error || 'Échec du lancement'), 'launchGame');
       window.ProgressUI.addLine('Échec du lancement: ' + (res?.error || 'inconnu'));
       window.ProgressUI.enableClose();
     }
   } catch (error) {
-    window.Logger.error('Erreur IPC (play): ' + (error?.message || error));
+    window.ErrorManager.handleError(error, 'launchGame');
     window.ProgressUI.addLine('Erreur IPC (play): ' + (error?.message || error));
     window.ProgressUI.enableClose();
   }
@@ -237,7 +229,7 @@ async function runUpdaterIfNeeded() {
       }
     }
   } catch (error) {
-    console.warn('Updater error:', error);
+    window.ErrorManager.handleError(error, 'update');
   }
   
   return false;

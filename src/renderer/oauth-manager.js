@@ -220,10 +220,9 @@ async function processCroissantUser(user) {
 
 // Update points display in the UI
 function updatePointsDisplay(points) {
-  const pointsElement = document.getElementById('userPoints');
-  if (pointsElement) {
-    pointsElement.textContent = `${points} croissants`;
-    pointsElement.style.display = 'inline-block';
+  if (window.DOMUtils) {
+    window.DOMUtils.setText('userPoints', `${points} croissants`);
+    window.DOMUtils.setDisplay('userPoints', 'inline-block');
   }
 }
 
@@ -308,9 +307,8 @@ async function handleOAuthCallback(code, state) {
 
 // Initialize OAuth event listeners
 function initOAuthListeners() {
-  const btnLoginWithCroissant = document.getElementById('btnLoginWithCroissant');
-  if (btnLoginWithCroissant) {
-    btnLoginWithCroissant.addEventListener('click', connectWithCroissant);
+  if (window.DOMUtils) {
+    window.DOMUtils.addEventListener('btnLoginWithCroissant', 'click', connectWithCroissant);
   }
 }
 

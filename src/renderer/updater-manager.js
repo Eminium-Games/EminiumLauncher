@@ -429,56 +429,54 @@ function stopPeriodicChecks() {
 
 // Update update UI elements
 function updateUpdateUI() {
-  const updateStatus = document.getElementById('updateStatus');
-  const updateButton = document.getElementById('updateButton');
-  const currentVersionEl = document.getElementById('currentVersion');
-  const latestVersionEl = document.getElementById('latestVersion');
-  
-  // Update version display
-  if (currentVersionEl) {
-    currentVersionEl.textContent = `Version actuelle: ${_updaterState.currentVersion}`;
+  if (!window.DOMUtils) {
+    console.error('DOMUtils not available');
+    return;
   }
   
-  if (latestVersionEl) {
-    if (_updaterState.latestVersion) {
-      latestVersionEl.textContent = `Dernière version: ${_updaterState.latestVersion}`;
-    } else {
-      latestVersionEl.textContent = 'Dernière version: Inconnue';
-    }
+  // Update version display
+  window.DOMUtils.setText('currentVersion', `Version actuelle: ${_updaterState.currentVersion}`);
+  
+  if (_updaterState.latestVersion) {
+    window.DOMUtils.setText('latestVersion', `Dernière version: ${_updaterState.latestVersion}`);
+  } else {
+    window.DOMUtils.setText('latestVersion', 'Dernière version: Inconnue');
   }
   
   // Update status
-  if (updateStatus) {
-    if (_updaterState.checking) {
-      updateStatus.textContent = 'Vérification en cours...';
-      updateStatus.className = 'update-status checking';
-    } else if (_updaterState.downloading) {
-      updateStatus.textContent = `Téléchargement: ${_updaterState.downloadProgress.toFixed(0)}%`;
-      updateStatus.className = 'update-status downloading';
-    } else if (_updaterState.installing) {
-      updateStatus.textContent = `Installation: ${_updaterState.installProgress.toFixed(0)}%`;
-      updateStatus.className = 'update-status installing';
-    } else if (_updaterState.updateAvailable) {
-      updateStatus.textContent = 'Mise à jour disponible!';
-      updateStatus.className = 'update-status available';
-    } else {
-      updateStatus.textContent = 'À jour';
-      updateStatus.className = 'update-status up-to-date';
-    }
+  let statusText = '';
+  let statusClass = '';
+  
+  if (_updaterState.checking) {
+    statusText = 'Vérification en cours...';
+    statusClass = 'checking';
+  } else if (_updaterState.downloading) {
+    statusText = `Téléchargement: ${_updaterState.downloadProgress.toFixed(0)}%`;
+    statusClass = 'downloading';
+  } else if (_updaterState.installing) {
+    statusText = `Installation: ${_updaterState.installProgress.toFixed(0)}%`;
+    statusClass = 'installing';
+  } else if (_updaterState.updateAvailable) {
+    statusText = 'Mise à jour disponible!';
+    statusClass = 'available';
+  } else {
+    statusText = 'À jour';
+    statusClass = 'up-to-date';
   }
   
+  window.DOMUtils.setText('updateStatus', statusText);
+  window.DOMUtils.setAttribute('updateStatus', 'className', `update-status ${statusClass}`);
+  
   // Update button
-  if (updateButton) {
-    if (_updaterState.updateAvailable && !_updaterState.downloading && !_updaterState.installing) {
-      updateButton.style.display = 'block';
-      updateButton.disabled = false;
-      updateButton.textContent = 'Mettre à jour';
-    } else if (_updaterState.downloading || _updaterState.installing) {
-      updateButton.disabled = true;
-      updateButton.textContent = 'Mise à jour en cours...';
-    } else {
-      updateButton.style.display = 'none';
-    }
+  if (_updaterState.updateAvailable && !_updaterState.downloading && !_updaterState.installing) {
+    window.DOMUtils.setText('updateButton', 'Mettre à jour');
+    window.DOMUtils.setDisabled('updateButton', false);
+    window.DOMUtils.show('updateButton', 'block');
+  } else if (_updaterState.downloading || _updaterState.installing) {
+    window.DOMUtils.setText('updateButton', 'Mise à jour en cours...');
+    window.DOMUtils.setDisabled('updateButton', true);
+  } else {
+    window.DOMUtils.hide('updateButton');
   }
 }
 
@@ -531,6 +529,74 @@ async function installUpdateManual() {
   return await downloadAndInstallUpdate();
 }
 
+// Force update function - clears cache and forces recheck
+async function forceUpdate() {
+  try {
+    console.log('[Updater] Forcing update check...');
+    
+    // Clear any cached update info
+    _updaterState.updateAvailable = false;
+    _updaterState.updateInfo = null;
+    _updaterState.latestVersion = null;
+    
+    // Force a fresh check
+    await checkForUpdates(true);
+    
+    // If update is available, automatically download it
+    if (_updaterState.updateAvailable) {
+      console.log('[Updater] Update found, forcing download...');
+      await downloadAndInstallUpdate();
+    } else {
+      console.log('[Updater] No updates available');
+      // Show notification to user
+      if (UPDATE_CONFIG.showNotifications) {
+        // Create a simple notification
+        const notification = document.createElement('div');
+        notification.className = 'update-notification';
+        notification.innerHTML = `
+          <div class="notification-content">
+            <div class="notification-icon">✓</div>
+            <div class="notification-text">
+              <strong>Aucune mise à jour disponible</strong><br>
+              Votre launcher est à jour avec la version ${_updaterState.currentVersion}
+            </div>
+          </div>
+        `;
+        
+        // Add basic styling
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #10b981, #059669);
+          color: white;
+          padding: 16px;
+          border-radius: 12px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          max-width: 300px;
+          animation: slideIn 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }, 5000);
+      }
+    }
+  } catch (error) {
+    console.error('[Updater] Force update failed:', error);
+    handleUpdateError(error);
+  }
+}
+
 // Export updater manager
 window.UpdaterManager = {
   initUpdaterManager,
@@ -538,6 +604,7 @@ window.UpdaterManager = {
   checkForUpdatesManual,
   downloadAndInstallUpdate,
   installUpdateManual,
+  forceUpdate,
   getUpdaterState,
   getUpdateHistory,
   startPeriodicChecks,
