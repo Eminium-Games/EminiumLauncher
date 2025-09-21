@@ -12,37 +12,56 @@ let _appState = {
   lastUp: undefined
 };
 
-// Initialize all modules
+// Initialize application
 async function initializeApp() {
-  if (_appState.initialized) return;
-  
   try {
-    window.Logger.info('Initializing Eminium Launcher...');
-    
-    // Initialize all modules in order
-    window.UIHelpers.initUIHelpers();
-    window.ProgressUI.initProgressUI();
-    window.AuthManager.initAuthManager();
-    window.OAuthManager.initOAuthManager();
-    await window.SettingsManager.initSettingsManager();
-    
-    // Initialize game functionality
-    initializeGameFunctionality();
-    
-    // Initialize server monitoring
-    initializeServerMonitoring();
-    
-    // Initialize updater
-    initializeUpdater();
-    
-    // Set up auto-startup flow
-    await autoStartFlow();
-    
-    _appState.initialized = true;
-    window.Logger.success('Eminium Launcher initialized successfully!');
-    
+    console.log('[App] Initializing Eminium Launcher...');
+
+    // Force close any leftover progress modals from previous sessions
+    forceCloseAllProgress();
+
+    // Initialize UI helpers
+    if (window.UIHelpers) {
+      window.UIHelpers.init();
+    }
+
+    // Initialize progress UI
+    if (window.ProgressUI) {
+      window.ProgressUI.initProgressUI();
+    }
+
+    // Initialize error manager
+    if (window.ErrorManager) {
+      window.ErrorManager.init();
+    }
+
+    // Initialize settings manager
+    if (window.SettingsManager) {
+      window.SettingsManager.init();
+    }
+
+    // Initialize logger
+    if (window.Logger) {
+      window.Logger.init();
+    }
+
+    // Start pinging server
+    startPing();
+
+    // Check for updates in background
+    if (window.UpdaterManager) {
+      window.UpdaterManager.initUpdaterManager();
+    }
+
+    // Auto-prepare game files if needed
+    setTimeout(() => {
+      checkAndAutoPrepare();
+    }, 1000);
+
+    console.log('[App] Initialization complete');
   } catch (error) {
-    window.ErrorManager.handleError(error, 'initialization');
+    console.error('[App] Initialization error:', error);
+    window.ErrorManager?.handleError(error, 'initialization');
   }
 }
 
@@ -151,6 +170,32 @@ function setReadyUI(ready) {
   }
 }
 
+// Force close all progress modals and reset state
+function forceCloseAllProgress() {
+  try {
+    // Close any open progress modal
+    if (window.ProgressUI && window.ProgressUI.close) {
+      window.ProgressUI.close();
+    }
+
+    // Also try direct DOM manipulation as fallback
+    const progressModal = document.getElementById('progressModal');
+    if (progressModal) {
+      progressModal.style.display = 'none';
+    }
+
+    // Reset any error notifications
+    const errorNotifications = document.querySelectorAll('.error-notification, .update-notification');
+    errorNotifications.forEach(notification => {
+      notification.remove();
+    });
+
+    console.log('[App] Force closed all progress modals and notifications');
+  } catch (error) {
+    console.warn('[App] Error force closing progress modals:', error);
+  }
+}
+
 // Check and auto-prepare game files
 async function checkAndAutoPrepare() {
   try {
@@ -166,17 +211,20 @@ async function checkAndAutoPrepare() {
       window.ProgressUI.set(100);
       window.ProgressUI.addLine('Fichiers prêts ✓');
       window.ProgressUI.enableClose();
+      setTimeout(() => window.ProgressUI.close(), 1500);
     } else {
       window.ErrorManager.handleError(new Error(res?.error || 'Échec de la préparation'), 'checkAndAutoPrepare');
       setReadyUI(false);
       window.ProgressUI.addLine('Échec de la préparation: ' + (res?.error || 'inconnu'));
       window.ProgressUI.enableClose();
+      setTimeout(() => window.ProgressUI.close(), 1500);
     }
   } catch (error) {
     window.ErrorManager.handleError(error, 'checkAndAutoPrepare');
     setReadyUI(false);
     window.ProgressUI.addLine('Erreur IPC (ensure): ' + (error?.message || error));
     window.ProgressUI.enableClose();
+    setTimeout(() => window.ProgressUI.close(), 1500);
   }
 }
 
@@ -198,15 +246,18 @@ async function launchGame() {
       window.ProgressUI.set(100);
       window.ProgressUI.addLine('Client lancé ✓');
       window.ProgressUI.enableClose();
+      setTimeout(() => window.ProgressUI.close(), 1500);
     } else {
       window.ErrorManager.handleError(new Error(res?.error || 'Échec du lancement'), 'launchGame');
       window.ProgressUI.addLine('Échec du lancement: ' + (res?.error || 'inconnu'));
       window.ProgressUI.enableClose();
+      setTimeout(() => window.ProgressUI.close(), 1500);
     }
   } catch (error) {
     window.ErrorManager.handleError(error, 'launchGame');
     window.ProgressUI.addLine('Erreur IPC (play): ' + (error?.message || error));
     window.ProgressUI.enableClose();
+    setTimeout(() => window.ProgressUI.close(), 1500);
   }
 }
 
@@ -258,6 +309,36 @@ function handleUnload() {
   }
 }
 
+// Handle keyboard shortcuts for debugging
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupKeyboardShortcuts);
+} else {
+  setupKeyboardShortcuts();
+}
+
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (event) => {
+    // F5: Force refresh and close all modals
+    if (event.key === 'F5') {
+      event.preventDefault();
+      forceCloseAllProgress();
+      window.location.reload();
+    }
+
+    // Escape: Close all modals
+    if (event.key === 'Escape') {
+      forceCloseAllProgress();
+    }
+
+    // Ctrl+Shift+F: Force close and reset everything
+    if (event.ctrlKey && event.shiftKey && event.key === 'F') {
+      event.preventDefault();
+      forceCloseAllProgress();
+      console.log('[App] Force reset activated via Ctrl+Shift+F');
+    }
+  });
+}
+
 // Initialize application when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initializeApp);
@@ -278,5 +359,6 @@ window.App = {
   checkAndAutoPrepare,
   launchGame,
   runUpdaterIfNeeded,
+  forceCloseAllProgress,
   getState: () => ({ ..._appState })
 };
