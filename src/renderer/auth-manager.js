@@ -3,6 +3,9 @@
  * Handles all authentication-related functionality
  */
 
+// API URL configuration
+const SITE_URL = 'https://croissant-api.fr';
+
 // Validation formulaire login
 function validateLogin(email, pass, code2fa) {
   if (!email || !pass) {
@@ -130,7 +133,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
       setAuthError('La connexion met trop de temps à répondre. Vérifiez votre connexion internet.');
       window.Logger.error('Connexion timeout après 20 secondes');
       window.UIHelpers.setProfileSkeleton(false);
-      window.AuthManager.showConnectionStatus('Timeout de connexion', 'error');
+      showConnectionStatus('Timeout de connexion', 'error');
     }
     if (onError) onError('Timeout de connexion');
   }, 20000);
@@ -139,7 +142,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
     // Test connection first
     if (!quiet) {
       window.Logger.info('Test de connexion au serveur...');
-      window.AuthManager.showConnectionStatus('Test de connexion...', 'info');
+      showConnectionStatus('Test de connexion...', 'info');
     }
 
     const connectionTest = await testConnection();
@@ -148,7 +151,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
         setAuthError(connectionTest.message);
         window.Logger.error('Test de connexion échoué:', connectionTest.message);
         window.UIHelpers.setProfileSkeleton(false);
-        window.AuthManager.showConnectionStatus('Serveur injoignable', 'error');
+        showConnectionStatus('Serveur injoignable', 'error');
       }
       if (onError) onError(connectionTest.message);
       clearTimeout(loginTimeout);
@@ -157,7 +160,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
 
     if (!quiet) {
       window.Logger.info('Tentative de connexion...');
-      window.AuthManager.showConnectionStatus('Connexion en cours...', 'info');
+      showConnectionStatus('Connexion en cours...', 'info');
     }
 
     const result = await window.eminium.login(email, pass, code2fa);
@@ -169,7 +172,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
         window.Logger.success('Connexion réussie!');
         updateUIAfterLogin(result.profile);
         window.UIHelpers.setProfileSkeleton(false);
-        window.AuthManager.showConnectionStatus('Connexion réussie!', 'success');
+        showConnectionStatus('Connexion réussie!', 'success');
       }
 
       if (onSuccess) onSuccess(result.profile);
@@ -180,7 +183,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
         setAuthError(errorMsg);
         window.Logger.error('Échec de connexion: ' + errorMsg);
         window.UIHelpers.setProfileSkeleton(false);
-        window.AuthManager.showConnectionStatus('Échec de connexion', 'error');
+        showConnectionStatus('Échec de connexion', 'error');
       }
 
       if (onError) onError(errorMsg);
@@ -193,7 +196,7 @@ async function performLogin(email, pass, code2fa, options = {}) {
       setAuthError(errorMsg);
       window.Logger.error('Erreur de connexion: ' + errorMsg);
       window.UIHelpers.setProfileSkeleton(false);
-      window.AuthManager.showConnectionStatus('Erreur de connexion', 'error');
+      showConnectionStatus('Erreur de connexion', 'error');
     }
 
     if (onError) onError(errorMsg);
@@ -331,7 +334,7 @@ function initAuthListeners() {
   document.body.appendChild(statusIndicator);
 
   // Function to show connection status
-  window.AuthManager.showConnectionStatus = (message, type = 'info') => {
+  function showConnectionStatus(message, type = 'info') {
     const indicator = document.getElementById('connectionStatus');
     if (indicator) {
       indicator.textContent = message;
@@ -343,7 +346,7 @@ function initAuthListeners() {
         indicator.style.display = 'none';
       }, 5000);
     }
-  };
+  }
 }
 
 // Initialize authentication manager

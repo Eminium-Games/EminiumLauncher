@@ -250,8 +250,9 @@ const Logger = {
     };
   },
   
-  setConfig: function(config) {
-    Object.assign(LOGGER_CONFIG, config);
+  // Initialize logger
+  init: function() {
+    initLogger();
   }
 };
 

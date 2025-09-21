@@ -429,16 +429,16 @@ const CallStackProtection = {
 
 // Initialize stack overflow protection
 if (typeof window !== 'undefined') {
-  window.StackOverflowProtection = StackOverflowProtection;
+  window.CallStackProtection = CallStackProtection;
   // Start monitoring when the window loads
   window.addEventListener('load', () => {
     setTimeout(() => {
-      StackOverflowProtection.startMonitoring();
+      CallStackProtection.startMonitoring();
     }, 5000); // Wait 5 seconds after page load
   });
 }
 if (typeof global !== 'undefined') {
-  global.StackOverflowProtection = StackOverflowProtection;
+  global.CallStackProtection = CallStackProtection;
 }
 
 // Handle error with enhanced processing

@@ -32,12 +32,12 @@ async function initializeApp() {
 
     // Initialize error manager
     if (window.ErrorManager) {
-      window.ErrorManager.init();
+      // ErrorManager is already initialized
     }
 
     // Initialize settings manager
     if (window.SettingsManager) {
-      window.SettingsManager.init();
+      window.SettingsManager.initSettingsManager();
     }
 
     // Initialize logger
