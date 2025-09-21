@@ -1624,6 +1624,57 @@ html, body {
             <div class="toggle" id="closeOnPlayToggle"></div>
           </div>
           
+          <div class="panel" style="margin-top: 24px;">
+            <div class="panel-header">
+              <h3 class="panel-title">Mises à jour</h3>
+            </div>
+            
+            <div class="update-info" style="padding: 16px; background: var(--bg-glass); border-radius: 8px; margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 14px; color: var(--text-secondary);">Version actuelle</span>
+                <span style="font-weight: 500;" id="currentVersion">Chargement...</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 14px; color: var(--text-secondary);">Dernière vérification</span>
+                <span style="font-size: 12px; color: var(--text-secondary);" id="lastCheck">Jamais</span>
+              </div>
+            </div>
+            
+            <div id="updateStatus" style="padding: 12px; background: var(--bg-glass); border-radius: 8px; margin-bottom: 16px; display: none;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span id="updateStatusIcon">🔄</span>
+                <span id="updateStatusText" style="font-weight: 500;">Vérification des mises à jour...</span>
+              </div>
+              <div id="updateStatusDetails" style="font-size: 12px; color: var(--text-secondary);"></div>
+            </div>
+            
+            <div id="updateAvailable" style="padding: 16px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; margin-bottom: 16px; border-left: 3px solid var(--accent-primary); display: none;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span style="font-size: 18px;">📦</span>
+                <span style="font-weight: 500;">Nouvelle version disponible</span>
+              </div>
+              <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                Version <span id="latestVersion" style="font-weight: 500; color: var(--accent-primary);"></span> est prête à être installée
+              </div>
+              <div id="updateChangelog" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; max-height: 100px; overflow-y: auto;"></div>
+            </div>
+            
+            <div class="btn-group" style="gap: 8px;">
+              <button class="btn btn-secondary" id="btnCheckUpdates">
+                <span>🔄</span>
+                Vérifier les mises à jour
+              </button>
+              <button class="btn btn-secondary" id="btnInstallUpdate" style="display: none;">
+                <span>⬇</span>
+                Installer la mise à jour
+              </button>
+              <button class="btn btn-secondary" id="btnUpdateSettings">
+                <span>⚙️</span>
+                Paramètres
+              </button>
+            </div>
+          </div>
+          
           <div class="btn-group" style="margin-top: 24px;">
             <button class="btn btn-secondary" id="btnCheck">
               <span>🔄</span>
@@ -1725,6 +1776,7 @@ html, body {
     </div>
   </div>
 </div>
+<script src="./updater-manager.js"></script>
 <script src="./app.js"></script>
 <script src="./auth-manager.js"></script>
 <script src="./logger.js"></script>
@@ -1732,6 +1784,8 @@ html, body {
 <script src="./progress-ui.js"></script>
 <script src="./settings-manager.js"></script>
 <script src="./ui-helpers.js"></script>
+<!-- Test script - remove after testing -->
+<script src="./test-modules.js"></script>
 
 </body>
 </html>

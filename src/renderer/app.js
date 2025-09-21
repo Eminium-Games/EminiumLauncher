@@ -65,6 +65,35 @@ function initializeGameFunctionality() {
       await launchGame();
     });
   }
+  
+  // Update buttons
+  const btnCheckUpdates = document.getElementById('btnCheckUpdates');
+  const btnInstallUpdate = document.getElementById('btnInstallUpdate');
+  const btnUpdateSettings = document.getElementById('btnUpdateSettings');
+  
+  if (btnCheckUpdates) {
+    btnCheckUpdates.addEventListener('click', async () => {
+      if (window.UpdaterManager) {
+        await window.UpdaterManager.checkForUpdates(true);
+      }
+    });
+  }
+  
+  if (btnInstallUpdate) {
+    btnInstallUpdate.addEventListener('click', async () => {
+      if (window.UpdaterManager) {
+        await window.UpdaterManager.installUpdateManual();
+      }
+    });
+  }
+  
+  if (btnUpdateSettings) {
+    btnUpdateSettings.addEventListener('click', () => {
+      if (window.UpdaterManager) {
+        window.UpdaterManager.showUpdateSettings();
+      }
+    });
+  }
 }
 
 // Initialize server monitoring
@@ -74,29 +103,9 @@ function initializeServerMonitoring() {
 
 // Initialize updater functionality
 function initializeUpdater() {
-  // Updater is handled in the main process, just set up progress listeners
-  if (window.updater) {
-    window.updater.onProgress((data) => {
-      if (!data) return;
-      
-      if (data.phase === 'downloading') {
-        const curr = data.currentFile || 1;
-        const total = data.totalFiles || 1;
-        const p = typeof data.percent === 'number' ? data.percent : 0;
-        window.ProgressUI.set(Math.max(1, Math.min(100, p | 0)));
-        window.ProgressUI.addLine(`Téléchargement des mises à jour ${curr}/${total}`);
-      } else if (data.phase === 'downloaded') {
-        window.ProgressUI.set(100);
-        window.ProgressUI.addLine('Téléchargement terminé. Application de la mise à jour...');
-      } else if (data.phase === 'applying') {
-        const curr = data.currentFile || 0;
-        const total = data.totalFiles || 0;
-        if (total > 0) window.ProgressUI.set(Math.round((curr / total) * 100));
-      } else if (data.phase === 'error') {
-        window.ProgressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
-        window.ProgressUI.enableClose();
-      }
-    });
+  // Initialize the enhanced updater manager
+  if (window.UpdaterManager) {
+    window.UpdaterManager.initUpdaterManager();
   }
 }
 
@@ -211,45 +220,21 @@ async function launchGame() {
 
 // Run updater if needed
 async function runUpdaterIfNeeded() {
-  if (!window.updater) return false;
+  if (!window.UpdaterManager) return false;
   
   try {
-    const res = await window.updater.check();
+    // Check for updates silently
+    const result = await window.UpdaterManager.checkForUpdates(false);
     
-    if (res?.ok && res.updateAvailable && res.latest?.assetUrl && res.latest?.tag) {
-      window.ProgressUI.open('Mise à jour du launcher');
-      window.ProgressUI.set(5);
-      window.ProgressUI.addLine('Préparation du téléchargement...');
+    // If update is available, ask user if they want to install
+    if (result?.ok && window.UpdaterManager.getUpdaterState().updateAvailable) {
+      const state = window.UpdaterManager.getUpdaterState();
       
-      const dl = await window.updater.download({ 
-        assetUrl: res.latest.assetUrl, 
-        tag: res.latest.tag 
-      });
-      
-      if (!dl?.ok) {
-        window.ProgressUI.addLine('Erreur téléchargement: ' + (dl?.error || 'inconnue'), 'err');
-        window.ProgressUI.enableClose();
-        return true;
+      // Show update notification and ask user
+      if (confirm(`Une nouvelle version ${state.latestVersion} est disponible. Voulez-vous l'installer maintenant?`)) {
+        await window.UpdaterManager.installUpdateManual();
+        return true; // updater engaged; app will restart
       }
-      
-      const ap = await window.updater.apply({ tag: res.latest.tag });
-      
-      if (!ap?.ok) {
-        window.ProgressUI.addLine('Erreur application: ' + (ap?.error || 'inconnue'), 'err');
-        window.ProgressUI.enableClose();
-        return true;
-      }
-      
-      window.ProgressUI.addLine('Mise à jour appliquée. Redémarrage...');
-      window.ProgressUI.set(100);
-      
-      try {
-        await window.updater.relaunch();
-      } catch (error) {
-        console.warn('Error relaunching:', error);
-      }
-      
-      return true; // updater engaged; app will restart
     }
   } catch (error) {
     console.warn('Updater error:', error);
