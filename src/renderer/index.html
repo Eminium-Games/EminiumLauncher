@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="https://eminium.ovh/storage/img/eminium-logo.png" type="image/x-icon">
+<title>Eminium Launcher</title>
+<!-- Premium font import -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1a0b0b;
+  --card: rgba(42, 31, 31, 0.8);
+  --muted: #d1c4a7;
+  --accent: #f59e0b;
+  --txt: #fff8e1;
+  --glass: rgba(255,255,255,0.05);
+}
+ 
+  html, body {
+  margin:0; padding:0; height:100%;
+  font-family: 'Inter', sans-serif;
+  background:linear-gradient(135deg, #1a0b0b 0%, #3b1f1f 100%);
+  color: var(--txt);
+}
+/* Global box-sizing to prevent accidental overflow */
+*, *::before, *::after { box-sizing: border-box; }
+
+.wrap { display:flex; justify-content:center; align-items:center; height:100%; padding:24px; box-sizing:border-box; }
+
+.card {
+  width:100%; max-width:1100px; min-width:720px;
+  background: var(--card);
+  border-radius: 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  padding: 24px; display:flex; flex-direction:column;
+  transition: all 0.3s ease;
+}
+
+.card:hover { transform: translateY(-4px); box-shadow: 0 25px 70px rgba(0,0,0,0.7); }
+
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.brand { display:flex; align-items:center; gap:12px; }
+
+.logo {
+  width:60px; height:60px; border-radius:15px;
+  background: radial-gradient(circle at 50% 50%, var(--accent) 0%, #d97706 100%);
+  box-shadow: 0 0 22px rgba(245,158,11,0.5);
+  animation: pulse 2s infinite alternate;
+}
+
+.logo img { width: 100%; height: 100%; border-radius: 15px; object-fit: cover; display: block; }
+
+@keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
+
+h1 { font-size:32px; margin:0; font-weight:700; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+.muted { color:var(--muted); font-size:13px; }
+
+.tabs { display:flex; border-bottom:1px solid #4e342e; margin-bottom:12px; gap:4px; }
+.tab { padding:10px 16px 10px 42px; cursor:pointer; border-radius:12px 12px 0 0; background: var(--glass); transition: all 0.3s ease; position: relative; font-weight:600; }
+.tab::before { content: attr(data-ico); position:absolute; left:12px; top:50%; transform: translateY(-50%); filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+.tab.active { background: var(--accent); color:#3e1f0f; box-shadow: 0 6px 18px rgba(245,158,11,0.35); }
+.tab.active::after { content:""; position:absolute; inset:0; border-radius:inherit; box-shadow: inset 0 0 0 1px rgba(62,39,35,0.12), 0 0 0 3px rgba(245,158,11,0.25); pointer-events:none; }
+
+.tab-content {
+  opacity: 0; transform: translateY(10px); pointer-events: none;
+  transition: all 0.3s ease; position: relative; width: 100%; display: none;
+}
+.tab-content.active { opacity: 1; transform: translateY(0); pointer-events: all; display: block; }
+
+.panel {
+  background: var(--glass); border-radius: 18px; padding:20px; margin-bottom:12px;
+  backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 26px rgba(0,0,0,0.32);
+  position: relative; z-index: 1; overflow: hidden;
+}
+
+input[type=text], input[type=password], input[type=number] {
+  width:100%; background: rgba(28,18,18,0.8);
+  border:1px solid rgba(62,39,35,0.6); color: var(--txt);
+  padding:10px; border-radius:12px; transition: 0.2s;
+}
+input:focus { border-color: var(--accent); outline:none; }
+
+button { border:none; border-radius:14px; padding:12px 18px; cursor:pointer; font-weight:700; transition: all 0.2s ease; }
+.btn { background: linear-gradient(180deg, #f59e0b, #d97706); color:#3e1f0f; box-shadow: 0 12px 26px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.25); }
+.btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 16px 36px rgba(245,158,11,0.45); }
+.btn:active { transform: translateY(0); box-shadow: 0 10px 22px rgba(245,158,11,0.35); }
+.btn.sec { background: rgba(255,255,255,0.06); color:#ffe8c2; border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+.btn.sec:hover { background: rgba(255,255,255,0.09); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.25); }
+
+.profile-row { display:flex; align-items:center; gap:12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding:10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+.profile-avatar { width:42px; height:42px; border-radius: 11px; overflow:hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+.badge-grade { background: linear-gradient(180deg, rgba(245,158,11,0.25), rgba(245,158,11,0.12)); color: #ffd9a1; border: 1px solid rgba(245,158,11,0.35); padding:3px 8px; border-radius: 999px; font-size: 12px; }
+
+.log {
+  height:200px; overflow:auto;
+  font-family: ui-monospace, monospace; font-size:12px;
+  background: rgba(28,18,18,0.85); border-radius:12px;
+  padding:10px; border:1px solid rgba(62,39,35,0.6);
+  scrollbar-width: thin; scrollbar-color: var(--accent) var(--glass);
+}
+.log::-webkit-scrollbar { width:8px; }
+.log::-webkit-scrollbar-thumb { background: var(--accent); border-radius:4px; }
+.log::-webkit-scrollbar-track { background: var(--glass); }
+
+.profile-card { display:flex; align-items:center; gap:12px; padding:12px; background: var(--glass); border:1px solid rgba(255,255,255,0.1); border-radius:18px; cursor:pointer; transition: all 0.2s ease; }
+.profile-card:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); }
+.profile-card img { width:64px; height:64px; border-radius:12px; }
+.profile-info { display:flex; flex-direction:column; }
+.profile-info span { font-size:14px; }
+.profile-info .uuid { font-size:12px; color:var(--muted); }
+/* Grade badge */
+.badge-grade {
+  display: none;
+  margin-top: 4px;
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245,158,11,0.18); /* default fallback */
+  color: var(--accent);              /* will be overridden inline when known */
+  border: 1px solid rgba(245,158,11,0.35);
+}
+
+.settings-modal { opacity: 0; transition: opacity 0.3s ease; }
+.settings-modal.show { display: flex; opacity: 1; }
+.settings-content { background: var(--card); padding:24px; border-radius:24px; width:400px; max-width:90%; backdrop-filter: blur(10px); }
+.settings-content h2 { margin-top:0; }
+
+/* Progress Modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.modal-backdrop.show { display: flex; }
+.modal { width: 720px; max-width: 92vw; background: var(--card); border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 18px; border: 1px solid rgba(255,255,255,0.08); }
+
+/* ===== Premium Visual Overhaul (non-breaking) ===== */
+:root {
+  --elev-1: 0 6px 24px rgba(0,0,0,0.35);
+  --elev-2: 0 12px 36px rgba(0,0,0,0.45);
+  --ring: 0 0 0 3px rgba(245,158,11,0.25);
+  --glass-strong: rgba(255,255,255,0.08);
+  --card-strong: rgba(35, 24, 24, 0.78);
+  --txt-sec: #ffe9b0;
+}
+
+@keyframes bgShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+html, body {
+  background: radial-gradient(circle at 10% 10%, #3b1f1f 0%, #1a0b0b 35%),
+              linear-gradient(135deg, #1a0b0b 0%, #3b1f1f 100%);
+  background-size: 200% 200%;
+  animation: bgShift 18s ease infinite;
+}
+
+.card { background: var(--card-strong); box-shadow: var(--elev-2); border: 1px solid rgba(255,255,255,0.06); }
+.card:hover { transform: translateY(-6px); box-shadow: 0 22px 70px rgba(0,0,0,0.65); }
+/* Grid layout: header spans, tabs left, content right */
+.card { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: auto 1fr; column-gap: 32px; row-gap: 26px; padding: 18px; }
+.header { grid-column: 1 / -1; margin-bottom: 4px; }
+.tabs { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-self: start; position: sticky; top: 12px; height: fit-content; padding: 10px; gap: 10px; background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); overflow:hidden; z-index: 0; }
+.tab { border-radius: 12px; width:100%; }
+.tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+.tab:hover { filter: brightness(1.05); }
+.tab.active { border-color: rgba(245,158,11,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 14px rgba(245,158,11,0.18); }
+.tab.active::before { transform: translateY(-50%) scale(1.02); }
+.tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
+.tab + .tab { margin-top: 0; }
+.tab-content { grid-column: 2; grid-row: 2; overflow: auto; padding-right: 8px; position: relative; z-index: 1; min-width: 0; }
+/* Panels spacing */
+.panel { padding: 20px 22px; }
+.panel + .panel { margin-top: 16px; }
+.panel .panel { border-radius: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(0,0,0,0.28); }
+.row { gap: 14px; }
+.row.fields-2 { gap: 28px; }
+.row.toggles { gap: 24px; align-items: center; }
+.row.toggles label { display: inline-flex; align-items: center; gap: 10px; }
+.field label { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.field input[type=range] { margin-top: 2px; }
+.field { min-width: 0; }
+.field .hint { margin-left: 8px; opacity: .9; white-space: nowrap; }
+/* Spacing for login button under fields in Auth panel */
+#auth #btnLogin { margin-top: 16px; }
+/* Auth error message styling */
+.auth-error {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.35);
+  color: #fecaca;
+  font-size: 13px;
+  white-space: pre-line; /* allow line breaks for extra technical info */
+}
+@media (max-width: 880px) {
+  .card { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+  .tabs { grid-column: 1; grid-row: 2; flex-direction: row; position: static; height: auto; gap: 8px; padding: 0 6px; }
+  .tab + .tab { margin-top: 0; }
+  .tab { border-radius: 12px 12px 0 0; }
+  .tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.04)); border:1px solid rgba(255,255,255,0.1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+  .tab:hover { filter: brightness(1.05); }
+  .tab.active { border-color: rgba(245,158,11,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 14px rgba(245,158,11,0.18); }
+  .tab.active::before { transform: translateY(-50%) scale(1.02); }
+  .tab.active::after { box-shadow: inset 0 0 0 1px rgba(62,39,35,0.14), 0 0 0 2px rgba(245,158,11,0.2); }
+  .tab + .tab { margin-top: 0; }
+  .tab-content { grid-column: 1; grid-row: 3; padding-right: 0; }
+}
+
+.logo { box-shadow: 0 0 34px rgba(245,158,11,0.55); }
+h1 { letter-spacing: 0.3px; }
+
+.profile-card { background: var(--glass-strong); border-color: rgba(255,255,255,0.14); box-shadow: var(--elev-1); }
+.profile-card:hover { background: rgba(255,255,255,0.11); transform: translateY(-1px) scale(1.015); }
+.profile-card img { box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+.profile-info span { color: var(--txt-sec); }
+
+.tabs { border-bottom-color: rgba(255,255,255,0.08); gap: 6px; }
+.tab { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 18px rgba(0,0,0,0.25); }
+.tab:hover { transform: translateY(-1px); filter: brightness(1.05); }
+.tab.active { box-shadow: 0 10px 26px rgba(245,158,11,0.35); border-color: rgba(255,255,255,0.12); }
+
+.tab-content { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; box-shadow: var(--elev-1); padding: 18px; }
+
+.btn {
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  color: #3e1f0f; border: none;
+  box-shadow: 0 10px 24px rgba(245,158,11,0.35);
+}
+
+/* Slider styling */
+.slider-row { display:flex; gap:12px; align-items:center; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.range-grey { background: rgba(255,255,255,0.10) !important; }
+label .hint { color: var(--muted); font-size: 12px; margin-left: 6px; }
+
+/* Inputs */
+input, select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--txt); border-radius: 12px; padding: 10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
+input:focus, select:focus { outline: none; box-shadow: var(--ring); }
+
+/* Sliders */
+input[type=range] { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.09); display: block; width: 100%; margin-top: 8px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.10); background-clip: padding-box; }
+/* Extra spacing when multiple sliders are stacked in same container */
+.panel input[type=range] ~ input[type=range] { margin-top: 18px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); border: 2px solid #fff3; cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #fbbf24, #f59e0b); border: 2px solid #fff3; box-shadow: 0 3px 10px rgba(245,158,11,0.45), 0 0 0 3px rgba(245,158,11,0.16); cursor: pointer; }
+input[type=range].dim::-webkit-slider-thumb, input[type=range].dim::-moz-range-thumb { box-shadow: 0 2px 6px rgba(0,0,0,0.25); filter: saturate(0.7) brightness(0.9); }
+
+/* Checkboxes */
+input[type=checkbox] { width: 18px; height: 18px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); display: inline-grid; place-content: center; cursor: pointer; -webkit-appearance: none; appearance: none; transition: all .15s ease; }
+input[type=checkbox]:hover { filter: brightness(1.06); }
+input[type=checkbox]:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.25), 0 0 0 1px rgba(255,255,255,0.25); }
+input[type=checkbox]::after { content: ""; width: 12px; height: 12px; border-radius: 4px; transform: scale(0.2); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; background: transparent; box-shadow: none; }
+input[type=checkbox]:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.28); box-shadow: 0 6px 18px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.15); }
+input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,255,255,0.95); box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset; }
+
+/* Toggle switch variant (refined) */
+input.toggle { width: 44px; height: 26px; border-radius: 999px; position: relative; border: 1px solid rgba(255,255,255,0.16); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); vertical-align: middle; }
+input.toggle::after { content:""; position:absolute; left:2px; top:1px; width:22px; height:22px; border-radius:50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); transition: left .18s ease, background .18s ease; }
+input.toggle:hover { filter: brightness(1.03); }
+input.toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
+input.toggle:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.25); box-shadow: 0 6px 16px rgba(245,158,11,0.3), inset 0 1px 0 rgba(255,255,255,0.15); }
+input.toggle:checked::after { left:20px; background: #fffdf6; }
+/* Ensure label aligns with switch height */
+.row.toggles label { min-height: 26px; line-height: 26px; }
+
+/* Logs */
+.log { background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 8px 24px rgba(0,0,0,0.35); }
+
+/* Modal improvements */
+.modal-backdrop { backdrop-filter: blur(6px); }
+.modal { background: linear-gradient(180deg, rgba(32,21,21,0.92), rgba(44,30,30,0.92)); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 70px rgba(0,0,0,0.65); }
+.progress-title { font-weight: 700; letter-spacing: 0.2px; }
+.progress-value { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+.modal-title { font-weight: 700; margin-bottom: 10px; }
+.progress { width: 100%; height: 10px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #f59e0b); box-shadow: 0 0 15px rgba(245,158,11,0.5); transition: width .25s ease; }
+.progress-bar.error { background: linear-gradient(90deg, #ef4444, #dc2626); box-shadow: 0 0 15px rgba(239,68,68,0.5); }
+.progress-log { margin-top: 10px; background: rgba(28,18,18,0.85); border: 1px solid rgba(62,39,35,0.6); border-radius: 12px; padding: 10px; max-height: 240px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+.progress-log .line { display:block; margin-bottom:2px; }
+.progress-log .line.err { color:#fca5a5; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top: 10px; }
+/* Layout helpers */
+.row { display:flex; gap:12px; align-items:flex-end; flex-wrap: wrap; }
+
+/* Hide scrollbars globally but keep scroll behavior */
+html, body, .wrap, .card, .tab-content, .panel, .log, .progress-log {
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar,
+.wrap::-webkit-scrollbar, .card::-webkit-scrollbar,
+.tab-content::-webkit-scrollbar, .panel::-webkit-scrollbar,
+.log::-webkit-scrollbar, .progress-log::-webkit-scrollbar { display: none; }
+/* Prevent outer window scrollbar */
+html, body { overflow: hidden; }
+
+/* Skeleton loading */
+.skeleton { position: relative; color: transparent !important; }
+.skeleton::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer { 0% { background-position: -150% 0; } 100% { background-position: 150% 0; } }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div class="brand">
+        <div class="logo"><img src="https://eminium.ovh/storage/img/eminium-logo.png" alt=""></div>
+        <div>
+          <h1>Eminium Launcher</h1>
+          <div class="profile-card" id="profileCard" style="display:none;">
+            <img id="profileSkin" src="" alt="Skin" class="skeleton">
+            <div class="profile-info">
+              <span id="profileName" class="skeleton">Pseudo</span>
+              <span class="uuid skeleton" id="profileUUID">UUID</span>
+              <span class="badge-grade" id="profileGrade" aria-label="Grade" title=""></span>
+            </div>
+            <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;" aria-label="Se déconnecter" title="Se déconnecter">Déconnexion</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="tabs">
+      <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
+      <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
+      <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
+      <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
+    </div>
+
+    <!-- Contenus -->
+    <div class="tab-content active" id="auth">
+      <div class="panel">
+        <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
+        <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
+        <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
+        <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter">Connexion</button>
+        <div id="authError" class="auth-error" role="alert" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="play">
+      <div class="panel">
+        <div class="field">
+          <label>Mémoire allouée <span class="hint" id="memLabel">2048 Mo</span></label>
+          <div class="slider-row">
+            <input id="memSlider" type="range" min="1024" max="8192" step="256" value="2048">
+          </div>
+          <div id="ramInfo" class="muted" style="margin-top:6px;">Détection RAM...</div>
+        </div>
+        <div class="panel" style="margin-top:12px;">
+          <div class="muted" style="margin-bottom:8px;">Performances</div>
+          <div class="row fields-2">
+            <div class="field" style="flex:1;">
+              <label>Distance de rendu <span class="hint" id="renderLabel">12 chunks</span></label>
+              <input id="renderDist" type="range" min="2" max="32" step="1" value="12">
+            </div>
+            <div class="field" style="flex:1;">
+              <label>FPS max <span class="hint" id="fpsLabel">120</span></label>
+              <input id="fpsCap" type="range" min="30" max="240" step="10" value="120">
+            </div>
+          </div>
+          <div class="row toggles" style="margin-top:8px;">
+            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="vsync"> VSync</label>
+            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
+          </div>
+        </div>
+        <div class="row toggles" style="margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
+          </label>
+        </div>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
+          <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
+          <button class="btn" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">Jouer</button>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <div class="tab-content" id="log">
+      <div class="panel">
+        <div class="muted" style="margin-bottom:8px;">Log</div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="admin">
+      <div class="panel">
+        <div class="muted" style="margin-bottom:8px;">Administration</div>
+        <div class="row toggles">
+          <label><input type="checkbox" class="toggle" id="maintenanceToggle" disabled> Statut maintenance (contrôlé côté serveur)</label>
+        </div>
+        <div class="muted" style="margin-top:10px; font-size:12px;">Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal paramètres -->
+<div class="settings-modal" id="settingsModal">
+  <div class="settings-content">
+    <h2>Paramètres</h2>
+    <p>Options du launcher...</p>
+    <button class="btn sec" onclick="document.getElementById('settingsModal').classList.remove('show')">Fermer</button>
+  </div>
+</div>
+
+<!-- Modal de progression -->
+<div class="modal-backdrop" id="progressModal">
+  <div class="modal">
+    <div class="modal-title" id="progressTitle">Préparation</div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-log" id="progressLog"></div>
+    <div class="modal-actions">
+      <button class="btn sec" id="progressClose" disabled>Fermer</button>
+    </div>
+  </div>
+ </div>
+
+<script>
+// Gestion des onglets
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (tab.style.display === 'none') return; // ignore hidden tabs
+    if (!IS_LOGGED && tab.dataset.tab !== 'auth') {
+      // Bloque l'accès aux onglets tant que non connecté
+      log('Veuillez vous connecter pour accéder à cet onglet.');
+      return;
+    }
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    // (no shop tab)
+  });
+});
+
+// Auth/tab visibility helpers
+let IS_LOGGED = false;
+function setTabsForAuth(logged, isAdmin=false) {
+  IS_LOGGED = !!logged;
+  const tabAuth = document.getElementById('tabAuth');
+  const tabPlay = document.getElementById('tabPlay');
+  const tabLog = document.getElementById('tabLog');
+  const tabAdmin = document.getElementById('tabAdmin');
+  const profileCard = document.getElementById('profileCard');
+  if (tabAuth) tabAuth.style.display = logged ? 'none' : '';
+  if (tabPlay) tabPlay.style.display = logged ? '' : 'none';
+  if (tabLog) tabLog.style.display = logged ? '' : 'none';
+  if (tabAdmin) tabAdmin.style.display = (logged && isAdmin) ? '' : 'none';
+  if (profileCard) profileCard.style.display = logged ? '' : 'none';
+  // Tooltips
+  if (tabPlay) tabPlay.title = logged ? '' : 'Connectez-vous pour accéder';
+  if (tabLog) tabLog.title = logged ? '' : 'Connectez-vous pour accéder';
+  if (tabAdmin) tabAdmin.title = (logged && isAdmin) ? '' : 'Réservé aux administrateurs';
+  // Activate a sensible tab
+  const activeTab = document.querySelector('.tab.active');
+  if (!logged) {
+    // Force auth active
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    if (tabAuth) tabAuth.classList.add('active');
+    document.getElementById('auth').classList.add('active');
+  } else if (activeTab && activeTab.dataset.tab === 'auth') {
+    // Switch to play when logging in
+    activeTab.classList.remove('active');
+    document.getElementById('auth').classList.remove('active');
+    if (tabPlay) tabPlay.classList.add('active');
+    document.getElementById('play').classList.add('active');
+  }
+}
+
+// Admin helpers (renderer)
+function isAdminClient(profile) {
+  try {
+    if (!profile) return false;
+    const parts = [];
+    if (typeof profile.role === 'string') parts.push(profile.role);
+    if (typeof profile.grade === 'string') parts.push(profile.grade);
+    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
+    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
+    const s = parts.join(' ').toLowerCase();
+    return /\b(admin|owner|propri[eé]taire)\b/.test(s);
+  } catch { return false; }
+}
+
+// Privileged access: Administrateur or Développeur
+function hasPrivilegedAccess(profile) {
+  try {
+    if (!profile) return false;
+    const parts = [];
+    if (typeof profile.role === 'string') parts.push(profile.role);
+    if (typeof profile.grade === 'string') parts.push(profile.grade);
+    if (profile.role && typeof profile.role === 'object' && profile.role.name) parts.push(profile.role.name);
+    if (profile.grade && typeof profile.grade === 'object' && profile.grade.name) parts.push(profile.grade.name);
+    const s = parts.join(' ').toLowerCase();
+    return /(administrateur|admin|d[eé]veloppeur|developpeur|dev)\b/.test(s);
+  } catch { return false; }
+}
+
+// Ensure we can toggle Play content with a replacement image
+function ensurePlayReplacement() {
+  const play = document.getElementById('play');
+  if (!play) return null;
+  // Cibler uniquement le contenu principal de l'onglet Jouer (la première .panel)
+  const container = play.querySelector('.panel') || play;
+  let orig = container.querySelector('#playOriginal');
+  // Ne plus gérer/ajouter d'image de remplacement
+  let repl = container.querySelector('#playReplacement');
+  if (!orig) {
+    // Envelopper UNIQUEMENT le contenu de ce container (pas l'onglet complet)
+    orig = document.createElement('div');
+    orig.id = 'playOriginal';
+    while (container.firstChild) orig.appendChild(container.firstChild);
+    container.appendChild(orig);
+  }
+  // Ne rien créer ni afficher, mais retourner les refs si jamais présentes
+  return { play, orig, repl };
+}
+
+function setPlayRestricted(restricted) {
+  // Désactivé: toujours afficher le contenu original et les onglets
+  const ctx = ensurePlayReplacement();
+  if (!ctx) return;
+  if (ctx.orig) ctx.orig.style.display = '';
+  // Si un ancien élément de remplacement existe encore, on le retire du DOM
+  if (ctx.repl && ctx.repl.parentNode) {
+    try { ctx.repl.parentNode.removeChild(ctx.repl); } catch {}
+  }
+  const tabsBar = document.querySelector('.tabs');
+  if (tabsBar) tabsBar.style.display = '';
+}
+
+async function loadSettings() {
+  try { const res = await window.eminium.getSettings(); return res?.settings || {}; } catch { return {}; }
+}
+async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
+
+// Maintenance désactivée
+
+// (Anti-VPN banner and subscriptions removed)
+
+// Play options: close launcher on game start
+async function refreshPlayOptionsUI() {
+  try {
+    const set = await loadSettings();
+    const chk = document.getElementById('closeOnPlayToggle');
+    if (chk) chk.checked = !!set.closeOnPlay;
+  } catch {}
+}
+(() => {
+  const chk = document.getElementById('closeOnPlayToggle');
+  if (chk) {
+    chk.addEventListener('change', async (e) => {
+      const on = !!e.target.checked;
+      await saveSettings({ closeOnPlay: on });
+    });
+  }
+  // Initial sync
+  refreshPlayOptionsUI();
+})();
+
+// Bouton: Forcer la mise à jour
+document.getElementById('btnForceUpdate').addEventListener('click', async () => {
+  if (!window.updater) { log('Updater indisponible.'); return; }
+  try {
+    progressUI.open('Mise à jour du launcher (forcée)');
+    progressUI.set(5);
+    progressUI.addLine('Préparation du téléchargement...');
+    const off = window.updater.onProgress((data) => {
+      if (!data) return;
+      if (data.phase === 'downloading') {
+        const curr = data.currentFile || 1; const total = data.totalFiles || 1;
+        const p = typeof data.percent === 'number' ? data.percent : 0;
+        progressUI.set(Math.max(1, Math.min(100, p|0)));
+        progressUI.addLine(`Téléchargement des mises à jour ${curr}/${total}`);
+      } else if (data.phase === 'downloaded') {
+        progressUI.set(100);
+        progressUI.addLine('Téléchargement terminé. Application de la mise à jour...');
+      } else if (data.phase === 'applying') {
+        const curr = data.currentFile || 0; const total = data.totalFiles || 0;
+        if (total > 0) progressUI.set(Math.round((curr/total)*100));
+      } else if (data.phase === 'error') {
+        progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
+        progressUI.enableClose();
+        try { off && off(); } catch {}
+      }
+    });
+    const res = await window.updater.check({ force: true });
+    if (!(res?.ok)) { progressUI.addLine('Erreur: ' + (res?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    if (!res.updateAvailable || !res.latest?.assetUrl || !res.latest?.tag) {
+      progressUI.addLine('Aucune mise à jour disponible.');
+      progressUI.enableClose();
+      try { off && off(); } catch {}
+      return;
+    }
+    const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
+    if (!dl?.ok) { progressUI.addLine('Erreur téléchargement: ' + (dl?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    const ap = await window.updater.apply({ tag: res.latest.tag });
+    if (!ap?.ok) { progressUI.addLine('Erreur application: ' + (ap?.error || 'inconnue'), 'err'); progressUI.enableClose(); return; }
+    progressUI.addLine('Mise à jour appliquée. Redémarrage...');
+    progressUI.set(100);
+    try { await window.updater.relaunch(); } catch {}
+    try { off && off(); } catch {}
+  } catch (e) {
+    progressUI.addLine('Erreur: ' + (e?.message || e), 'err');
+    progressUI.enableClose();
+    try { window.updater.offProgress && window.updater.offProgress(); } catch {}
+  }
+});
+
+// Helper: hide/show Connexion tab
+function setAuthTabHidden(hidden) {
+  const authTab = document.querySelector('.tab[data-tab="auth"]');
+  if (authTab) authTab.style.display = hidden ? 'none' : '';
+}
+
+// Déconnexion
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  try {
+    const res = await window.eminium.logout();
+    if (res?.ok) {
+      log('Déconnecté.');
+      document.getElementById('profileName').textContent = 'Pseudo';
+      document.getElementById('profileUUID').textContent = 'UUID';
+      document.getElementById('profileSkin').src = '';
+      // Clear grade badge
+      const gEl = document.getElementById('profileGrade');
+      gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; applyGradeStyle(gEl, null, null);
+      setProfileSkeleton(true);
+      document.getElementById('btnLogout').style.display = 'none';
+      // Clear points UI
+      updatePointsUI(undefined);
+      // Revenir sur l'onglet Connexion
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.querySelector('.tab[data-tab="auth"]').classList.add('active');
+      document.getElementById('auth').classList.add('active');
+      setAuthTabHidden(false);
+      setTabsForAuth(false, false);
+      // Maintenance UI supprimée: rien à restaurer
+    } else {
+      log('Échec de déconnexion: ' + (res?.error || 'inconnu'));
+    }
+  } catch (e) {
+    log('Erreur IPC (logout): ' + (e?.message || e));
+  }
+});
+
+// Initialiser à partir du profil sauvegardé
+(async function initProfile() {
+  try {
+    const res = await window.eminium.getProfile();
+    const p = res?.profile;
+    if (p && p.name && p.uuid) {
+      document.getElementById('profileName').textContent = p.name;
+      document.getElementById('profileUUID').textContent = p.uuid;
+      const skinUrl = `https://minotar.net/helm/${p.name}/64.png`;
+      document.getElementById('profileSkin').src = `${skinUrl}?t=${Date.now()}`;
+      // Grade badge
+      const gEl = document.getElementById('profileGrade');
+      const grade = formatGrade(p.grade ?? p.role);
+      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+      else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+      applyGradeStyle(gEl, p.gradeColor || null, grade);
+      document.getElementById('btnLogout').style.display = 'inline-block';
+      setProfileSkeleton(false);
+      // Ouvrir directement l'onglet Jouer
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.querySelector('.tab[data-tab="play"]').classList.add('active');
+      document.getElementById('play').classList.add('active');
+      setAuthTabHidden(true);
+      // Show Admin tab if admin and adjust tabs visibility
+      const admin = isAdminClient(p);
+      setTabsForAuth(true, admin);
+      // Maintenance UI supprimée
+      // Fetch points on init when already logged in
+      try { await fetchAndUpdatePoints(); } catch {}
+    }
+  } catch {}
+})();
+
+// Au chargement: afficher uniquement l'onglet Connexion
+setTabsForAuth(false, false);
+
+// Logger
+function log(msg) {
+    const logEl = document.getElementById('log');
+    logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+// Safely format grade text from possible shapes (string | object | array)
+function formatGrade(v) {
+  try {
+    if (!v) return '';
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)) {
+      const parts = v.map(formatGrade).filter(Boolean);
+      return parts.join(', ');
+    }
+    if (typeof v === 'object') {
+      const cand = v.name || v.title || v.displayName || v.label || v.slug || v.role || '';
+      return String(cand).trim();
+    }
+    return String(v).trim();
+  } catch { return ''; }
+}
+
+// --- Grade color helpers (script) ---
+function hexToRgb(hex) {
+  if (!hex) return null;
+  let s = String(hex).trim();
+  if (s.startsWith('#')) s = s.slice(1);
+  if (s.length === 3) s = s.split('').map(c => c + c).join('');
+  if (!/^[0-9a-fA-F]{6}$/.test(s)) return null;
+  const n = parseInt(s, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+function rgba(hex, a) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${a})`;
+}
+function paletteColorForGrade(name) {
+  if (!name) return null;
+  const n = name.toLowerCase();
+  const map = [
+    { key: 'admin', color: '#ef4444' },
+    { key: 'owner', color: '#ef4444' },
+    { key: 'dev', color: '#8b5cf6' },
+    { key: 'moderator', color: '#3b82f6' },
+    { key: 'mod', color: '#3b82f6' },
+    { key: 'staff', color: '#10b981' },
+    { key: 'helper', color: '#10b981' },
+    { key: 'vip', color: '#f59e0b' },
+    { key: 'premium', color: '#f59e0b' },
+    { key: 'mvp', color: '#06b6d4' },
+    { key: 'membre', color: '#cbd5e1' },
+    { key: 'member', color: '#cbd5e1' },
+  ];
+  for (const it of map) {
+    if (n.includes(it.key)) return it.color;
+  }
+  return null;
+}
+function applyGradeStyle(el, hex, name) {
+  const base = hex || paletteColorForGrade(name);
+  if (!base) {
+    el.style.background = '';
+    el.style.borderColor = '';
+    el.style.color = '';
+    return;
+  }
+  const bg = rgba(base, 0.18) || '';
+  const br = rgba(base, 0.35) || '';
+  el.style.background = bg;
+  el.style.borderColor = br;
+  el.style.color = base;
+}
+
+// Toggle skeleton state for profile UI
+function setProfileSkeleton(on) {
+  ['profileName','profileUUID','profileSkin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (on) el.classList.add('skeleton'); else el.classList.remove('skeleton');
+  });
+}
+
+// Validation formulaire login
+function validateLogin(email, pass, code2fa) {
+    if(!email || !pass) return 'Email et mot de passe requis';
+    if(code2fa && !/^\d{6}$/.test(code2fa)) return 'Code 2FA invalide';
+    return null;
+}
+
+// Connexion
+const btnLogin = document.getElementById('btnLogin');
+const code2faInput = document.getElementById('code2fa');
+const authErrEl = document.getElementById('authError');
+function setAuthError(msg){ if(!authErrEl) return; authErrEl.textContent = msg || ''; authErrEl.style.display = msg ? 'block' : 'none'; }
+function mapLoginError(result, caught){
+  const r = result || {};
+  const reason = (r.code || r.reason || r.message || '').toString().toLowerCase();
+  const pick = (...vals) => vals.find(v => typeof v === 'string' && v.trim());
+  // 1) Derive status/code FIRST so HTTP codes override server generic text
+  let status = undefined;
+  if (typeof r.status === 'number') status = r.status;
+  else if (typeof r.httpStatus === 'number') status = r.httpStatus;
+  else if (typeof r.code === 'number') status = r.code;
+  if (!status && caught) {
+    const resp = caught?.response;
+    if (resp && typeof resp.status === 'number') status = resp.status;
+    else if (typeof caught.status === 'number') status = caught.status;
+  }
+  if (!status) {
+    const msg = (r.message || r.reason || caught?.message || '').toString();
+    const m = msg.match(/status\s*code\s*(\d{3})/i) || msg.match(/\b(4\d{2}|5\d{2})\b/);
+    if (m && m[1]) status = parseInt(m[1], 10);
+  }
+  // 2) Map by explicit status codes immediately
+  if (status === 400) return "Requête invalide. Vérifiez les informations saisies.";
+  if (status === 401) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
+  if (status === 403) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
+  if (status === 404) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  if (status === 408) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  if (status === 409) return "Conflit détecté. Réessayez ou contactez le support si le problème persiste.";
+  if (status === 423) return "Compte/verrouillage temporaire. Réessayez plus tard ou contactez le support.";
+  if (status === 429) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
+  if (status === 500 || status === 501 || status === 502 || status === 503 || status === 504) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  // 3) Network/offline detection from caught message
+  if (caught) {
+    const m = (caught?.message || caught)?.toString().toLowerCase();
+    if (/network|offline|fetch|net::|ecconnrefused|ecconnreset|enotfound|dns|ehostunreach/.test(m)) return "Erreur réseau. Vérifiez votre connexion Internet et réessayez.";
+    if (/timeout|etimedout|request.*timed.*out/.test(m)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  }
+  // 4) Prefer explicit server-provided message if present (and not the Axios generic)
+  const serverMsg = pick(
+    r.userMessage,
+    r.hint,
+    r.detail,
+    r.details,
+    r.description,
+    r.error_description,
+    r.errorMessage,
+    r.error?.message,
+    r.data?.message,
+    r.data?.error,
+    r.message
+  ) || pick(
+    caught?.response?.data?.userMessage,
+    caught?.response?.data?.hint,
+    caught?.response?.data?.detail,
+    caught?.response?.data?.details,
+    caught?.response?.data?.description,
+    caught?.response?.data?.error_description,
+    caught?.response?.data?.error,
+    caught?.response?.data?.message
+  );
+  if (serverMsg && !/request failed with status code/i.test(serverMsg)) {
+    return serverMsg.trim();
+  }
+
+  if (/invalid.*(credential|identifiant|password|mot de passe)/.test(reason) || /unauthoriz|401/.test(reason)) return "Identifiants invalides. Vérifiez l'email et le mot de passe.";
+  if (/2fa.*(required|requis)/.test(reason) || reason === '2fa') return "Double authentification requise. Entrez le code 2FA et recliquez sur Connexion.";
+  if (/2fa.*(invalid|incorrect)/.test(reason)) return "Code 2FA invalide. Réessayez avec un code valide.";
+  if (/ban|banni|suspend|suspens|lock/.test(reason)) return "Compte restreint (banni/suspendu/verrouillé). Contactez le support.";
+  if (/email.*not.*verif|mail.*non.*v[ée]rifi/.test(reason)) return "Adresse email non vérifiée. Vérifiez votre boîte mail pour valider votre compte.";
+  if (/rate.*limit|too.*many.*attempt|429/.test(reason)) return "Trop de tentatives. Patientez quelques minutes avant de réessayer.";
+  if (/maintenance|service.*down|unavailable|503|404/.test(reason)) return "Service indisponible (maintenance/incident). Réessayez plus tard.";
+  if (/forbidden|403/.test(reason)) return "Accès refusé. Droits insuffisants ou restrictions temporaires.";
+  if (/timeout|d[ée]lai.*d[ée]pass/.test(reason)) return "Temps d'attente dépassé. Vérifiez votre connexion et réessayez.";
+  if (/server|500|exception|internal/.test(reason)) return "Erreur serveur. Réessayez plus tard.";
+  if (/uuid|profile.*not.*found/.test(reason)) return "Profil introuvable. Vérifiez vos identifiants ou contactez le support.";
+  // Show a meaningful reason if any remains
+  if (reason) return reason.charAt(0).toUpperCase() + reason.slice(1);
+  return "Connexion échouée. Réessayez plus tard.";
+}
+
+// Masquer le 2FA par défaut
+code2faInput.parentElement.style.display = 'none';
+
+// Action de connexion unifiée (réutilisable par un overlay)
+async function performLogin(email, pass, code2fa, options = {}) {
+  const triggerButton = options.triggerButton || null;
+  const err = validateLogin(email, pass, code2fa);
+  if (err) { setAuthError(err); log(err); return { ok: false, error: err }; }
+
+  if (triggerButton) triggerButton.disabled = true; // Désactive le bouton source si fourni
+  log('Connexion en cours...');
+  setAuthError('');
+
+  try {
+    const result = await window.eminium.login(email, pass, code2fa || undefined);
+
+    if (result?.status === 'pending' && result?.reason === '2fa') {
+      code2faInput.parentElement.style.display = 'block';
+      const msg = 'Double authentification requise. Entrez votre code et recliquez sur Connexion.';
+      setAuthError(msg);
+      log('2FA requis : entrez votre code et recliquez sur Connexion.');
+      return { ok: false, pending: true, reason: '2fa' };
+    }
+
+    if (result?.status === 'error') {
+      const friendly = mapLoginError(result);
+      setAuthError(friendly);
+      log(`Erreur: ${result.message || result.reason || 'Connexion échouée'}`);
+      const err = new Error(friendly || 'Connexion échouée');
+      err.code = result.code || result.reason || undefined;
+      throw err;
+    }
+
+    if (result?.status === 'success') {
+      const p = result.profile || {};
+      log('Connecté ! Profil enregistré.');
+      setAuthError('');
+      document.getElementById('profileName').textContent = p.name || 'Pseudo';
+      document.getElementById('profileUUID').textContent = p.uuid || 'UUID';
+      let skinUrl = p?.name ? `https://minotar.net/helm/${p.name}/64.png` : '';
+      document.getElementById('profileSkin').src = skinUrl ? `${skinUrl}${skinUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : '';
+      const gEl = document.getElementById('profileGrade');
+      const grade = formatGrade(p.grade ?? p.role);
+      if (grade) { gEl.textContent = `Grade: ${grade}`; gEl.title = `Grade: ${grade}`; gEl.style.display = 'inline-block'; }
+      else { gEl.textContent = ''; gEl.title=''; gEl.style.display = 'none'; }
+      applyGradeStyle(gEl, p.gradeColor || null, grade);
+      code2faInput.parentElement.style.display = 'none';
+      document.getElementById('btnLogout').style.display = 'inline-block';
+      setProfileSkeleton(false);
+      // Basculer sur l'onglet Jouer automatiquement
+      document.querySelector('.tab[data-tab="auth"]').classList.remove('active');
+      document.getElementById('auth').classList.remove('active');
+      document.querySelector('.tab[data-tab="play"]').classList.add('active');
+      document.getElementById('play').classList.add('active');
+      setAuthTabHidden(true);
+      setTabsForAuth(true, isAdminClient(p));
+      // Maintenance UI supprimée
+      try { await fetchAndUpdatePoints(); } catch {}
+      return { ok: true, profile: p };
+    }
+
+    log('Réponse inconnue du login.');
+    return { ok: false, error: 'unknown' };
+  } catch (e) {
+    const friendly = mapLoginError(null, e);
+    setAuthError(friendly);
+    log('Erreur IPC : ' + (e?.message || e));
+    return { ok: false, error: friendly || (e?.message || 'Connexion échouée') };
+  } finally {
+    if (triggerButton) triggerButton.disabled = false; // Réactive le bouton source si fourni
+  }
+}
+
+// Bouton de connexion principal → réutilise performLogin
+btnLogin.addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const pass = document.getElementById('pass').value.trim();
+  const code2fa = code2faInput.value.trim();
+  await performLogin(email, pass, code2fa, { triggerButton: btnLogin });
+});
+
+// Expose une API pour un overlay externe
+window.eminiumUI = window.eminiumUI || {};
+window.eminiumUI.login = async (email, password, code2fa) => {
+  return await performLogin(String(email || '').trim(), String(password || '').trim(), String(code2fa || '').trim());
+};
+
+// Boutons jouer / vérifier
+const progressUI = (() => {
+  const modal = document.getElementById('progressModal');
+  const title = document.getElementById('progressTitle');
+  const bar = document.getElementById('progressBar');
+  const logBox = document.getElementById('progressLog');
+  const btnClose = document.getElementById('progressClose');
+  let percent = 0;
+  let opened = false;
+  // Buffer pour éviter le spam DOM
+  const buffer = [];
+  const MAX_LINES = 500;
+  let flushScheduled = false;
+  const flush = () => {
+    flushScheduled = false;
+    if (!buffer.length) return;
+    const frag = document.createDocumentFragment();
+    for (const { line, cls } of buffer.splice(0)) {
+      const el = document.createElement('span');
+      el.className = 'line' + (cls ? ' ' + cls : '');
+      el.textContent = line;
+      frag.appendChild(el);
+      frag.appendChild(document.createElement('br'));
+    }
+    logBox.appendChild(frag);
+    // Cap sur le nombre de lignes
+    while (logBox.childNodes.length > MAX_LINES * 2) {
+      // deux nodes par ligne (span + br)
+      logBox.removeChild(logBox.firstChild);
+      logBox.removeChild(logBox.firstChild);
+    }
+    logBox.scrollTop = logBox.scrollHeight;
+  };
+  const open = (t) => {
+    title.textContent = t || 'Progression';
+    bar.style.width = '0%';
+    bar.classList.remove('error');
+    percent = 0; opened = true;
+    logBox.textContent = '';
+    btnClose.disabled = true;
+    modal.classList.add('show');
+  };
+  const close = () => { modal.classList.remove('show'); opened = false; };
+  const set = (p) => { percent = Math.max(0, Math.min(100, p|0)); bar.style.width = percent + '%'; };
+  const bump = (delta=3) => set(Math.min(95, percent + delta));
+  const addLine = (line, cls='') => {
+    buffer.push({ line, cls });
+    if (!flushScheduled) {
+      flushScheduled = true;
+      setTimeout(flush, 100); // ~10 Hz
+    }
+  };
+  btnClose.addEventListener('click', close);
+  return { open, close, set, bump, addLine, enableClose: () => (btnClose.disabled = false), isOpen: () => opened };
+})();
+
+// Ping serveur toutes les 5s pour activer/désactiver le bouton Jouer
+let _pingTimer = null;
+let _lastUp = undefined;
+async function pingOnce() {
+  try {
+    const host = 'play.eminium.ovh';
+    const port = 25565;
+    const btnPlay = document.getElementById('btnPlay');
+    const res = await (window.eminium?.ping ? window.eminium.ping(host, port, 2500) : Promise.resolve({ ok: true, up: true }));
+    const up = !!(res && res.up);
+    if (_lastUp !== up) {
+      _lastUp = up;
+      btnPlay.disabled = !up || btnPlay.disabled; // conserve disabled si non prêt côté installation
+      btnPlay.title = up ? '' : 'Serveur hors ligne';
+      if (!up) {
+        // S'assurer que le bouton est bien désactivé même si setReadyUI(true) a été appelé
+        btnPlay.disabled = true;
+      } else if (document.getElementById('btnCheck').style.display === 'none') {
+        // Prêt et serveur up → autoriser
+        btnPlay.disabled = false;
+      }
+    }
+  } catch (_) {
+    const btnPlay = document.getElementById('btnPlay');
+    btnPlay.disabled = true;
+    btnPlay.title = 'Serveur hors ligne';
+    _lastUp = false;
+  }
+}
+
+function startPing() {
+  if (_pingTimer) clearInterval(_pingTimer);
+  pingOnce();
+  _pingTimer = setInterval(pingOnce, 5000);
+}
+
+// Hôte/port fixes → pas d'écouteurs d'inputs nécessaires
+
+// Événements de progression depuis le main process (avec désinscription)
+let _offEnsure = null;
+let _offPlay = null;
+if (window.eminiumProgress) {
+  _offEnsure = window.eminiumProgress.onEnsureProgress((data) => {
+    if (!progressUI.isOpen()) progressUI.open('Préparation du launcher');
+    if (data?.phase === 'start') { progressUI.set(10); progressUI.addLine('Préparation en cours...'); }
+    else if (data?.phase === 'done') { progressUI.set(100); progressUI.addLine('Préparation terminée.'); progressUI.enableClose(); }
+    else if (data?.phase === 'error') { progressUI.addLine('Erreur: ' + (data.message || 'inconnue')); progressUI.enableClose(); }
+  });
+  _offPlay = window.eminiumProgress.onPlayProgress((data) => {
+    if (!progressUI.isOpen()) progressUI.open('Téléchargements / Lancement');
+    if (data?.type === 'error') {
+      document.getElementById('progressBar').classList.add('error');
+      progressUI.addLine(String(data.line), 'err');
+      progressUI.enableClose();
+      return;
+    }
+    // Affichage compact: pas de ligne par asset pour garder l'UI fluide (barre précise conservée)
+    if (data?.type === 'asset' && typeof data.current === 'number' && typeof data.total === 'number') {
+      const { current, total, hash } = data;
+      const percent = Math.max(1, Math.min(100, Math.round((current / total) * 100)));
+      progressUI.set(percent);
+      // Optionnel: uncomment to show occasional status lines
+      // if (current % 200 === 0 || current === total) progressUI.addLine(`[BMCL] Assets ${current}/${total}`);
+      return;
+    }
+    // Idem pour librairies/classifiers: on met à jour la barre sans spammer les logs
+    if (data?.type === 'library' && typeof data.current === 'number' && typeof data.total === 'number') {
+      const { current, total, path, kind } = data;
+      const percent = Math.max(1, Math.min(100, Math.round((current / total) * 100)));
+      progressUI.set(percent);
+      // const label = kind === 'classifier' ? 'Classifier' : 'Librairie';
+      // if (current % 10 === 0 || current === total) progressUI.addLine(`[BMCL] ${label} ${current}/${total}`);
+      return;
+    }
+    if (data?.line) { progressUI.addLine(String(data.line)); progressUI.bump(); }
+  });
+}
+
+// Nettoyage global sur déchargement de la page
+window.addEventListener('beforeunload', () => {
+  try { _offEnsure && _offEnsure(); } catch {}
+  try { _offPlay && _offPlay(); } catch {}
+  try { if (_pingTimer) clearInterval(_pingTimer); } catch {}
+});
+
+// Helpers readiness UI + auto prepare
+function setReadyUI(ready) {
+  const btnCheck = document.getElementById('btnCheck');
+  const btnPlay = document.getElementById('btnPlay');
+  if (ready) {
+    btnCheck.style.display = 'none';
+    btnPlay.style.display = 'inline-block';
+    btnPlay.disabled = false;
+  } else {
+    btnCheck.style.display = 'inline-block';
+    btnCheck.textContent = 'Installer / Mettre à jour';
+    btnPlay.style.display = 'none';
+    btnPlay.disabled = true;
+  }
+}
+
+async function checkAndAutoPrepare() {
+  try {
+    const st = await window.eminium.status();
+    if (st?.ok) {
+      setReadyUI(true);
+      return true;
+    }
+  } catch {}
+  // Not ready → auto prepare
+  setReadyUI(false);
+  progressUI.open('Installation / Mise à jour');
+  progressUI.set(5);
+  log('Installation / Mise à jour des fichiers requis...');
+  try {
+    const res = await window.eminium.prepare();
+    if (res?.ok) {
+      setReadyUI(true);
+      // Ne pas lancer automatiquement. Informer l'utilisateur et laisser le bouton Jouer actif.
+      progressUI.addLine('Installation terminée. Cliquez sur "Jouer" pour lancer.');
+      progressUI.set(100);
+      progressUI.enableClose();
+      return true;
+    }
+  } catch (e) {
+    log('Erreur IPC (prepare): ' + (e?.message || e));
+    progressUI.addLine('Erreur IPC (prepare): ' + (e?.message || e)); progressUI.enableClose();
+  }
+  return false;
+}
+
+// Remappe le bouton Vérifier/Préparer pour utiliser prepare()
+document.getElementById('btnCheck').addEventListener('click', async () => {
+  await checkAndAutoPrepare();
+});
+
+document.getElementById('btnPlay').addEventListener('click', async () => {
+  const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
+  const serverHost = 'play.eminium.ovh';
+  const serverPort = 25565;
+  try {
+    progressUI.open('Lancement');
+    progressUI.set(10);
+    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${serverHost}:${serverPort})`);
+    const res = await window.eminium.play({ memoryMB, serverHost, serverPort });
+    if (res?.ok) {
+      log('Client lancé ✓');
+      progressUI.set(100);
+      progressUI.addLine('Client lancé ✓');
+      progressUI.enableClose();
+    } else {
+      log('Échec du lancement: ' + (res?.error || 'inconnu'));
+      progressUI.addLine('Échec du lancement: ' + (res?.error || 'inconnu'));
+      progressUI.enableClose();
+    }
+  } catch (e) {
+    log('Erreur IPC (play): ' + (e?.message || e));
+    progressUI.addLine('Erreur IPC (play): ' + (e?.message || e));
+    progressUI.enableClose();
+  }
+});
+
+// Updater + startup flow
+async function runUpdaterIfNeeded() {
+  if (!window.updater) return false;
+  try {
+    const res = await window.updater.check();
+    if (res?.ok && res.updateAvailable && res.latest?.assetUrl && res.latest?.tag) {
+      progressUI.open('Mise à jour du launcher');
+      progressUI.set(5);
+      progressUI.addLine('Préparation du téléchargement...');
+      const off = window.updater.onProgress((data) => {
+        if (!data) return;
+        if (data.phase === 'downloading') {
+          const curr = data.currentFile || 1; const total = data.totalFiles || 1;
+          const p = typeof data.percent === 'number' ? data.percent : 0;
+          progressUI.set(Math.max(1, Math.min(100, p|0)));
+          progressUI.addLine(`Téléchargement des mises à jour ${curr}/${total}`);
+        } else if (data.phase === 'downloaded') {
+          progressUI.set(100);
+          progressUI.addLine('Téléchargement terminé. Application de la mise à jour...');
+        } else if (data.phase === 'applying') {
+          const curr = data.currentFile || 0; const total = data.totalFiles || 0;
+          if (total > 0) progressUI.set(Math.round((curr/total)*100));
+        } else if (data.phase === 'error') {
+          progressUI.addLine('Erreur de mise à jour: ' + (data.message || 'inconnue'), 'err');
+          progressUI.enableClose();
+          try { off && off(); } catch {}
+        }
+      });
+      const dl = await window.updater.download({ assetUrl: res.latest.assetUrl, tag: res.latest.tag });
+      if (!dl?.ok) { progressUI.addLine('Erreur téléchargement: ' + (dl?.error || 'inconnue'), 'err'); progressUI.enableClose(); return true; }
+      const ap = await window.updater.apply({ tag: res.latest.tag });
+      if (!ap?.ok) { progressUI.addLine('Erreur application: ' + (ap?.error || 'inconnue'), 'err'); progressUI.enableClose(); return true; }
+      progressUI.addLine('Mise à jour appliquée. Redémarrage...');
+      progressUI.set(100);
+      try { await window.updater.relaunch(); } catch {}
+      try { off && off(); } catch {}
+      return true; // updater engaged; app will restart
+    }
+  } catch (_) {}
+  return false;
+}
+
+// Auto-check and prepare at startup + RAM/perf UI init
+(async function autoStartOnce() {
+  try {
+    setReadyUI(false);
+    startPing();
+    const didUpdate = await runUpdaterIfNeeded();
+    if (!didUpdate) {
+      await checkAndAutoPrepare();
+    }
+  } catch {}
+})();
+
+// RAM + perf UI bindings
+(async function initPerfUI(){
+  const memSlider = document.getElementById('memSlider');
+  const memLabel = document.getElementById('memLabel');
+  const ramInfo = document.getElementById('ramInfo');
+  const render = document.getElementById('renderDist');
+  const renderLabel = document.getElementById('renderLabel');
+  const fps = document.getElementById('fpsCap');
+  const fpsLabel = document.getElementById('fpsLabel');
+  const fpsUnlimited = document.getElementById('fpsUnlimited');
+  // Cache RAM détectée pour éviter des appels répétés
+  let detectedRamMB = null;
+
+  function updateMemLabel(){ memLabel.textContent = `${memSlider.value} Mo`; }
+  function warnIfTooHigh(totalMB){
+    const sel = parseInt(memSlider.value,10) || 2048;
+    if (!totalMB) return;
+    const seventy = Math.floor(totalMB * 0.7);
+    if (sel > seventy) {
+      ramInfo.innerHTML = `RAM système: ${Math.round(totalMB/1024)} Go — <span style="color:#fca5a5;">Attention:</span> vous allouez plus de 70% de la RAM.`;
+    } else {
+      ramInfo.textContent = `RAM système: ${Math.round(totalMB/1024)} Go`;
+    }
+  }
+
+  // Remplissage visuel des sliders: accent jusqu'à la valeur, fondu sous le pouce vers transparent, base grise + léger vernis
+  function updateRangeFill(el) {
+    if (!el) return;
+    const min = Number(el.min) || 0;
+    const max = Number(el.max) || 100;
+    let val = Number(el.value);
+    if (!Number.isFinite(val)) val = min;
+    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    // Lueur + remplissage qui s'efface vers transparent près du pouce
+    const thumbW = 22; // doit rester en phase avec le CSS
+    const fade = Math.max(1.2, Math.min(5.5, (thumbW / (el.getBoundingClientRect()?.width || 200)) * 100 * 2.0));
+    const a0 = Math.max(0, pct - fade);  // fin du plein accent
+    const a1 = pct;                      // centre du pouce
+    const grey = 'rgba(255,255,255,0.10)';
+    const fill = `linear-gradient(90deg,
+      rgba(245,158,11,0.96) 0% ${a0}%,
+      rgba(245,158,11,1) ${a0}% calc(${a1}% + 0.25%),
+      rgba(245,158,11,0.00) calc(${a1}% + 0.25%) 100%)`;
+    const r1 = Math.round(thumbW * 0.62);
+    const r2 = Math.round(thumbW * 1.28);
+    const r3 = Math.round(thumbW * 2.1);
+    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(245,158,11,0.45) 0 ${r1}px, rgba(245,158,11,0.18) ${r1}px ${r2}px, rgba(245,158,11,0) ${r2}px ${r3}px)`;
+    const base = `linear-gradient(90deg, ${grey}, ${grey})`;
+    const sheen = `linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, rgba(0,0,0,0.00) 100%)`;
+    el.style.background = `${glow}, ${fill}, ${base}, ${sheen}`;
+    el.style.backgroundRepeat = 'no-repeat';
+  }
+
+  // Detect system RAM and adjust slider max to 85% of total (rounded to step)
+  try {
+    const info = await (window.eminium?.getSystemRamMB ? window.eminium.getSystemRamMB() : Promise.resolve({ ok:true, totalMB: 8192 }));
+    const total = info?.totalMB || 8192;
+    detectedRamMB = total;
+    const maxAlloc = Math.max(1024, Math.floor((total * 0.85) / 256) * 256);
+    memSlider.max = String(maxAlloc);
+    if (parseInt(memSlider.value,10) > maxAlloc) memSlider.value = String(Math.min(maxAlloc, 4096));
+    updateMemLabel();
+    warnIfTooHigh(total);
+    ramInfo.title = `Total détecté: ${total} Mo`;
+  } catch {
+    detectedRamMB = null;
+    updateMemLabel();
+    ramInfo.textContent = 'Impossible de détecter la RAM système';
+  }
+
+  memSlider.addEventListener('input', async () => {
+    updateMemLabel();
+    updateRangeFill(memSlider);
+    warnIfTooHigh(detectedRamMB);
+    settingsDebouncedSave();
+  });
+
+  const syncFPS = () => {
+    const unlimited = fpsUnlimited.checked;
+    fps.disabled = unlimited;
+    if (unlimited) { fpsLabel.textContent = 'Illimité'; }
+    else { fpsLabel.textContent = String(fps.value); }
+    // Visuel: si illimité, griser totalement la piste et atténuer le pouce
+    if (unlimited) {
+      fps.classList.add('dim');
+      // base grise sans lueur/fill
+      fps.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.10), rgba(255,255,255,0.10))';
+      fps.style.backgroundRepeat = 'no-repeat';
+    } else {
+      fps.classList.remove('dim');
+      updateRangeFill(fps);
+    }
+  };
+  render.addEventListener('input', ()=> { renderLabel.textContent = `${render.value} chunks`; updateRangeFill(render); });
+  render.addEventListener('change', settingsDebouncedSave);
+  fps.addEventListener('input', ()=> { if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); updateRangeFill(fps); });
+  fps.addEventListener('change', settingsDebouncedSave);
+  fpsUnlimited.addEventListener('change', () => { syncFPS(); updateRangeFill(fps); settingsDebouncedSave(); });
+  // Recalcule le fondu au redimensionnement (évite de petits artefacts)
+  window.addEventListener('resize', () => {
+    updateRangeFill(memSlider);
+    updateRangeFill(render);
+    if (!fpsUnlimited.checked) updateRangeFill(fps);
+  });
+  // Initial labels
+  renderLabel.textContent = `${render.value} chunks`;
+  fpsLabel.textContent = String(fps.value);
+  syncFPS();
+  // Initial fills
+  [memSlider, render, fps].forEach(updateRangeFill);
+
+  // Settings load/save
+  function readCurrentSettings() {
+    return {
+      memMB: parseInt(memSlider.value, 10) || 2048,
+      renderDist: parseInt(render.value, 10) || 12,
+      fpsCap: parseInt(fps.value, 10) || 120,
+      vsync: !!document.getElementById('vsync').checked,
+      fpsUnlimited: !!fpsUnlimited.checked
+    };
+  }
+  async function applySettings(s) {
+    if (!s || typeof s !== 'object') return;
+    if (typeof s.memMB === 'number') { memSlider.value = String(s.memMB); updateMemLabel(); }
+    if (typeof s.renderDist === 'number') { render.value = String(s.renderDist); renderLabel.textContent = `${render.value} chunks`; }
+    if (typeof s.fpsCap === 'number') { fps.value = String(s.fpsCap); if (!fpsUnlimited.checked) fpsLabel.textContent = String(fps.value); }
+    if (typeof s.vsync === 'boolean') { document.getElementById('vsync').checked = !!s.vsync; }
+    if (typeof s.fpsUnlimited === 'boolean') { fpsUnlimited.checked = !!s.fpsUnlimited; }
+    syncFPS();
+    // Refresh fills after programmatic updates
+    [memSlider, render, fps].forEach(updateRangeFill);
+    warnIfTooHigh(detectedRamMB);
+  }
+  let _saveTimer = null;
+  function settingsDebouncedSave() {
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(async () => {
+      try { await window.eminium.setSettings(readCurrentSettings()); } catch {}
+    }, 300);
+  }
+  // Save checkboxes immediately on toggle
+  document.getElementById('vsync').addEventListener('change', settingsDebouncedSave);
+  fpsUnlimited.addEventListener('change', settingsDebouncedSave);
+
+  // Load on startup
+  try {
+    const res = await (window.eminium?.getSettings ? window.eminium.getSettings() : null);
+    if (res && res.ok && res.settings) await applySettings(res.settings);
+  } catch {}
+})();
+
+</script>
+
+</body>
+</html>
