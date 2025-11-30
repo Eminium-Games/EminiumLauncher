@@ -79,16 +79,27 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
   color: var(--text-primary);
-  min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* Typographie */
@@ -124,30 +135,36 @@ a:hover {
 
 /* Layout */
 .wrap {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  padding: 2rem;
-  background: url('https://eminium.ovh/storage/img/background.jpg') no-repeat center center fixed;
+  padding: 1rem;
+  background: url('https://eminium.ovh/storage/img/background.jpg') no-repeat center center;
   background-size: cover;
   position: relative;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0; /* Permet au conteneur de se rétrécir si nécessaire */
+  width: 100%;
 }
 
 .wrap::before {
   content: '';
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(15, 23, 42, 0.8);
   z-index: 0;
+  pointer-events: none;
 }
 
 .card {
   width: 100%;
   max-width: 72rem;
+  max-height: calc(100vh - 2rem);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-xl);
@@ -166,6 +183,13 @@ a:hover {
 .card:hover {
   transform: translateY(-4px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* Ajustement pour les petits écrans */
+@media (max-height: 800px) {
+  .card {
+    max-height: 95vh;
+  }
 }
 
 /* En-tête */
@@ -335,12 +359,14 @@ h1 {
 /* Contenu des onglets */
 .tab-content {
   display: none;
-  padding: 2rem;
+  padding: 1.5rem;
   background: var(--card-bg);
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--primary) transparent;
+  min-height: 0; /* Important pour le flex dans certains navigateurs */
+  overscroll-behavior: contain; /* Empêche le scroll en cascade */
 }
 
 .tab-content::-webkit-scrollbar {
@@ -350,11 +376,19 @@ h1 {
 
 .tab-content::-webkit-scrollbar-track {
   background: transparent;
+  margin: 4px 0;
 }
 
 .tab-content::-webkit-scrollbar-thumb {
   background-color: var(--primary);
   border-radius: 3px;
+}
+
+/* Ajustement pour le contenu des onglets sur petits écrans */
+@media (max-width: 768px) {
+  .tab-content {
+    padding: 1rem;
+  }
 }
 
 .tab-content.active {
@@ -1071,11 +1105,46 @@ html::-webkit-scrollbar, body::-webkit-scrollbar,
 .wrap::-webkit-scrollbar, .card::-webkit-scrollbar,
 .tab-content::-webkit-scrollbar, .panel::-webkit-scrollbar,
 .log::-webkit-scrollbar, .progress-log::-webkit-scrollbar { display: none; }
-/* Prevent outer window scrollbar */
-html, body { overflow: hidden; }
+/* La gestion du défilement est maintenant gérée par le conteneur .tab-content */
 
 /* Skeleton loading */
-.skeleton { position: relative; color: transparent !important; }
+.skeleton { 
+  position: relative; 
+  color: transparent !important; 
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: var(--radius);
+  overflow: hidden;
+  min-height: 1em;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 .skeleton::after {
   content: '';
   position: absolute; inset: 0;
