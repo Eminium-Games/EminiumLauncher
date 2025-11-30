@@ -257,6 +257,81 @@ input[type=checkbox]::after { content: ""; width: 12px; height: 12px; border-rad
 input[type=checkbox]:checked { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: rgba(255,255,255,0.28); box-shadow: 0 6px 18px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.15); }
 input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,255,255,0.95); box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset; }
 
+/* Changelog styles */
+.changelog-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.changelog-loading,
+.changelog-error {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.changelog-entry {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid var(--accent);
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.2s ease;
+}
+
+.changelog-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(4px);
+}
+
+.changelog-version {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.changelog-date {
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-left: 12px;
+  font-weight: 500;
+}
+
+.changelog-changes {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.changelog-changes li {
+  margin-bottom: 6px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.changelog-changes li:before {
+  content: '•';
+  color: var(--accent);
+  position: absolute;
+  left: -16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .changelog-version {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .changelog-date {
+    margin: 4px 0 0 0;
+  }
+}
+
 /* Toggle switch variant (refined) */
 input.toggle { width: 44px; height: 26px; border-radius: 999px; position: relative; border: 1px solid rgba(255,255,255,0.16); background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); vertical-align: middle; }
 input.toggle::after { content:""; position:absolute; left:2px; top:1px; width:22px; height:22px; border-radius:50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.35); transition: left .18s ease, background .18s ease; }
@@ -342,7 +417,8 @@ html, body { overflow: hidden; }
       <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
       <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
       <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
-      <div class="tab" data-tab="admin" data-ico="🛠" id="tabAdmin" style="display:none;">Admin</div>
+      <div class="tab" data-tab="changelog" data-ico="📝">Changelog</div>
+      <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div>
     </div>
 
     <!-- Contenus -->
@@ -401,6 +477,15 @@ html, body { overflow: hidden; }
       <div class="panel">
         <div class="muted" style="margin-bottom:8px;">Log</div>
         <div class="log" id="log"></div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="changelog">
+      <div class="panel">
+        <h3>Dernières mises à jour</h3>
+        <div id="changelog-content" class="changelog-container">
+          <div class="changelog-loading">Chargement des mises à jour...</div>
+        </div>
       </div>
     </div>
     
@@ -1391,5 +1476,69 @@ async function runUpdaterIfNeeded() {
 
 </script>
 
-</body>
+  <script>
+    // Chargement du changelog
+    async function loadChangelog() {
+      const container = document.getElementById('changelog-content');
+      if (!container) return;
+      
+      try {
+        const response = await fetch('https://eminium.ovh/api/changelog/updates');
+        if (!response.ok) throw new Error('Erreur de chargement du changelog');
+        
+        const updates = await response.json();
+        
+        if (!updates || !Array.isArray(updates) || updates.length === 0) {
+          container.innerHTML = '<div class="changelog-empty">Aucune mise à jour disponible pour le moment.</div>';
+          return;
+        }
+        
+        // Formater la date
+        const formatDate = (dateString) => {
+          const options = { year: 'numeric', month: 'long', day: 'numeric' };
+          return new Date(dateString).toLocaleDateString('fr-FR', options);
+        };
+        
+        // Générer le HTML du changelog
+        const html = updates.map(update => `
+          <div class="changelog-entry">
+            <div class="changelog-version">
+              <span>Version ${update.version || 'N/A'}</span>
+              <span class="changelog-date">${formatDate(update.date || new Date().toISOString())}</span>
+            </div>
+            ${update.changes && update.changes.length ? `
+              <ul class="changelog-changes">
+                ${update.changes.map(change => `<li>${change}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        `).join('');
+        
+        container.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Erreur lors du chargement du changelog:', error);
+        container.innerHTML = `
+          <div class="changelog-error">
+            Impossible de charger les mises à jour. Vérifiez votre connexion internet.
+          </div>
+        `;
+      }
+    }
+    
+    // Charger le changelog au chargement de la page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadChangelog();
+      
+      // Recharger le changelog quand on change d'onglet
+      document.querySelector('.tab[data-tab="changelog"]')?.addEventListener('click', () => {
+        // Recharger uniquement si le contenu n'est pas déjà chargé
+        const container = document.getElementById('changelog-content');
+        if (container && container.textContent === 'Chargement des mises à jour...') {
+          loadChangelog();
+        }
+      });
+    });
+  </script>
+  </body>
 </html>
