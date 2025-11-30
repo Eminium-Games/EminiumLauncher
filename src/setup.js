@@ -1152,7 +1152,7 @@ async function loginEminium(email, password, twoFactorCode) {
 
 const { Client, Authenticator } = require('minecraft-launcher-core');
 
-async function launchMinecraft({ memoryMB = 2048, serverHost = 'play.eminium.ovh', serverPort = 25565 } = {}) {
+async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565 } = {}) {
 
   const profile = readUserProfile();
   if (!profile) {

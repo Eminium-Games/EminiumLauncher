@@ -1112,7 +1112,7 @@ let _pingTimer = null;
 let _lastUp = undefined;
 async function pingOnce() {
   try {
-    const host = 'play.eminium.ovh';
+    const host = '82.64.85.47';
     const port = 25565;
     const btnPlay = document.getElementById('btnPlay');
     const res = await (window.eminium?.ping ? window.eminium.ping(host, port, 2500) : Promise.resolve({ ok: true, up: true }));
@@ -1245,7 +1245,7 @@ document.getElementById('btnCheck').addEventListener('click', async () => {
 
 document.getElementById('btnPlay').addEventListener('click', async () => {
   const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
-  const serverHost = 'play.eminium.ovh';
+  const serverHost = '82.64.85.47';
   const serverPort = 25565;
   try {
     progressUI.open('Lancement');

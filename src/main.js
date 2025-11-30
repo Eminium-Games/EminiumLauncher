@@ -652,7 +652,7 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     // (VPN/proxy reminder removed)
 
     // Enforce server availability before launching
-    const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : 'play.eminium.ovh';
+    const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : '82.64.85.47';
     const port = (userOpts && userOpts.serverPort) ? Number(userOpts.serverPort) : 25565;
     const up = await tcpPing(host, port, 2500);
     if (!up) {
