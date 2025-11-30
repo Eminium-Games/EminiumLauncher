@@ -262,6 +262,8 @@ input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,
   max-height: 600px;
   overflow-y: auto;
   padding-right: 8px;
+  color: var(--txt);
+  line-height: 1.6;
 }
 
 .changelog-loading,
@@ -313,7 +315,33 @@ input[type=checkbox]:checked::after { transform: scale(1); background: rgba(255,
   line-height: 1.5;
 }
 
-.changelog-changes li:before {
+.changelog-content {
+  margin-top: 12px;
+}
+
+.changelog-section {
+  margin-bottom: 16px;
+}
+
+.changelog-section h4 {
+  color: var(--accent);
+  margin: 16px 0 8px 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.changelog-section ul {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.changelog-section li {
+  margin-bottom: 6px;
+  position: relative;
+  list-style-type: none;
+}
+
+.changelog-section li:before {
   content: '•';
   color: var(--accent);
   position: absolute;
@@ -418,7 +446,7 @@ html, body { overflow: hidden; }
       <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
       <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
       <div class="tab" data-tab="changelog" data-ico="📝">Changelog</div>
-      <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div>
+      <!-- <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div> -->
     </div>
 
     <!-- Contenus -->
@@ -1483,10 +1511,13 @@ async function runUpdaterIfNeeded() {
       if (!container) return;
       
       try {
+        container.innerHTML = '<div class="changelog-loading">Chargement des mises à jour...</div>';
+        
         const response = await fetch('https://eminium.ovh/api/changelog/updates');
         if (!response.ok) throw new Error('Erreur de chargement du changelog');
         
-        const updates = await response.json();
+        const data = await response.json();
+        const updates = data?.data;
         
         if (!updates || !Array.isArray(updates) || updates.length === 0) {
           container.innerHTML = '<div class="changelog-empty">Aucune mise à jour disponible pour le moment.</div>';
@@ -1495,24 +1526,65 @@ async function runUpdaterIfNeeded() {
         
         // Formater la date
         const formatDate = (dateString) => {
-          const options = { year: 'numeric', month: 'long', day: 'numeric' };
+          const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          };
           return new Date(dateString).toLocaleDateString('fr-FR', options);
         };
         
+        // Extraire la version du titre (format: "Eminium - PatchNote V10.0.0.2 | 22/08/2025")
+        const extractVersion = (title) => {
+          const match = title.match(/V([\d.]+)/);
+          return match ? `v${match[1]}` : 'N/A';
+        };
+        
         // Générer le HTML du changelog
-        const html = updates.map(update => `
-          <div class="changelog-entry">
-            <div class="changelog-version">
-              <span>Version ${update.version || 'N/A'}</span>
-              <span class="changelog-date">${formatDate(update.date || new Date().toISOString())}</span>
+        const html = updates.map(update => {
+          // Convertir le contenu HTML en nœuds DOM pour le traiter
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = update.content;
+          
+          // Récupérer les sections h1
+          const sections = {};
+          tempDiv.querySelectorAll('h1').forEach(h1 => {
+            const sectionTitle = h1.textContent.trim();
+            const sectionContent = [];
+            let next = h1.nextElementSibling;
+            
+            while (next && next.tagName !== 'H1') {
+              if (next.tagName === 'UL') {
+                sectionContent.push(next.outerHTML);
+              }
+              next = next.nextElementSibling;
+            }
+            
+            sections[sectionTitle] = sectionContent.join('');
+          });
+          
+          const version = extractVersion(update.title);
+          const date = update.created_at ? formatDate(update.created_at) : '';
+          
+          return `
+            <div class="changelog-entry">
+              <div class="changelog-version">
+                <span>${update.title || 'Mise à jour'}</span>
+                <span class="changelog-date">${date}</span>
+              </div>
+              <div class="changelog-content">
+                ${Object.entries(sections).map(([title, content]) => `
+                  <div class="changelog-section">
+                    <h4>${title}</h4>
+                    ${content}
+                  </div>
+                `).join('')}
+              </div>
             </div>
-            ${update.changes && update.changes.length ? `
-              <ul class="changelog-changes">
-                ${update.changes.map(change => `<li>${change}</li>`).join('')}
-              </ul>
-            ` : ''}
-          </div>
-        `).join('');
+          `;
+        }).join('');
         
         container.innerHTML = html;
         
@@ -1521,6 +1593,7 @@ async function runUpdaterIfNeeded() {
         container.innerHTML = `
           <div class="changelog-error">
             Impossible de charger les mises à jour. Vérifiez votre connexion internet.
+            <div style="margin-top: 10px; font-size: 12px; color: #ff9e9e;">${error.message}</div>
           </div>
         `;
       }
