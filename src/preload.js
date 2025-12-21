@@ -47,6 +47,25 @@ contextBridge.exposeInMainWorld('eminium', {
     ipcRenderer.invoke('launcher:prepare')
   ),
   
+  // Gestion des serveurs
+  getServers: withLogging('servers:get', () => 
+    ipcRenderer.invoke('servers:get')
+  ),
+  
+  // Gestion des modpacks
+  checkModpack: withLogging('modpack:check', (name, version) => 
+    ipcRenderer.invoke('modpack:check', { name, version })
+  ),
+  
+  downloadModpack: withLogging('modpack:download', (url, name, version) => 
+    ipcRenderer.invoke('modpack:download', { url, name, version })
+  ),
+  
+  // Lancement du jeu
+  launchGame: withLogging('game:launch', (options) => 
+    ipcRenderer.invoke('game:launch', options)
+  ),
+  
   // Utilitaires réseau
   ping: withLogging('launcher:ping', (host, port, timeout = 3000) => 
     ipcRenderer.invoke('launcher:ping', { host, port, timeout })

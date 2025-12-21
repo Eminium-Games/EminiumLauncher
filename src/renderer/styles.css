@@ -258,10 +258,241 @@ h1 {
   height: 6px;
 }
 
+/* Styles pour les cartes de serveur */
+.server-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.server-card.modded {
+  border-left: 3px solid #8a2be2;
+}
+
+.server-card.vanilla {
+  border-left: 3px solid #3b82f6;
+}
+
 .server-card.active {
   background: rgba(245, 158, 11, 0.1);
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* En-tête de la carte serveur */
+.server-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.server-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-right: 12px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.server-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.server-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.server-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.server-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.server-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.server-version {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.badge-modded {
+  background-color: rgba(138, 43, 226, 0.2);
+  color: #b388ff;
+}
+
+.badge-vanilla {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #82b1ff;
+}
+
+/* Statut du serveur */
+.server-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.server-status .status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.server-status.online .status-indicator {
+  background-color: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+.server-status.offline .status-indicator {
+  background-color: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
+}
+
+.server-status.maintenance .status-indicator {
+  background-color: var(--warning);
+  box-shadow: 0 0 6px var(--warning);
+}
+
+/* Statistiques du serveur */
+.server-stats {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.server-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.server-stat svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+/* Actions du serveur */
+.server-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Panneau de contrôle du serveur */
+.server-control-panel {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: var(--padding);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: var(--gap);
+}
+
+.server-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.server-detail {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+
+.server-detail h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 6px 0;
+  color: var(--muted);
+}
+
+.server-detail p {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Indicateur de chargement */
+.loading-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .server-details {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .server-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .server-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 .server-card.active::before {
