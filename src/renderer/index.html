@@ -54,39 +54,302 @@
 
     <div class="tab-content" id="play">
       <div class="panel">
-        <div class="field">
-          <label>Mémoire allouée <span class="hint" id="memLabel">2048 Mo</span></label>
-          <div class="slider-row">
-            <input id="memSlider" type="range" min="1024" max="8192" step="256" value="2048">
-          </div>
-          <div id="ramInfo" class="muted" style="margin-top:6px;">Détection RAM...</div>
-        </div>
-        <div class="panel" style="margin-top:12px;">
-          <div class="muted" style="margin-bottom:8px;">Performances</div>
-          <div class="row fields-2">
-            <div class="field" style="flex:1;">
-              <label>Distance de rendu <span class="hint" id="renderLabel">12 chunks</span></label>
-              <input id="renderDist" type="range" min="2" max="32" step="1" value="12">
+        <h3 class="panel-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Sélectionnez un serveur
+        </h3>
+        
+        <!-- Grille des serveurs -->
+        <div class="servers-grid" id="serversList">
+          <!-- Les serveurs seront ajoutés dynamiquement ici par JavaScript -->
+          
+          <!-- Exemple de serveur (sera remplacé par les vrais serveurs) -->
+          <div class="server-card" data-server-id="survival">
+            <div class="server-header">
+              <div class="server-icon">
+                <img src="https://minotar.net/helm/MHF_Creeper/64.png" alt="Survival">
+              </div>
+              <div class="server-info">
+                <h4 class="server-name">Serveur Survival</h4>
+                <span class="server-status online">
+                  <span class="status-indicator"></span>
+                  En ligne: 24/100
+                </span>
+              </div>
             </div>
-            <div class="field" style="flex:1;">
-              <label>FPS max <span class="hint" id="fpsLabel">120</span></label>
-              <input id="fpsCap" type="range" min="30" max="240" step="10" value="120">
+            <p class="server-desc">
+              Survie classique avec économie, métiers et événements réguliers.
+            </p>
+            <div class="server-stats">
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Communauté active</span>
+              </div>
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <span>Support 24/7</span>
+              </div>
+            </div>
+            <div class="server-actions">
+              <button class="btn btn-primary btn-sm" data-action="connect">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Se connecter
+              </button>
+              <button class="btn btn-secondary btn-sm" data-action="info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Détails
+              </button>
             </div>
           </div>
-          <div class="row toggles" style="margin-top:8px;">
-            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="vsync"> VSync</label>
-            <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
+          
+          <!-- Exemple d'un deuxième serveur -->
+          <div class="server-card" data-server-id="creative">
+            <div class="server-header">
+              <div class="server-icon">
+                <img src="https://minotar.net/helm/MHF_Enderman/64.png" alt="Créatif">
+              </div>
+              <div class="server-info">
+                <h4 class="server-name">Serveur Créatif</h4>
+                <span class="server-status online">
+                  <span class="status-indicator"></span>
+                  En ligne: 12/50
+                </span>
+              </div>
+            </div>
+            <p class="server-desc">
+              Monde créatif illimité avec des outils de construction avancés et des plots à personnaliser.
+            </p>
+            <div class="server-stats">
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                <span>WorldEdit inclus</span>
+              </div>
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <span>Builds sauvegardées</span>
+              </div>
+            </div>
+            <div class="server-actions">
+              <button class="btn btn-primary btn-sm" data-action="connect">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Se connecter
+              </button>
+              <button class="btn btn-secondary btn-sm" data-action="info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Détails
+              </button>
+            </div>
+          </div>
+          
+          <!-- Exemple d'un serveur hors ligne -->
+          <div class="server-card" data-server-id="minigames">
+            <div class="server-header">
+              <div class="server-icon">
+                <img src="https://minotar.net/helm/MHF_Cake/64.png" alt="Mini-jeux">
+              </div>
+              <div class="server-info">
+                <h4 class="server-name">Mini-jeux</h4>
+                <span class="server-status maintenance">
+                  <span class="status-indicator"></span>
+                  Maintenance
+                </span>
+              </div>
+            </div>
+            <p class="server-desc">
+              Collection de mini-jeux variés : SkyWars, BedWars, PvP et bien plus encore !
+            </p>
+            <div class="server-stats">
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23l5-3 5 3-1.21-9.12"></polyline>
+                </svg>
+                <span>Classements</span>
+              </div>
+              <div class="server-stat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Équipes</span>
+              </div>
+            </div>
+            <div class="server-actions">
+              <button class="btn btn-secondary btn-sm" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Indisponible
+              </button>
+              <button class="btn btn-secondary btn-sm" data-action="info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Détails
+              </button>
+            </div>
           </div>
         </div>
-        <div class="row toggles" style="margin-top:8px;">
-          <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
-          </label>
-        </div>
-        <div class="row" style="margin-top:12px;">
-          <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
-          <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
-          <button class="btn" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">Jouer</button>
+        
+        <!-- Panneau de contrôle du serveur sélectionné -->
+        <div class="server-control-panel" id="serverControlPanel" style="display: none;">
+          <div class="server-control-header">
+            <h3 class="server-control-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+              Paramètres du serveur
+            </h3>
+            <button class="btn btn-icon btn-sm" id="btnBackToServers" aria-label="Retour à la liste des serveurs">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="server-control-stats">
+            <div class="stat-card">
+              <div class="stat-label">Statut</div>
+              <div class="stat-value" id="serverStatus">Hors ligne</div>
+              <div class="stat-hint">Dernière vérification: <span id="lastPing">À l'instant</span></div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-label">Joueurs</div>
+              <div class="stat-value"><span id="onlinePlayers">0</span>/<span id="maxPlayers">0</span></div>
+              <div class="stat-hint">En ligne: <span id="playerList">Aucun joueur</span></div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-label">Version</div>
+              <div class="stat-value" id="serverVersion">1.20.1</div>
+              <div class="stat-hint">Protocole: <span id="protocolVersion">763</span></div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-label">Latence</div>
+              <div class="stat-value" id="serverPing">0</div>
+              <div class="stat-hint">Temps de réponse du serveur</div>
+            </div>
+          </div>
+          
+          <div class="panel">
+            <h4 class="panel-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+              </svg>
+              Paramètres du jeu
+            </h4>
+            
+            <div class="form-group">
+              <label class="form-label" for="memSlider">Mémoire allouée <span class="hint" id="memLabel">2048 Mo</span></label>
+              <div class="progress-container" style="margin-top: 8px;">
+                <div class="progress-bar" id="memProgress" style="width: 25%;"></div>
+              </div>
+              <input type="range" class="form-control" id="memSlider" min="1024" max="16384" step="256" value="2048">
+              <div id="ramInfo" class="muted" style="margin-top: 4px; font-size: 12px;">Détection RAM en cours...</div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+              <label class="form-label">Performances</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px;">
+                <div>
+                  <label class="form-label" for="renderDist">Distance de rendu <span class="hint" id="renderLabel">12 chunks</span></label>
+                  <input type="range" class="form-control" id="renderDist" min="2" max="32" step="1" value="12">
+                </div>
+                <div>
+                  <label class="form-label" for="fpsCap">FPS max <span class="hint" id="fpsLabel">120</span></label>
+                  <input type="range" class="form-control" id="fpsCap" min="30" max="240" step="10" value="120">
+                </div>
+              </div>
+              <div style="display: flex; gap: 24px; margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                  <input type="checkbox" class="toggle" id="vsync">
+                  <span>VSync</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                  <input type="checkbox" class="toggle" id="fpsUnlimited">
+                  <span>FPS illimités</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" class="toggle" id="closeOnPlayToggle">
+                <span>Fermer le launcher au démarrage du jeu</span>
+              </label>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" id="btnCheck">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Vérifier les mises à jour
+              </button>
+              <button class="btn btn-secondary" id="btnForceUpdate">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                  <path d="M16 16h5v5"></path>
+                </svg>
+                Forcer la mise à jour
+              </button>
+              <button class="btn btn-primary" id="btnPlay" style="margin-left: auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Jouer
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
