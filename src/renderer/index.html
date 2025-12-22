@@ -1,53 +1,144 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="shortcut icon" href="https://eminium.ovh/storage/img/eminium-logo.png" type="image/x-icon">
-<title>Eminium Launcher</title>
-<!-- Premium font import -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NationsGlory Launcher</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <div class="header">
-      <div class="brand">
-        <div class="logo"><img src="https://eminium.ovh/storage/img/eminium-logo.png" alt=""></div>
-        <div>
-          <h1>Eminium Launcher</h1>
-          <div class="profile-card" id="profileCard" style="display:none;">
-            <img id="profileSkin" src="" alt="Skin" class="skeleton">
-            <div class="profile-info">
-              <span id="profileName" class="skeleton">Pseudo</span>
-              <span class="uuid skeleton" id="profileUUID">UUID</span>
-              <span class="badge-grade" id="profileGrade" aria-label="Grade" title=""></span>
-            </div>
-            <button class="btn sec" id="btnLogout" style="margin-left:auto; display:none;" aria-label="Se déconnecter" title="Se déconnecter">Déconnexion</button>
-          </div>
-        </div>
+  <div id="app">
+    <!-- Barre de titre personnalisée -->
+    <div class="titlebar">
+      <div class="titlebar-title">NationsGlory Launcher</div>
+      <div class="titlebar-controls">
+        <div class="titlebar-btn minimize"><i class="fas fa-minus"></i></div>
+        <div class="titlebar-btn maximize"><i class="far fa-window-maximize"></i></div>
+        <div class="titlebar-btn close"><i class="fas fa-times"></i></div>
       </div>
     </div>
 
-    <!-- Onglets -->
-    <div class="tabs">
-      <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
-      <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
-      <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
-      <div class="tab" data-tab="changelog" data-ico="📝">Changelog</div>
-      <!-- <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div> -->
-    </div>
+    <div class="main-container">
+      <!-- Barre latérale -->
+      <div class="sidebar">
+        <div class="nav-item active" data-tab="play">
+          <i class="fas fa-play"></i>
+        </div>
+        <div class="nav-item" data-tab="news">
+          <i class="far fa-newspaper"></i>
+        </div>
+        <div class="nav-item" data-tab="shop">
+          <i class="fas fa-shopping-bag"></i>
+        </div>
+        <div class="nav-item" data-tab="settings">
+          <i class="fas fa-cog"></i>
+        </div>
+      </div>
+
+      <!-- Contenu principal -->
+      <div class="main-content">
+        <div class="content-header">
+          <div>
+            <h1 class="content-title">NationsGlory</h1>
+            <div class="status-indicator">
+              <span class="status-dot"></span>
+              <span id="playerCount">Chargement...</span>
+            </div>
+          </div>
+          
+          <!-- Menu profil (caché par défaut) -->
+          <div class="profile-menu" id="profileMenu" style="display: none;">
+            <div class="profile-info">
+              <span id="profileName">Invité</span>
+              <span class="profile-grade" id="profileGrade">Joueur</span>
+            </div>
+            <img id="profileAvatar" src="https://crafatar.com/avatars/steve.png" alt="Avatar" class="profile-avatar">
+          </div>
+        </div>
 
     <!-- Contenus -->
-    <div class="tab-content active" id="auth">
-      <div class="panel">
-        <div class="field"><label>Email</label><input id="email" type="text" autocomplete="username" aria-label="Adresse email"></div>
-        <div class="field"><label>Mot de passe</label><input id="pass" type="password" autocomplete="current-password" aria-label="Mot de passe"></div>
-        <div class="field"><label>Code 2FA</label><input id="code2fa" type="text" placeholder="000000" inputmode="numeric" pattern="\\d{6}" aria-label="Code de double authentification"></div>
-        <button class="btn" id="btnLogin" aria-label="Se connecter" title="Se connecter">Connexion</button>
+        <div class="scroll-content">
+          <!-- Sélecteur de version -->
+          <div class="version-selector">
+            <select id="versionSelect">
+              <option value="1.19.4">Version 1.19.4 (Recommandé)</option>
+              <option value="1.18.2">Version 1.18.2</option>
+              <option value="1.17.1">Version 1.17.1</option>
+              <option value="1.16.5">Version 1.16.5</option>
+            </select>
+          </div>
+
+          <!-- Bouton de lancement -->
+          <button class="launch-button" id="btnPlay">
+            <i class="fas fa-play"></i> JOUER
+          </button>
+
+          <!-- Panneau de connexion (caché par défaut) -->
+          <div class="auth-panel" id="authPanel">
+            <h3>Connexion</h3>
+            <div class="form-group">
+              <input type="email" id="email" placeholder="Email" class="form-input">
+            </div>
+            <div class="form-group">
+              <input type="password" id="password" placeholder="Mot de passe" class="form-input">
+            </div>
+            <div class="form-group" id="twoFactorGroup" style="display: none;">
+              <input type="text" id="twoFactorCode" placeholder="Code 2FA" class="form-input">
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary" id="btnCancelAuth">Annuler</button>
+              <button class="btn btn-primary" id="btnLogin">Se connecter</button>
+            </div>
+            <div class="auth-links">
+              <a href="#" id="btnForgotPassword">Mot de passe oublié ?</a>
+              <a href="#" id="btnRegister">Créer un compte</a>
+            </div>
+          </div>
+
+          <!-- Grille des jeux -->
+          <div class="games-grid">
+            <!-- Carte de jeu 1 -->
+            <div class="game-card" data-game="age-of-alliances">
+              <div class="game-card-header">
+                <h3 class="game-card-title">AGE OF ALLIANCES</h3>
+                <div class="game-card-tags">
+                  <span class="game-tag">Update</span>
+                  <span class="game-tag">Java</span>
+                </div>
+              </div>
+              <div class="game-card-body">
+                <p>Rejoignez la compétition ultime entre nations et construisez votre empire !</p>
+                <div class="game-stats">
+                  <span><i class="fas fa-users"></i> 2.4K en jeu</span>
+                  <span><i class="fas fa-star"></i> Nouvelle mise à jour</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carte de jeu 2 -->
+            <div class="game-card" data-game="bienvenue">
+              <div class="game-card-header">
+                <h3 class="game-card-title">BIENVENUE SUR PANORA</h3>
+                <div class="game-card-tags">
+                  <i class="fas fa-play"></i>
+                </div>
+              </div>
+              <div class="game-card-body">
+                <p>Découvrez l'univers de NationsGlory et commencez votre aventure dès maintenant !</p>
+                <div class="game-stats">
+                  <span><i class="fas fa-users"></i> 5.7K en jeu</span>
+                  <span><i class="fas fa-heart"></i> Populaire</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version en bas à gauche -->
+          <div class="version">Version 5.0.104</div>
         <div id="authError" class="auth-error" role="alert" aria-live="polite"></div>
       </div>
     </div>
@@ -107,23 +198,87 @@
           <div class="changelog-loading">Chargement des mises à jour...</div>
         </div>
       </div>
+        </div>
+      </div>
     </div>
-    
-    <div class="tab-content" id="admin">
-      <div class="panel">
-        <div class="muted" style="margin-bottom:8px;">Administration</div>
+  </div>
+
+  <!-- Modal de chargement -->
+  <div class="modal" id="loadingModal">
+    <div class="modal-content">
+      <div class="loader">
+        <div class="spinner"></div>
+        <p id="loadingText">Chargement...</p>
+        <div class="progress-bar">
+          <div class="progress" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal d'erreur -->
+  <div class="modal" id="errorModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="errorTitle">Erreur</h3>
+        <button class="modal-close" id="closeErrorModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="errorMessage">Une erreur est survenue.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="errorModalOk">OK</button>
+      </div>
+    </div>
+  </div>
         <div class="row toggles">
           <label><input type="checkbox" class="toggle" id="maintenanceToggle" disabled> Statut maintenance (contrôlé côté serveur)</label>
         </div>
         <div class="muted" style="margin-top:10px; font-size:12px;">Ce statut est géré automatiquement par le serveur. Le launcher ne peut pas le modifier.</div>
       </div>
     </div>
+  <!-- Paramètres -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <h3>Paramètres</h3>
+      <button class="settings-close" id="closeSettings">&times;</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-section">
+        <h4>Paramètres graphiques</h4>
+        <div class="form-group">
+          <label>Mémoire allouée (RAM)</label>
+          <div class="range-container">
+            <input type="range" id="ramAllocation" min="1024" max="16384" step="256" value="4096">
+            <span id="ramValue">4 Go</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Résolution</label>
+          <select id="resolution" class="form-input">
+            <option value="auto">Automatique</option>
+            <option value="1920x1080">1920x1080 (Full HD)</option>
+            <option value="2560x1440">2560x1440 (QHD)</option>
+            <option value="3840x2160">3840x2160 (4K)</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h4>Compte</h4>
+        <div class="form-group">
+          <button class="btn btn-block" id="btnLogout">Se déconnecter</button>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h4>À propos</h4>
+        <p>NationsGlory Launcher v5.0.104</p>
+        <p>&copy; 2025 Eminium. Tous droits réservés.</p>
+      </div>
+    </div>
   </div>
-</div>
-
-<!-- Modal paramètres -->
-<div class="settings-modal" id="settingsModal">
-  <div class="settings-content">
     <h2>Paramètres</h2>
     <p>Options du launcher...</p>
     <button class="btn sec" onclick="document.getElementById('settingsModal').classList.remove('show')">Fermer</button>
