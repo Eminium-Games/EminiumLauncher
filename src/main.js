@@ -4,13 +4,23 @@ const { app, BrowserWindow, ipcMain, dialog, nativeImage } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-
 const AdmZip = require('adm-zip');
-let DiscordRPC;
-try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
-const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
+let DiscordRPC;
+try { DiscordRPC = require('discord-rpc'); } catch {}
+
+// Import all required functions from setup.js
+const setup = require('./setup');
+const { 
+  ensureAll, 
+  launchMinecraft, 
+  readUserProfile, 
+  logoutEminium, 
+  checkReady, 
+  prepareGame,
+  loginEminium 
+} = setup;
 
 let mainWindow;
 let windowIcon; // nativeImage pour l'icône
@@ -136,9 +146,82 @@ function setPresencePlaying() {
   } catch { }
 }
 
-const { loginEminium } = require('./setup.js');
+// loginEminium is already imported above
+
+// Gestionnaires d'authentification
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
-  return await loginEminium(email, password, code);
+  try {
+    return await loginEminium(email, password, code);
+  } catch (error) {
+    console.error('Erreur de connexion:', error);
+    return { success: false, error: error.message || 'Échec de la connexion' };
+  }
+});
+
+ipcMain.handle('auth:logout', async () => {
+  try {
+    await logoutEminium();
+    return { success: true };
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('auth:profile:get', async () => {
+  try {
+    const profile = readUserProfile();
+    return { success: true, profile };
+  } catch (error) {
+    console.error('Erreur lors de la lecture du profil:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Gestionnaires du launcher
+ipcMain.handle('launcher:ensure', async () => {
+  try {
+    await ensureAll();
+    return { ok: true };
+  } catch (e) {
+    console.error('Erreur lors de l\'initialisation:', e);
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
+
+ipcMain.handle('launcher:play', async (_evt, options) => {
+  try {
+    const result = await launchMinecraft(options);
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Erreur lors du lancement du jeu:', error);
+    return { success: false, error: error.message || 'Échec du lancement du jeu' };
+  }
+});
+
+
+ipcMain.handle('launcher:prepare', async () => {
+  try {
+    await prepareGame(console.log);
+    return { success: true };
+  } catch (error) {
+    console.error('Erreur lors de la préparation du jeu:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Utilitaires système
+ipcMain.handle('sys:ram:totalMB', () => {
+  try {
+    return { ok: true, totalMB: Math.floor(os.totalmem() / (1024 * 1024)) };
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Impossible de lire la mémoire système' };
+  }
+});
+
+// Maintenance
+ipcMain.handle('maintenance:get', () => {
+  return { ok: true, maintenance: false };
 });
 
 // (payments notifications removed)
@@ -756,12 +839,22 @@ function tcpPing(host, port, timeout = 3000) {
 }
 
 // IPC: ping Minecraft server (port open check)
-ipcMain.handle('launcher:ping', async (_evt, { host, port, timeout }) => {
+ipcMain.handle('launcher:ping', async (_evt, { host, port, timeout } = {}) => {
   try {
     if (!host || !port) return { ok: true, up: false };
-    const up = await tcpPing(String(host), Number(port), typeof timeout === 'number' ? timeout : 3000);
+    const up = await tcpPing(host, port, timeout);
     return { ok: true, up };
   } catch (e) {
-    return { ok: true, up: false };
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
+
+// Gestionnaire pour la vérification des mises à jour
+ipcMain.handle('updater:check', async () => {
+  try {
+    // Pour l'instant, retourner qu'aucune mise à jour n'est disponible
+    return { ok: true, updateAvailable: false };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
   }
 });

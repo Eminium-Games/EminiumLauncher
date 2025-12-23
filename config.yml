@@ -1,0 +1,13 @@
+window:
+  width: 1280
+  height: 800
+game:
+  javaPath: ''
+  jvmArgs: '-Xmx2G -Xms1G'
+  gameDir: E:\Users\Loic\AppData\Roaming\.minecraft
+  launcherVisibility: hide
+settings:
+  autoConnect: false
+  keepLauncherOpen: true
+  showConsole: false
+  language: fr_FR

@@ -97,7 +97,29 @@ contextBridge.exposeInMainWorld('eminiumMaintenance', {
   }
 });
 
-// (payments notifications removed)
+// Updater functionality
+contextBridge.exposeInMainWorld('updater', {
+  check: withLogging('updater:check', (opts) => 
+    ipcRenderer.invoke('updater:check', opts)
+  ),
+  download: withLogging('updater:download', (info) => 
+    ipcRenderer.invoke('updater:download', info)
+  ),
+  apply: withLogging('updater:apply', (info) => 
+    ipcRenderer.invoke('updater:apply', info)
+  ),
+  relaunch: withLogging('updater:relaunch', () => 
+    ipcRenderer.invoke('updater:relaunch')
+  ),
+  onProgress: (cb) => {
+    const handler = (_evt, data) => cb?.(data);
+    ipcRenderer.on('updater:progress', handler);
+    return () => ipcRenderer.removeListener('updater:progress', handler);
+  },
+  offProgress: () => {
+    ipcRenderer.removeAllListeners('updater:progress');
+  }
+});
 
 // Updater (branch-based)
 contextBridge.exposeInMainWorld('updater', {
