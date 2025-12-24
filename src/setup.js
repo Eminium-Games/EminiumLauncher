@@ -7,9 +7,8 @@ const https = require('https');
 const AdmZip = require('adm-zip');
 const crypto = require('crypto');           // pour générer un UUID offline si besoin
 const { execFileSync, spawnSync } = require('child_process');
-const { app, BrowserWindow } = require('electron');
-
 const SITE_URL = 'https://eminium.ovh';     // ton site Azuriom
+const { app, BrowserWindow } = require('electron');
 
 
 
@@ -210,115 +209,23 @@ function ensureMirrorsFile() {
 }
 
 async function importBundledModpackIfAny() {
-  try {
-    if (!fs.existsSync(bundledModpack)) {
-      console.log('[importBundledModpackIfAny] Aucun modpack intégré trouvé');
-      return { success: true, extracted: false };
-    }
-
-    console.log(`[importBundledModpackIfAny] Extraction du modpack intégré: ${bundledModpack}`);
-    
-    // Vérifier la taille du fichier
-    const stats = fs.statSync(bundledModpack);
-    if (stats.size === 0) {
-      throw new Error('Le fichier du modpack est vide');
-    }
-
-    // Extraire le contenu du ZIP
+  if (fs.existsSync(bundledModpack)) {
     const zip = new AdmZip(bundledModpack);
-    const zipEntries = zip.getEntries();
-    
-    if (!zipEntries || zipEntries.length === 0) {
-      throw new Error('Le fichier ZIP du modpack est vide ou corrompu');
-    }
-
-    console.log(`[importBundledModpackIfAny] Extraction de ${zipEntries.length} fichiers...`);
-    
-    // Extraire les fichiers
     zip.extractAllTo(hiddenBase, true);
-    
-    console.log('[importBundledModpackIfAny] Extraction terminée avec succès');
-    return { success: true, extracted: true, fileCount: zipEntries.length };
-    
-  } catch (error) {
-    console.error('[importBundledModpackIfAny] Erreur lors de l\'extraction du modpack:', error);
-    // Essayer de supprimer le fichier corrompu
-    try {
-      if (fs.existsSync(bundledModpack)) {
-        fs.unlinkSync(bundledModpack);
-        console.log('[importBundledModpackIfAny] Fichier modpack corrompu supprimé');
-      }
-    } catch (cleanupError) {
-      console.error('[importBundledModpackIfAny] Erreur lors du nettoyage du fichier corrompu:', cleanupError);
-    }
-    
-    throw new Error(`Échec de l'extraction du modpack intégré: ${error.message}`);
   }
 }
 
 // Utilitaire: copier récursivement (overwrite)
-// Set global pour suivre les chemins déjà traités
-if (!global._copyDirProcessedPaths) {
-  global._copyDirProcessedPaths = new Set();
-}
-
-function copyDir(src, dst, options = {}) {
-  const srcPath = path.resolve(src);
-  const dstPath = path.resolve(dst);
-  
-  // Vérifier si on essaie de copier un dossier dans lui-même
-  if (srcPath === dstPath || dstPath.startsWith(srcPath + path.sep)) {
-    console.warn(`Tentative de copie récursive évitée: ${src} -> ${dst}`);
-    return;
-  }
-  
-  // Vérifier si ce chemin a déjà été traité
-  const cacheKey = `${srcPath}->${dstPath}`;
-  if (global._copyDirProcessedPaths.has(cacheKey)) {
-    console.warn(`Copie en double évitée: ${src} -> ${dst}`);
-    return;
-  }
-  
-  try {
-    // Ajouter ce chemin à l'ensemble des chemins traités
-    global._copyDirProcessedPaths.add(cacheKey);
-    
-    // Créer le répertoire de destination
-    ensureDir(dstPath);
-    
-    // Lire le contenu du répertoire source
-    const entries = fs.readdirSync(srcPath, { withFileTypes: true });
-    
-    // Copier chaque entrée
-    for (const entry of entries) {
-      const srcFile = path.join(srcPath, entry.name);
-      const dstFile = path.join(dstPath, entry.name);
-      
-      try {
-        if (entry.isDirectory()) {
-          // Copier récursivement les sous-répertoires
-          copyDir(srcFile, dstFile, options);
-        } else if (entry.isFile()) {
-          // Copier les fichiers
-          fs.copyFileSync(srcFile, dstFile);
-          
-          // Optionnel: préserver les permissions
-          if (process.platform !== 'win32') {
-            const stats = fs.statSync(srcFile);
-            fs.chmodSync(dstFile, stats.mode);
-          }
-        }
-      } catch (err) {
-        console.error(`Erreur lors de la copie de ${srcFile} vers ${dstFile}:`, err);
-        if (!options.continueOnError) throw err;
-      }
+function copyDir(src, dst) {
+  ensureDir(dst);
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name);
+    const d = path.join(dst, entry.name);
+    if (entry.isDirectory()) copyDir(s, d);
+    else if (entry.isFile()) {
+      ensureDir(path.dirname(d));
+      fs.copyFileSync(s, d);
     }
-  } catch (error) {
-    console.error(`Erreur lors de la copie du répertoire ${srcPath}:`, error);
-    if (!options.continueOnError) throw error;
-  } finally {
-    // Nettoyer le cache après la copie
-    global._copyDirProcessedPaths.delete(cacheKey);
   }
 }
 
@@ -974,90 +881,15 @@ async function fetchWithFallback(urls, dest, label='resource', validateJar=false
 }
 
 
-// Garder une trace de l'état d'exécution
-let _ensureAllInProgress = false;
-let _ensureAllPromise = null;
-
-async function ensureAll(log = console.log) {
-  // Éviter les exécutions parallèles
-  if (_ensureAllInProgress) {
-    return _ensureAllPromise || Promise.resolve({ ok: false, error: 'Une opération est déjà en cours' });
-  }
-
-  _ensureAllInProgress = true;
-  _ensureAllPromise = (async () => {
-    try {
-      log('[ensureAll] Début de l\'initialisation...');
-      
-      // 1. Créer les dossiers de base
-      log('[ensureAll] Création des dossiers de base...');
-      await ensureBaseFolders();
-      
-      // 2. Migrer depuis l'ancienne structure si nécessaire
-      log('[ensureAll] Vérification de la migration depuis l\'ancienne structure...');
-      await migrateFromOldHiddenBase(log);
-      
-      // 3. Options utilisateur
-      log('[ensureAll] Configuration des options utilisateur...');
-      await ensureUserOptions();
-      
-      // 4. Fichier de miroirs
-      log('[ensureAll] Configuration des miroirs...');
-      ensureMirrorsFile();
-      
-      // 5. Importer le modpack intégré s'il existe
-      log('[ensureAll] Vérification du modpack intégré...');
-      try {
-        await importBundledModpackIfAny();
-      } catch (err) {
-        log(`[ensureAll] Erreur lors de l'import du modpack intégré: ${err.message}`);
-        // Ne pas échouer pour cette étape
-      }
-      
-      // 6. Synchroniser depuis l'URL du modpack
-      log('[ensureAll] Synchronisation du modpack depuis l\'URL...');
-      try {
-        await syncModpackFromUrl(MODPACK_URL, log);
-      } catch (err) {
-        log(`[ensureAll] Erreur lors de la synchronisation du modpack: ${err.message}`);
-        // Ne pas échouer pour cette étape
-      }
-      
-      // 7. Télécharger les fichiers de version
-      log('[ensureAll] Vérification des fichiers de version...');
-      await ensureVersionFilesBMCL(MC_VERSION, log);
-      
-      // 8. Nettoyer les bibliothèques corrompues
-      log('[ensureAll] Nettoyage des bibliothèques corrompues...');
-      await cleanupCorruptLibraries();
-      
-      log('[ensureAll] Initialisation terminée avec succès');
-      return { 
-        ok: true,
-        paths: { hiddenBase, eminiumDir }
-      };
-      
-    } catch (error) {
-      const errorMessage = error?.message || String(error);
-      log(`[ensureAll] ERREUR: ${errorMessage}`);
-      log(error.stack || 'Pas de stack trace disponible');
-      
-      // Retourner une erreur détaillée
-      return { 
-        ok: false, 
-        error: errorMessage,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-        paths: { hiddenBase, eminiumDir }
-      };
-      
-    } finally {
-      // Réinitialiser l'état d'exécution
-      _ensureAllInProgress = false;
-      _ensureAllPromise = null;
-    }
-  })();
-
-  return _ensureAllPromise;
+async function ensureAll() {
+  await ensureBaseFolders();
+  await ensureUserOptions();
+  ensureMirrorsFile();
+  await importBundledModpackIfAny();
+  return {
+    ok: true,
+    paths: { hiddenBase, eminiumDir }
+  };
 }
 
 // Test de connexion au serveur
@@ -1115,7 +947,16 @@ function writeUserProfile(profile) {
   fs.writeFileSync(userProfilePath, JSON.stringify(profile, null, 2));
 }
 
-async function logoutEminium() {
+function logoutEminium() {
+  try {
+    if (fs.existsSync(userProfilePath)) fs.unlinkSync(userProfilePath);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+async function loginEminium(email, password, twoFactorCode) {
   // Validation des entrées
   if (!email || !password) {
     return { 
@@ -1304,288 +1145,148 @@ async function logoutEminium() {
     access_token: data.access_token || null,
     obtainedAt: new Date().toISOString()
   };
-  
-  return profile;
+
+  writeUserProfile(profile);
+  return { status: 'success', profile };
 }
 
 const { Client, Authenticator } = require('minecraft-launcher-core');
 
-async function loginEminium(email, password, code) {
-  try {
-    const response = await axios.post(`${SITE_URL}/api/auth/login`, {
-      email,
-      password,
-      ...(code && { code })
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    });
-
-    if (response.data && response.data.token) {
-      const userData = response.data.user || {};
-      const profile = {
-        name: userData.name || userData.username || 'Joueur',
-        uuid: userData.uuid || uuidFromName(userData.name || userData.username || 'Player'),
-        email: userData.email || email,
-        token: response.data.token,
-        refresh_token: response.data.refresh_token,
-        expires_at: response.data.expires_at || null,
-        ...userData
-      };
-      
-      writeUserProfile(profile);
-      return { success: true, profile };
-    }
-    
-    return { success: false, error: 'Réponse du serveur invalide' };
-  } catch (error) {
-    console.error('Erreur de connexion:', error);
-    return { 
-      success: false, 
-      error: error.response?.data?.message || error.message || 'Échec de la connexion',
-      requires2FA: error.response?.status === 402
-    };
-  }
-}
-
 async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565 } = {}) {
+
+  const profile = readUserProfile();
+  if (!profile) {
+    throw new Error('Aucun profil utilisateur trouvé. Connectez-vous d’abord.');
+  }
+
+  const launcher = new Client();
+
+  // Auth offline stricte pour éviter tout appel à authserver.mojang.com
+  const auth = {
+    access_token: '0',
+    client_token: '0',
+    uuid: profile.uuid,
+    name: profile.name,
+    user_properties: {},
+    meta: { type: 'offline' }
+  };
+
+  // Préparation offline via BMCL (évite Mojang)
+  const log = (msg) => {
+    console.log('[BMCL]', msg);
+    if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: msg });
+  };
+  // Synchroniser le modpack distant avant tout
+  await syncModpackFromUrl(MODPACK_URL, (m) => console.log(m));
+  await ensureVersionFilesBMCL(MC_VERSION, log);
+
+  const installerPath = await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
+  // Validate installer again defensively (may have been corrupted externally)
   try {
-    const profile = readUserProfile();
-    if (!profile) {
-      throw new Error('Aucun profil utilisateur trouvé. Connectez-vous d\'abord.');
-    }
-    
-    console.log(`[launchMinecraft] Démarrage du jeu pour ${profile.name} (${profile.uuid})`);
-
-    // Vérifier si le processus est déjà en cours d'exécution pour éviter les doublons
-    if (global.minecraftProcess) {
-      console.log('[launchMinecraft] Un processus Minecraft est déjà en cours d\'exécution');
-      return { success: false, error: 'Le jeu est déjà en cours d\'exécution' };
-    }
-
-      // Préparation offline via BMCL (évite Mojang)
-    const log = (msg) => {
-      console.log('[BMCL]', msg);
-      if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: msg });
-    };
-    // Synchroniser le modpack distant avant tout
-    await syncModpackFromUrl(MODPACK_URL, (m) => console.log(m));
-    await ensureVersionFilesBMCL(MC_VERSION, log);
-
-    // Vérifier et installer Forge si nécessaire
-    const installerPath = await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
-    try {
-      const testZip = new AdmZip(installerPath);
-      if (!testZip.getEntry('data/client.lzma') || !testZip.getEntry('install_profile.json')) {
-        try { fs.unlinkSync(installerPath); } catch {}
-        await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
-      }
-    } catch {
+    const testZip = new AdmZip(installerPath);
+    if (!testZip.getEntry('data/client.lzma') || !testZip.getEntry('install_profile.json')) {
       try { fs.unlinkSync(installerPath); } catch {}
       await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
     }
-
-    // Vérifier et valider Java
-    let javaPath = resolveJavaPath();
-    if (!javaPath) {
-      throw new Error('JRE embarqué introuvable. Placez une JRE Java 17 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
-    }
-
-    // Valider l'exécution de Java de manière asynchrone
-    const tryCheck = (exePath) => {
-      return new Promise((resolve) => {
-        const { spawn } = require('child_process');
-        const javaProcess = spawn(exePath, ['-version']);
-        
-        let output = '';
-        let errorOutput = '';
-        
-        javaProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-        
-        javaProcess.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-        });
-        
-        javaProcess.on('close', (code) => {
-          if (code === 0 || errorOutput.includes('version')) {
-            console.log(`[launchMinecraft] Java valide: ${exePath}`);
-            console.log(`[launchMinecraft] Version: ${errorOutput || output}`);
-            resolve(true);
-          } else {
-            console.error(`[launchMinecraft] Échec de la validation Java: code ${code}`);
-            resolve(false);
-          }
-        });
-        
-        // Timeout après 10 secondes
-        setTimeout(() => {
-          javaProcess.kill();
-          console.error('[launchMinecraft] Timeout lors de la validation de Java');
-          resolve(false);
-        }, 10000);
-      });
-    };
-
-    // Vérifier Java
-    let javaValid = await tryCheck(javaPath);
-    if (!javaValid && process.platform === 'win32' && javaPath.toLowerCase().endsWith('javaw.exe')) {
-      // Essayer avec java.exe si javaw.exe échoue
-      const altJavaPath = path.join(path.dirname(javaPath), 'java.exe');
-      if (fs.existsSync(altJavaPath)) {
-        console.log(`[launchMinecraft] Essai avec l'exécutable Java alternatif: ${altJavaPath}`);
-        javaValid = await tryCheck(altJavaPath);
-        if (javaValid) {
-          javaPath = altJavaPath;
-        }
-      }
-    }
-
-    if (!javaValid) {
-      throw new Error(`Java invalide ou non exécutable: ${javaPath}`);
-    }
-
-    // Configuration du lancement
-    const launchOptions = {
-      clientPackage: null, // Auto-détection
-      authorization: {
-        access_token: '0',
-        client_token: '0',
-        uuid: profile.uuid,
-        name: profile.name,
-        user_properties: {},
-        meta: { type: 'offline' }
-      },
-      root: dirs.hiddenBase,
-      version: {
-        number: MC_VERSION,
-        type: 'release',
-        custom: `eminium-${MC_VERSION}`
-      },
-      memory: {
-        min: Math.floor(memoryMB * 0.8) + 'M',
-        max: memoryMB + 'M'
-      },
-      javaPath,
-      server: serverHost ? { host: serverHost, port: serverPort } : undefined,
-      overrides: {
-        gameDirectory: eminiumDir,
-        maxSockets: 16
-      },
-      launcherBrand: 'Eminium Launcher',
-      launcherName: 'Eminium Launcher',
-      launcherVersion: '1.0.0',
-      // Options supplémentaires pour améliorer la stabilité
-      timeout: 300000, // 5 minutes de timeout pour le téléchargement
-      downloadFileMultiple: 16, // Téléchargements parallèles
-      downloadThreads: 16 // Nombre de threads de téléchargement
-    };
-    
-    console.log('[launchMinecraft] Lancement de Minecraft avec les options:', JSON.stringify({
-      ...launchOptions,
-      authorization: '***',
-      javaPath: '***'
-    }, null, 2));
-    
-    // Nettoyer les bibliothèques corrompues avant le lancement
-    await cleanupCorruptLibraries();
-    
-    // Lancer le jeu
-    const launcher = new Client();
-    const mcProcess = await launcher.launch(launchOptions);
-    
-    // Gestion des événements du processus
-    mcProcess.on('spawn', () => {
-      console.log('[launchMinecraft] Minecraft lancé avec succès');
-      if (globalThis.emitPlayProgress) {
-        globalThis.emitPlayProgress({ type: 'status', running: true });
-      }
-    });
-    
-    mcProcess.on('close', (code, signal) => {
-      console.log(`[launchMinecraft] Minecraft s'est arrêté avec le code ${code} (signal: ${signal || 'none'})`);
-      global.minecraftProcess = null;
-      if (globalThis.emitPlayProgress) {
-        globalThis.emitPlayProgress({ 
-          type: 'status', 
-          running: false,
-          exitCode: code,
-          signal: signal || null
-        });
-      }
-    });
-    
-    mcProcess.on('error', (err) => {
-      console.error('[launchMinecraft] Erreur lors du lancement de Minecraft:', err);
-      global.minecraftProcess = null;
-      if (globalThis.emitPlayProgress) {
-        globalThis.emitPlayProgress({ 
-          type: 'error', 
-          message: `Erreur: ${err.message}`,
-          error: {
-            name: err.name,
-            message: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-          }
-        });
-      }
-    });
-    
-    // Stocker la référence au processus
-    global.minecraftProcess = mcProcess;
-    
-    // Retourner les informations de lancement
-    return { 
-      success: true, 
-      process: mcProcess,
-      pid: mcProcess.pid,
-      launchOptions: {
-        ...launchOptions,
-        authorization: '***',
-        javaPath: '***'
-      }
-    };
-    
-  } catch (error) {
-    console.error('[launchMinecraft] Erreur critique lors du lancement:', error);
-    
-    // Nettoyer en cas d'erreur
-    global.minecraftProcess = null;
-    
-    // Envoyer l'erreur à l'interface utilisateur
-    if (globalThis.emitPlayProgress) {
-      globalThis.emitPlayProgress({
-        type: 'error',
-        message: `Échec du lancement: ${error.message}`,
-        error: {
-          name: error.name,
-          message: error.message,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }
-      });
-    }
-    
-    // Relancer l'erreur pour la gestion par l'appelant
-    throw new Error(`Échec du lancement de Minecraft: ${error.message}`);
+  } catch {
+    try { fs.unlinkSync(installerPath); } catch {}
+    await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
   }
+  let javaPath = resolveJavaPath();
+  // Enforce bundled JRE so we don't rely on system Java silently
+  if (!javaPath) {
+    throw new Error('JRE embarqué introuvable. Placez une JRE Java 17 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
+  }
+  // Validate Java by running -version; if javaw fails, try sibling java.exe
+  const tryCheck = (exePath) => {
+    try {
+      const { loginEminium, testServerConnection } = require('./setup.js');
+      const res = spawnSync(exePath, ['-version'], { encoding: 'utf8', windowsHide: true });
+      // Some Javas print version to stderr; accept exitCode 0
+      if (res.error) throw res.error;
+      if (res.status !== 0) {
+        const out = [res.stdout || '', res.stderr || ''].join('\n').trim();
+        const msg = `exitCode=${res.status}${out ? `, output=\n${out}` : ''}`;
+        throw new Error(msg);
+      }
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  try {
+    // If path points to javaw.exe, prefer java.exe for checks
+    if (process.platform === 'win32' && javaPath.toLowerCase().endsWith('javaw.exe')) {
+      const alt = path.join(path.dirname(javaPath), 'java.exe');
+      if (fs.existsSync(alt)) {
+        tryCheck(alt);
+        javaPath = alt;
+      } else {
+        tryCheck(javaPath);
+      }
+    } else {
+      tryCheck(javaPath);
+    }
+  } catch (e2) {
+    throw new Error(`Java invalide ou non exécutable: ${javaPath}. Détail: ${e2?.message || e2}`);
+  }
+  // Preflight: ensure critical Mojang library exists to avoid ForgeWrapper concurrent download issues
+  try {
+    const pathPart = 'com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar';
+    const dest = path.join(dirs.libraries, pathPart.replace(/\//g, path.sep));
+    if (!fs.existsSync(dest) || (function(){ try { const st = fs.statSync(dest); return st.size < 1024; } catch { return true; } })()) {
+      ensureDir(path.dirname(dest));
+      await fetchWithFallback(BMCL.maven(pathPart), dest, 'mojang blocklist jar', true);
+      try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: '[BMCL] Librairie pré-téléchargée com/mojang/blocklist' }); } catch {}
+    }
+  } catch (e) {
+    // Non bloquant: ForgeWrapper essaiera aussi, mais on log l'erreur
+    try { console.warn('[BMCL] Pré-téléchargement blocklist échoué:', e?.message || String(e)); } catch {}
+  }
+  try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `Java utilisé: ${javaPath}` }); } catch {}
+
+  const opts = {
+    root: hiddenBase, // dossier "invisible" avec Forge et mods
+    version: {
+      number: MC_VERSION,
+      type: 'release'
+    },
+    forge: installerPath,
+    ...(javaPath ? { javaPath } : {}),
+    // Use QuickPlay to auto-join the server (avoids deprecated server/port flags)
+    quickPlay: {
+      type: 'multiplayer',
+      identifier: `${serverHost}:${serverPort}`
+    },
+    memory: {
+      max: `${memoryMB}M`,
+      min: '512M'
+    },
+    authorization: auth
+  };
+
+  // Cleanup pass: remove any corrupted jars in libraries to force re-download by ForgeWrapper
+  await cleanupCorruptLibraries();
+
+  launcher.launch(opts);
+
+  launcher.on('debug', (e) => console.log('[MC DEBUG]', e));
+  launcher.on('data', (e) => console.log('[MC]', e.toString()));
+
+  return launcher;
 }
 
 
-// Export des fonctions
 module.exports = {
   ensureAll,
   launchMinecraft,
-  readUserProfile,
-  writeUserProfile,
-  logoutEminium,
   loginEminium,
-  checkReady,
-  prepareGame,
-  cleanupCorruptLibraries
+  testServerConnection,
+  readUserProfile,
+  logoutEminium,
+  eminiumDir,
+  hiddenBase
 };
 
 // Helpers d'état/installation pour le launcher
@@ -1625,6 +1326,9 @@ async function prepareGame(log) {
   await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
   return { ok: true };
 }
+
+module.exports.checkReady = checkReady;
+module.exports.prepareGame = prepareGame;
 
 // Parcours récursif des JARs pour supprimer ceux corrompus
 async function cleanupCorruptLibraries() {
