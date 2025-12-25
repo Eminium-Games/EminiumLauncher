@@ -35,7 +35,8 @@
     <!-- Onglets -->
     <div class="tabs">
       <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
-      <div class="tab" data-tab="play" data-ico="🎮" id="tabPlay">Jouer</div>
+      <div class="tab" data-tab="play" data-ico="▶️" id="tabPlay">Jouer</div>
+      <div class="tab" data-tab="settings" data-ico="⚙️" id="tabSettings">Paramètres</div>
       <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
       <div class="tab" data-tab="changelog" data-ico="📝">Changelog</div>
       <!-- <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div> -->
@@ -52,7 +53,23 @@
       </div>
     </div>
 
+    <!-- Onglet Jouer avec fond personnalisé -->
     <div class="tab-content" id="play">
+      <div class="play-container">
+        <div class="play-background"></div>
+        <div class="play-content">
+          <div class="play-button-container">
+            <button class="play-button" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">
+              <div class="play-triangle"></div>
+            </button>
+            <div class="play-text">Jouer</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nouvel onglet Paramètres -->
+    <div class="tab-content" id="settings">
       <div class="panel">
         <div class="field">
           <label>Mémoire allouée <span class="hint" id="memLabel">2048 Mo</span></label>
@@ -86,7 +103,6 @@
         <div class="row" style="margin-top:12px;">
           <button class="btn sec" id="btnCheck" aria-label="Installer ou mettre à jour" title="Installer / Mettre à jour">Installer / Mettre à jour</button>
           <button class="btn sec" id="btnForceUpdate" title="Ignore le cache local et force le re-téléchargement si disponible" aria-label="Forcer la mise à jour">Forcer la mise à jour</button>
-          <button class="btn" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">Jouer</button>
         </div>
       </div>
     </div>
