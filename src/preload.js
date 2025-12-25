@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Logger pour les appels IPC
 const logIpc = (channel, ...args) => {
-  console.log(`[IPC] ${channel} appelé avec:`, ...args);
+  // console.log(`[IPC] ${channel} appelé avec:`, ...args);
   return args;
 };
 
@@ -12,10 +12,10 @@ const withLogging = (channel, fn) =>
     logIpc(channel, ...args);
     try {
       const result = await fn(...args);
-      console.log(`[IPC] ${channel} réussi:`, result);
+      // console.log(`[IPC] ${channel} réussi:`, result);
       return result;
     } catch (error) {
-      console.error(`[IPC] ${channel} échoué:`, error);
+      // console.error(`[IPC] ${channel} échoué:`, error);
       throw error;
     }
   };

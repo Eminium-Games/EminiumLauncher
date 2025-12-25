@@ -1113,6 +1113,25 @@ async function runUpdaterIfNeeded() {
 </script>
 
   <script>
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+      const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(dateString).toLocaleDateString('fr-FR', options);
+    }
+
+    // Fonction pour extraire la version du titre
+    function extractVersion(title) {
+      if (!title) return 'N/A';
+      const match = title.match(/V([\d.]+)/);
+      return match ? `v${match[1]}` : 'N/A';
+    }
+
     // Chargement du changelog
     async function loadChangelog() {
       const container = document.getElementById('changelog-content');
@@ -1132,68 +1151,29 @@ async function runUpdaterIfNeeded() {
           return;
         }
         
-        // Formater la date
-        const formatDate = (dateString) => {
-          const options = { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          };
-          return new Date(dateString).toLocaleDateString('fr-FR', options);
-        };
+        // Trier les mises à jour par date (les plus récentes en premier)
+        updates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
-        // Extraire la version du titre (format: "Eminium - PatchNote V10.0.0.2 | 22/08/2025")
-        const extractVersion = (title) => {
-          const match = title.match(/V([\d.]+)/);
-          return match ? `v${match[1]}` : 'N/A';
-        };
+        // Générer le HTML
+        let html = '<div class="changelog-list">';
         
-        // Générer le HTML du changelog
-        const html = updates.map(update => {
-          // Convertir le contenu HTML en nœuds DOM pour le traiter
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = update.content;
-          
-          // Récupérer les sections h1
-          const sections = {};
-          tempDiv.querySelectorAll('h1').forEach(h1 => {
-            const sectionTitle = h1.textContent.trim();
-            const sectionContent = [];
-            let next = h1.nextElementSibling;
-            
-            while (next && next.tagName !== 'H1') {
-              if (next.tagName === 'UL') {
-                sectionContent.push(next.outerHTML);
-              }
-              next = next.nextElementSibling;
-            }
-            
-            sections[sectionTitle] = sectionContent.join('');
-          });
-          
+        updates.forEach(update => {
           const version = extractVersion(update.title);
-          const date = update.created_at ? formatDate(update.created_at) : '';
+          const date = formatDate(update.created_at);
+          const content = update.content || 'Aucun détail disponible';
           
-          return `
-            <div class="changelog-entry">
-              <div class="changelog-version">
-                <span>${update.title || 'Mise à jour'}</span>
+          html += `
+            <div class="changelog-item">
+              <div class="changelog-header">
+                <span class="changelog-version">${version}</span>
                 <span class="changelog-date">${date}</span>
               </div>
-              <div class="changelog-content">
-                ${Object.entries(sections).map(([title, content]) => `
-                  <div class="changelog-section">
-                    <h4>${title}</h4>
-                    ${content}
-                  </div>
-                `).join('')}
-              </div>
+              <div class="changelog-content">${content}</div>
             </div>
           `;
-        }).join('');
+        });
         
+        html += '</div>';
         container.innerHTML = html;
         
       } catch (error) {
@@ -1201,25 +1181,110 @@ async function runUpdaterIfNeeded() {
         container.innerHTML = `
           <div class="changelog-error">
             Impossible de charger les mises à jour. Vérifiez votre connexion internet.
-            <div style="margin-top: 10px; font-size: 12px; color: #ff9e9e;">${error.message}</div>
+            <div style="margin-top: 10px; font-size: 12px; color: #ff9e9e;">${error.message || 'Erreur inconnue'}</div>
           </div>
         `;
       }
     }
     
-    // Charger le changelog au chargement de la page
+    // Initialisation au chargement du DOM
     document.addEventListener('DOMContentLoaded', () => {
+      // Charger le changelog initial
       loadChangelog();
       
       // Recharger le changelog quand on change d'onglet
       document.querySelector('.tab[data-tab="changelog"]')?.addEventListener('click', () => {
-        // Recharger uniquement si le contenu n'est pas déjà chargé
         const container = document.getElementById('changelog-content');
         if (container && container.textContent === 'Chargement des mises à jour...') {
           loadChangelog();
         }
       });
     });
+  </script>
+  
+  <script>
+    // Désactiver la modification de l'image de fond
+    document.addEventListener('DOMContentLoaded', () => {
+      const playBackground = document.querySelector('.play-background');
+      if (playBackground) {
+        // Empêcher le glisser-déposer de fichiers
+        playBackground.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        
+        playBackground.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      }
+    });
+
+    // Message d'avertissement pour la console
+    // Message d'avertissement pour la console
+console.log('%c⚠️ ATTENTION - ZONE INTERDITE ⚠️', 'color: red; font-size: 24px; font-weight: bold;');
+console.log('%cSi vous lisez ceci, vous êtes probablement un génie du code... ou un curieux !', 'font-size: 16px;');
+console.log('%c⚠️ Mais attention, cette zone est réservée aux développeurs !', 'color: red; font-size: 14px;');
+console.log('%c🚫 Ne copiez/collez JAMAIS de code que vous ne comprenez pas !', 'font-size: 16px; font-weight: bold;');
+// console.log('%c👾 Les licornes pleureront si vous continuez !', 'font-size: 16px; color: purple;');
+console.log('%c🔒 Votre compte est précieux - protégez-le !', 'font-size: 16px; font-weight: bold;');
+console.log('%c🤖 Les robots ne sont pas les bienvenus ici !', 'font-size: 16px;');
+// console.log('%c⚠️ Détection de tentatives suspectes...', 'color: red; font-style: italic;');
+console.log('%c💡 Astuce : La meilleure sécurité, c\'est la prudence !', 'font-size: 16px;');
+console.log('%c🔍 Quelqu\'un vous regarde peut-être...', 'font-size: 14px; font-style: italic;');
+console.log('%c🚨 ALERTE : Zone à accès restreint détectée !', 'color: red; font-weight: bold; font-size: 18px;');
+console.log('%c🎮 Retournez plutôt jouer, c\'est plus sûr !', 'font-size: 16px;');
+    
+    // Détecter l'ouverture des outils de développement
+    (function() {
+      let devtools = { open: false };
+      const threshold = 160;
+      const emitEvent = (isOpen) => {
+        if (isOpen && !devtools.open) {
+          // console.log('%c🔒 Accès aux outils de développement détecté', 'color: orange; font-weight: bold;');
+          // console.log('%cToute tentative de modification non prévue est vivement déconseillée.', 'color: red;');
+          
+          // Afficher une alerte visuelle (optionnel)
+          // const alertDiv = document.createElement('div');
+          // alertDiv.style.position = 'fixed';
+          // alertDiv.style.bottom = '20px';
+          // alertDiv.style.right = '20px';
+          // alertDiv.style.backgroundColor = '#ff4d4d';
+          // alertDiv.style.color = 'white';
+          // alertDiv.style.padding = '15px';
+          // alertDiv.style.borderRadius = '5px';
+          // alertDiv.style.zIndex = '9999';
+          // alertDiv.style.maxWidth = '300px';
+          // alertDiv.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+          // alertDiv.innerHTML = '⚠️ Outils de développement détectés<br><br>Les modifications non autorisées sont interdites.';
+          // document.body.appendChild(alertDiv);
+          
+          // Supprimer l'alerte après 5 secondes
+          // setTimeout(() => {
+          //   alertDiv.style.transition = 'opacity 1s';
+          //   alertDiv.style.opacity = '0';
+          //   setTimeout(() => alertDiv.remove(), 1000);
+          // }, 5000);
+        }
+        devtools.open = isOpen;
+      };
+      
+      // Détection basée sur la taille de l'écran
+      setInterval(() => {
+        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        const orientation = widthThreshold ? 'vertical' : 'horizontal';
+        
+        if (!(heightThreshold && widthThreshold) && 
+            ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || 
+             widthThreshold || 
+             heightThreshold)) {
+          emitEvent(true);
+        } else {
+          emitEvent(false);
+        }
+      }, 500);
+    })();
   </script>
   </body>
 </html>
