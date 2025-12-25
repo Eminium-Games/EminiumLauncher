@@ -1,5 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
-
+//
 // Logger pour les appels IPC
 const logIpc = (channel, ...args) => {
   // console.log(`[IPC] ${channel} appelé avec:`, ...args);
