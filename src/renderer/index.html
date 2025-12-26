@@ -1188,13 +1188,13 @@ async function runUpdaterIfNeeded() {
     const a1 = pct;                      // centre du pouce
     const grey = 'rgba(255,255,255,0.10)';
     const fill = `linear-gradient(90deg,
-      rgba(245,158,11,0.96) 0% ${a0}%,
-      rgba(245,158,11,1) ${a0}% calc(${a1}% + 0.25%),
-      rgba(245,158,11,0.00) calc(${a1}% + 0.25%) 100%)`;
+      rgba(59, 130, 246, 0.96) 0% ${a0}%,
+      rgba(59, 130, 246, 1) ${a0}% calc(${a1}% + 0.25%),
+      rgba(59, 130, 246, 0.00) calc(${a1}% + 0.25%) 100%)`;
     const r1 = Math.round(thumbW * 0.62);
     const r2 = Math.round(thumbW * 1.28);
     const r3 = Math.round(thumbW * 2.1);
-    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(245,158,11,0.45) 0 ${r1}px, rgba(245,158,11,0.18) ${r1}px ${r2}px, rgba(245,158,11,0) ${r2}px ${r3}px)`;
+    const glow = `radial-gradient(circle at ${pct}% 50%, rgba(59, 130, 246, 0.45) 0 ${r1}px, rgba(59, 130, 246, 0.18) ${r1}px ${r2}px, rgba(59, 130, 246, 0) ${r2}px ${r3}px)`;
     const base = `linear-gradient(90deg, ${grey}, ${grey})`;
     const sheen = `linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, rgba(0,0,0,0.00) 100%)`;
     el.style.background = `${glow}, ${fill}, ${base}, ${sheen}`;
