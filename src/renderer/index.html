@@ -282,7 +282,7 @@ const MAINTENANCE_BYPASS_UUIDS = [
   "97f702b9-5093-4aae-af53-b0160aa6dcde", // Exemple d'UUID autorisé
   // Ajoutez d'autres UUID autorisés ici
 ];
-const MAINTENANCE_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const MAINTENANCE_CHECK_INTERVAL = 1000; // 1 seconde
 let maintenanceState = { maintenance: false, lastCheck: 0 };
 
 /**
