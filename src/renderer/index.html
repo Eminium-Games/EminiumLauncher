@@ -277,9 +277,181 @@ async function loadSettings() {
 }
 async function saveSettings(patch) { try { await window.eminium.setSettings(patch); } catch {} }
 
-// Maintenance désactivée
+// Constantes pour la gestion de la maintenance
+const MAINTENANCE_BYPASS_UUIDS = [
+  "97f702b9-5093-4aae-af53-b0160aa6dcde", // Exemple d'UUID autorisé
+  // Ajoutez d'autres UUID autorisés ici
+];
+const MAINTENANCE_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+let maintenanceState = { maintenance: false, lastCheck: 0 };
 
-// (Anti-VPN banner and subscriptions removed)
+/**
+ * Vérifie si l'utilisateur peut bypasser la maintenance
+ * @param {Object} profile - Le profil de l'utilisateur
+ * @returns {boolean} true si l'utilisateur peut bypasser la maintenance
+ */
+function canBypassMaintenance(profile) {
+  // Si l'utilisateur n'est pas connecté, il ne peut pas bypasser la maintenance
+  if (!profile) {
+    console.log('[Maintenance] Aucun profil trouvé');
+    return false;
+  }
+  
+  // Gérer le cas où le profil est encapsulé dans une propriété 'profile'
+  const actualProfile = profile.profile || profile;
+  
+  // Vérifier si l'UUID est dans un champ différent et le normaliser
+  let uuid = actualProfile.uuid || (actualProfile.user && actualProfile.user.uuid) || null;
+  if (!uuid) {
+    console.log('[Maintenance] Aucun UUID trouvé dans le profil');
+    console.log('[Debug] Profil complet:', JSON.stringify(profile, null, 2));
+    return false;
+  }
+  
+  // Normaliser l'UUID (minuscules et sans tirets)
+  uuid = uuid.toLowerCase().replace(/-/g, '');
+  const allowedUUIDs = MAINTENANCE_BYPASS_UUIDS.map(u => u.toLowerCase().replace(/-/g, ''));
+  
+  const canBypass = allowedUUIDs.includes(uuid);
+  // console.log(`[Maintenance] Vérification UUID ${uuid} - Accès ${canBypass ? 'autorisé' : 'refusé'}`);
+  // console.log('[Debug] UUIDs autorisés:', MAINTENANCE_BYPASS_UUIDS);
+  return canBypass;
+}
+
+/**
+ * Vérifie l'état de maintenance du serveur
+ * @returns {Promise<{maintenance: boolean, lastCheck: number}>}
+ */
+async function checkMaintenanceStatus() {
+  try {
+    const response = await fetch('https://server-production-84bf.up.railway.app/api/v1/maintenance', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) {
+      console.warn('Erreur lors de la vérification de la maintenance, utilisation du dernier état connu');
+      return maintenanceState;
+    }
+    
+    const data = await response.json();
+    maintenanceState = {
+      maintenance: !!data.maintenance,
+      lastCheck: Date.now()
+    };
+    
+    return maintenanceState;
+  } catch (error) {
+    console.error('Erreur lors de la vérification de la maintenance:', error);
+    // En cas d'erreur, on considère qu'il n'y a pas de maintenance
+    return { maintenance: false, lastCheck: Date.now() };
+  }
+}
+
+/**
+ * Met à jour l'interface utilisateur en fonction de l'état de maintenance
+ * @param {Object} maintenanceState - État de maintenance
+ * @param {Object} profile - Profil utilisateur actuel
+ */
+function updateMaintenanceUI(maintenanceState, profile) {
+  const playTab = document.getElementById('play');
+  const playButton = document.getElementById('btnPlay');
+  
+  if (!playTab || !playButton) return;
+  
+  const isInMaintenance = maintenanceState.maintenance && !canBypassMaintenance(profile);
+  
+  // Mise à jour de l'interface
+  if (isInMaintenance) {
+    playTab.classList.add('maintenance-mode');
+    playButton.style.display = 'none';
+    
+    // Remplacement complet du contenu de l'onglet
+    playTab.innerHTML = `
+      <div class="maintenance-fullscreen">
+        <div class="maintenance-content">
+          <div class="maintenance-icon">🔧</div>
+          <h2>Maintenance en cours</h2>
+          <p>Notre équipe travaille actuellement sur des améliorations pour vous offrir une meilleure expérience.</p>
+          <div class="maintenance-details">
+            <p><strong>Heure de fin prévue :</strong> Durée indéterminée</p>
+            <p><strong>Statut :</strong> En cours de maintenance</p>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Restauration de l'interface normale
+    playTab.classList.remove('maintenance-mode');
+    playButton.style.display = 'flex';
+    
+    // Recréation du contenu original de l'onglet Jouer
+    playTab.innerHTML = `
+      <div class="play-container">
+        <div class="play-background"></div>
+        <div class="play-content">
+          <div class="play-button-container">
+            <button class="play-button" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">
+              <div class="play-triangle"></div>
+            </button>
+            <div class="play-text">Jouer</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Réattacher l'événement click au bouton de jeu
+    const newPlayButton = document.getElementById('btnPlay');
+    if (newPlayButton) {
+      newPlayButton.addEventListener('click', handlePlayClick);
+    }
+  }
+}
+
+/**
+ * Vérifie périodiquement l'état de maintenance
+ */
+async function startMaintenanceCheck() {
+  try {
+    const profile = await window.eminium?.getProfile?.() || null;
+    const state = await checkMaintenanceStatus();
+    
+    // Si l'utilisateur n'est pas connecté ou peut bypasser la maintenance
+    if (!profile || canBypassMaintenance(profile)) {
+      // Réinitialiser l'interface
+      const playTab = document.getElementById('play');
+      if (playTab) {
+        playTab.classList.remove('maintenance-mode');
+        const playButton = document.getElementById('btnPlay');
+        if (playButton) playButton.style.display = 'flex';
+      }
+      return; // Ne pas afficher le message de maintenance
+    }
+    
+    // Mettre à jour l'interface de maintenance, peu importe l'onglet actif
+    updateMaintenanceUI(state, profile);
+  } catch (error) {
+    console.error('Erreur lors de la vérification de maintenance:', error);
+  } finally {
+    // Planifie la prochaine vérification
+    setTimeout(startMaintenanceCheck, MAINTENANCE_CHECK_INTERVAL);
+  }
+}
+
+// Démarrer la vérification périodique de maintenance
+document.addEventListener('DOMContentLoaded', () => {
+  // Vérifier l'état de maintenance au chargement
+  startMaintenanceCheck();
+  
+  // Mettre à jour l'état de maintenance lors du changement d'onglet
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', async () => {
+      if (tab.dataset.tab === 'play') {
+        await startMaintenanceCheck();
+      }
+    });
+  });
+});
 
 // Play options: close launcher on game start
 async function refreshPlayOptionsUI() {
@@ -880,6 +1052,23 @@ document.getElementById('btnCheck').addEventListener('click', async () => {
 });
 
 document.getElementById('btnPlay').addEventListener('click', async () => {
+  // Vérifier l'état de maintenance avant de lancer le jeu
+  console.log('[Maintenance] Vérification avant lancement du jeu...');
+  const maintenanceState = await checkMaintenanceStatus();
+  console.log('[Maintenance] État de maintenance:', maintenanceState);
+  
+  const profile = await window.eminium?.getProfile?.() || null;
+  console.log('[Maintenance] Profil utilisateur:', JSON.stringify(profile, null, 2));
+  
+  if (maintenanceState.maintenance) {
+    const bypass = canBypassMaintenance(profile);
+    console.log(`[Maintenance] Maintenance active - Bypass ${bypass ? 'autorisé' : 'refusé'}`);
+    if (!bypass) {
+      log('Jeu en maintenance. Veuillez réessayer plus tard.');
+      return;
+    }
+  }
+
   const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
   const serverHost = '82.64.85.47';
   const serverPort = 25565;
