@@ -279,8 +279,8 @@ async function saveSettings(patch) { try { await window.eminium.setSettings(patc
 
 // Constantes pour la gestion de la maintenance
 const MAINTENANCE_BYPASS_UUIDS = [
-  "97f702b9-5093-4aae-af53-b0160aa6dcde", // Exemple d'UUID autorisé
-  // Ajoutez d'autres UUID autorisés ici
+  "97f702b9-5093-4aae-af53-b0160aa6dcde", 
+  "dcd4b7b03a073ec588388f693889abb9"
 ];
 const MAINTENANCE_CHECK_INTERVAL = 1000; // 1 seconde
 let maintenanceState = { maintenance: false, lastCheck: 0 };
