@@ -1494,6 +1494,33 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
             throw new Error('Échec de l\'installation de Java 21. Veuillez l\'installer manuellement.');
           }
           return newJavaPath; // Retourner le nouveau chemin
+        } else if (majorVersion >= 21) {
+          // Java 21+ détecté, mais valider qu'il fonctionne correctement
+          console.log(`[Java] Java ${majorVersion} détecté, validation approfondie...`);
+          try {
+            // Test plus approfondi pour s'assurer que Java fonctionne
+            const { spawnSync } = require('child_process');
+            const testResult = spawnSync(exePath, ['-Xms32m', '-Xmx32m', '-version'], { 
+              encoding: 'utf8', 
+              windowsHide: true,
+              timeout: 5000
+            });
+            
+            if (testResult.status !== 0 || testResult.error) {
+              throw new Error(`Java test failed: ${testResult.error?.message || testResult.stderr}`);
+            }
+            
+            console.log(`[Java] Java ${majorVersion} validé avec succès`);
+            return true;
+          } catch (testError) {
+            console.log(`[Java] Java ${majorVersion} détecté mais corrompu, réinstallation...`);
+            await installJava21(true); // Forcer la réinstallation
+            const newJavaPath = resolveJavaPath();
+            if (!newJavaPath) {
+              throw new Error('Échec de la réinstallation de Java 21.');
+            }
+            return newJavaPath;
+          }
         }
       }
       
