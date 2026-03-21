@@ -32,15 +32,40 @@
       </div>
     </div>
 
-    <!-- Onglets -->
-    <div class="tabs">
-      <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">Connexion</div>
-      <div class="tab" data-tab="play" data-ico="▶️" id="tabPlay">Jouer</div>
-      <div class="tab" data-tab="settings" data-ico="⚙️" id="tabSettings">Paramètres</div>
-      <div class="tab" data-tab="log" data-ico="📜" id="tabLog">Logs</div>
-      <div class="tab" data-tab="changelog" data-ico="📝">Changelog</div>
-      <!-- <div class="tab" data-tab="admin" data-ico="🛡️">Administration</div> -->
-    </div>
+    <!-- Navigation latérale moderne -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-header">Principal</div>
+        <div class="tab active" data-tab="auth" data-ico="🔐" id="tabAuth">
+          <div class="tab-icon">🔐</div>
+          <div class="tab-label">Connexion</div>
+        </div>
+        <div class="tab" data-tab="play" data-ico="▶️" id="tabPlay">
+          <div class="tab-icon">▶️</div>
+          <div class="tab-label">Jouer</div>
+        </div>
+        <!-- <div class="tab" data-tab="servers" data-ico="🌐" id="tabServers">
+          <div class="tab-icon">🌐</div>
+          <div class="tab-label">Serveurs</div>
+        </div> -->
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-header">Système</div>
+        <div class="tab" data-tab="settings" data-ico="⚙️" id="tabSettings">
+          <div class="tab-icon">⚙️</div>
+          <div class="tab-label">Paramètres</div>
+        </div>
+        <div class="tab" data-tab="log" data-ico="📜" id="tabLog">
+          <div class="tab-icon">📜</div>
+          <div class="tab-label">Logs</div>
+        </div>
+        <!-- <div class="tab" data-tab="changelog" data-ico="📝" id="tabChangelog">
+          <div class="tab-icon">📝</div>
+          <div class="tab-label">Changelog</div>
+        </div> -->
+      </div>
+    </nav>
 
     <!-- Contenus -->
     <div class="tab-content active" id="auth">
@@ -53,16 +78,64 @@
       </div>
     </div>
 
-    <!-- Onglet Jouer avec fond personnalisé -->
+    <!-- Onglet Jouer (lancement rapide) -->
     <div class="tab-content" id="play">
-      <div class="play-container">
-        <div class="play-background"></div>
-        <div class="play-content">
-          <div class="play-button-container">
-            <button class="play-button" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">
-              <div class="play-triangle"></div>
-            </button>
-            <div class="play-text">Jouer</div>
+      <div class="content-panel">
+        <div class="content-header">
+          <h2>Serveurs Eminium</h2>
+          <p>Connectez-vous à nos serveurs officiels</p>
+        </div>
+        <div class="servers-grid">
+          <!-- Serveur 1 -->
+          <div class="server-card" data-server="server1">
+            <div class="server-header">
+              <div class="server-title-area">
+                <h3 class="server-title">Eminium Mini-Jeux</h3>
+                <div class="server-info">
+                <!-- <div class="server-address">82.64.85.47:25565</div> -->
+              </div>
+              </div>
+              <div class="server-status-indicator" id="server1Status">
+                <span class="status-dot"></span>
+              </div>
+            </div>
+            <div class="server-content">
+              <div class="server-icon">
+                <img src="https://eminium.ovh/storage/img/logo-eminium-12012026-2.png" alt="Eminium Mini-Jeux" />
+              </div>
+            </div>
+            <div class="server-actions">
+              <button class="play-btn" id="btnPlayServer1">
+                <div class="play-icon">▶</div>
+                <span>Jouer</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Serveur 2 -->
+          <div class="server-card" data-server="server2">
+            <div class="server-header">
+              <div class="server-title-area">
+                <h3 class="server-title">Eminium Factions</h3>
+                <div class="server-info">
+                <!-- <div class="server-address">82.64.85.47:25566</div> -->
+              </div>
+              </div>
+              <div class="server-status-indicator" id="server2Status">
+                <span class="status-dot"></span>
+              </div>
+            </div>
+            <div class="server-content">
+              <div class="server-icon">
+                <img src="https://eminium.ovh/storage/img/eminium-logo.png" alt="Eminium Factions" />
+              </div>
+            </div>
+            <div class="server-actions">
+              <button class="play-btn" id="btnPlayServer2">
+                <div class="play-icon">▶</div>
+                <span>Jouer</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -116,14 +189,14 @@
       </div>
     </div>
     
-    <div class="tab-content" id="changelog">
+    <!-- <div class="tab-content" id="changelog">
       <div class="panel">
         <h3>Dernières mises à jour</h3>
         <div id="changelog-content" class="changelog-container">
           <div class="changelog-loading">Chargement des mises à jour...</div>
         </div>
       </div>
-    </div>
+    </div> -->
     
     <div class="tab-content" id="admin">
       <div class="panel">
@@ -159,21 +232,167 @@
  </div>
 
 <script>
-// Gestion des onglets
+// Gestion des onglets avec nouvelle navigation latérale
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    if (tab.style.display === 'none') return; // ignore hidden tabs
-    if (!IS_LOGGED && tab.dataset.tab !== 'auth') {
-      // Bloque l'accès aux onglets tant que non connecté
-      log('Veuillez vous connecter pour accéder à cet onglet.');
-      return;
-    }
+    if (tab.classList.contains('active')) return;
+    
+    // Mettre à jour les onglets de navigation
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     tab.classList.add('active');
-    document.getElementById(tab.dataset.tab).classList.add('active');
-    // (no shop tab)
+    
+    // Mettre à jour le contenu
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    
+    const targetTab = tab.dataset.tab;
+    const targetContent = document.getElementById(targetTab);
+    
+    if (targetContent) {
+      targetContent.classList.add('active');
+    }
   });
+});
+
+// Configuration des serveurs (gérée uniquement dans le code)
+const serverConfig = {
+  server1: { 
+    host: '82.64.85.47', 
+    port: 25565, 
+    name: 'Eminium Mini-Jeux',
+    subtitle: 'Serveur principal'
+  },
+  server2: { 
+    host: '82.64.85.47', 
+    port: 25566, 
+    name: 'Eminium Factions',
+    subtitle: 'Serveur secondaire'
+  },
+  server3: { 
+    host: 'play.eminium.ovh', 
+    port: 25565, 
+    name: 'Eminium Official',
+    subtitle: 'Serveur officiel'
+  }
+};
+
+// Initialiser l'interface des serveurs
+function initServerUI() {
+  ['server1', 'server2', 'server3'].forEach(serverId => {
+    const config = serverConfig[serverId];
+    const card = document.querySelector(`[data-server="${serverId}"]`);
+    
+    if (card) {
+      // Mettre à jour l'affichage
+      const titleElement = card.querySelector('.server-title');
+      const subtitleElement = card.querySelector('.server-subtitle');
+      const addressElement = card.querySelector('.server-address');
+      const playBtn = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+      
+      if (titleElement) titleElement.textContent = config.name || 'Serveur sans nom';
+      if (subtitleElement) subtitleElement.textContent = config.subtitle || '';
+      if (addressElement) addressElement.textContent = config.host ? `${config.host}:${config.port}` : 'Non configuré';
+      
+      // Activer le bouton de jeu (tous les serveurs sont configurés)
+      if (playBtn) {
+        playBtn.disabled = false;
+        playBtn.classList.remove('disabled');
+      }
+    }
+  });
+}
+
+// Ping des serveurs pour vérifier leur statut
+async function pingServer(serverId) {
+  const config = serverConfig[serverId];
+  const statusIndicator = document.getElementById(`${serverId}Status`);
+  
+  if (!statusIndicator) return false;
+  
+  const statusDot = statusIndicator.querySelector('.status-dot');
+  
+  if (statusDot) {
+    statusDot.className = 'status-dot';
+  }
+  
+  try {
+    const result = await window.eminium?.ping?.(config.host, config.port, 2500);
+    const isOnline = !!(result && result.up);
+    
+    if (statusDot) {
+      statusDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+    }
+    
+    return isOnline;
+  } catch (e) {
+    if (statusDot) {
+      statusDot.className = 'status-dot offline';
+    }
+    return false;
+  }
+}
+
+// Ping périodique des serveurs
+let serverPingTimer = null;
+async function pingAllServers() {
+  await Promise.all(['server1', 'server2', 'server3'].map(id => pingServer(id)));
+}
+
+function startServerPings() {
+  if (serverPingTimer) clearInterval(serverPingTimer);
+  pingAllServers();
+  serverPingTimer = setInterval(pingAllServers, 5000);
+}
+
+// Gestionnaires de clic pour les boutons de jeu
+async function handlePlayClick(serverId) {
+  const config = serverConfig[serverId];
+  
+  if (!config.host) {
+    log(`Veuillez configurer l'adresse du serveur pour ${config.name || serverId}`);
+    return;
+  }
+  
+  // Vérifier si le serveur est en ligne
+  const isOnline = await pingServer(serverId);
+  if (!isOnline) {
+    log(`Serveur ${config.name} (${config.host}:${config.port}) hors ligne`);
+    return;
+  }
+  
+  const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
+  try {
+    progressUI.open('Lancement');
+    progressUI.set(10);
+    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${config.host}:${config.port})`);
+    const res = await window.eminium.play({ memoryMB, serverHost: config.host, serverPort: config.port });
+    if (res?.ok) {
+      log('Client lancé ✓');
+      progressUI.set(100);
+      progressUI.enableClose();
+    } else {
+      throw new Error(res?.error || 'Échec du lancement');
+    }
+  } catch (e) {
+    log('Erreur: ' + (e?.message || e));
+    progressUI.addLine('Erreur: ' + (e?.message || e), 'err');
+    progressUI.enableClose();
+  }
+}
+
+// Dialog pour ajouter un serveur
+function showAddServerDialog() {
+  log('Fonctionnalité d\'ajout de serveur bientôt disponible !');
+}
+
+// Attacher les événements aux boutons de jeu
+document.getElementById('btnPlayServer1')?.addEventListener('click', () => handlePlayClick('server1'));
+document.getElementById('btnPlayServer2')?.addEventListener('click', () => handlePlayClick('server2'));
+document.getElementById('btnPlayServer3')?.addEventListener('click', () => handlePlayClick('server3'));
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+  initServerUI();
+  startServerPings();
 });
 
 // Auth/tab visibility helpers
@@ -356,56 +575,68 @@ async function checkMaintenanceStatus() {
  */
 function updateMaintenanceUI(maintenanceState, profile) {
   const playTab = document.getElementById('play');
-  const playButton = document.getElementById('btnPlay');
   
-  if (!playTab || !playButton) return;
+  if (!playTab) return;
   
   const isInMaintenance = maintenanceState.maintenance && !canBypassMaintenance(profile);
   
   // Mise à jour de l'interface
   if (isInMaintenance) {
     playTab.classList.add('maintenance-mode');
-    playButton.style.display = 'none';
     
-    // Remplacement complet du contenu de l'onglet
-    playTab.innerHTML = `
-      <div class="maintenance-fullscreen">
-        <div class="maintenance-content">
-          <div class="maintenance-icon">🔧</div>
-          <h2>Maintenance en cours</h2>
-          <p>Notre équipe travaille actuellement sur des améliorations pour vous offrir une meilleure expérience.</p>
-          <div class="maintenance-details">
-            <p><strong>Heure de fin prévue :</strong> Durée indéterminée</p>
-            <p><strong>Statut :</strong> En cours de maintenance</p>
-          </div>
-        </div>
-      </div>
-    `;
+    // Cacher tous les boutons de serveur
+    ['server1', 'server2'].forEach(serverId => {
+      const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+      if (btnPlay) btnPlay.style.display = 'none';
+    });
+    
+    // Afficher un message de maintenance dans chaque contenu de serveur
+    ['server1Content', 'server2Content'].forEach(contentId => {
+      const content = document.getElementById(contentId);
+      if (content) {
+        const buttonContainer = content.querySelector('.play-button-container');
+        if (buttonContainer) {
+          buttonContainer.innerHTML = `
+            <div class="maintenance-message" style="text-align: center; padding: 2rem;">
+              <div style="font-size: 2rem; margin-bottom: 1rem;">🔧</div>
+              <h3 style="color: #ef4444; margin-bottom: 1rem;">Maintenance en cours</h3>
+              <p>Notre équipe travaille actuellement sur des améliorations.</p>
+              <p style="font-size: 0.9rem; opacity: 0.8;">Veuillez réessayer plus tard.</p>
+            </div>
+          `;
+        }
+      }
+    });
   } else {
     // Restauration de l'interface normale
     playTab.classList.remove('maintenance-mode');
-    playButton.style.display = 'flex';
     
-    // Recréation du contenu original de l'onglet Jouer
-    playTab.innerHTML = `
-      <div class="play-container">
-        <div class="play-background"></div>
-        <div class="play-content">
-          <div class="play-button-container">
-            <button class="play-button" id="btnPlay" aria-label="Lancer le jeu" title="Lancer le jeu">
+    // Restaurer les boutons de serveur
+    ['server1', 'server2'].forEach(serverId => {
+      const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+      if (btnPlay) {
+        btnPlay.style.display = 'flex';
+      }
+      
+      // Restaurer le contenu original des boutons
+      const content = document.getElementById(`${serverId}Content`);
+      if (content) {
+        const buttonContainer = content.querySelector('.play-button-container');
+        if (buttonContainer) {
+          const config = serverConfig[serverId];
+          buttonContainer.innerHTML = `
+            <button class="play-button" id="btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}" aria-label="Lancer sur ${config.name}" title="Lancer sur ${config.name}">
               <div class="play-triangle"></div>
             </button>
-            <div class="play-text">Jouer</div>
-          </div>
-        </div>
-      </div>
-    `;
+            <div class="play-text">Jouer sur <span id="${serverId}DisplayName">${config.name || 'Serveur sans nom'}</span></div>
+          `;
+        }
+      }
+    });
     
-    // Réattacher l'événement click au bouton de jeu
-    const newPlayButton = document.getElementById('btnPlay');
-    if (newPlayButton) {
-      newPlayButton.addEventListener('click', handlePlayClick);
-    }
+    // Réattacher les événements
+    document.getElementById('btnPlayServer1')?.addEventListener('click', () => handlePlayClick('server1'));
+    document.getElementById('btnPlayServer2')?.addEventListener('click', () => handlePlayClick('server2'));
   }
 }
 
@@ -423,8 +654,11 @@ async function startMaintenanceCheck() {
       const playTab = document.getElementById('play');
       if (playTab) {
         playTab.classList.remove('maintenance-mode');
-        const playButton = document.getElementById('btnPlay');
-        if (playButton) playButton.style.display = 'flex';
+        // Restaurer tous les boutons de serveur
+        ['server1', 'server2'].forEach(serverId => {
+          const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+          if (btnPlay) btnPlay.style.display = 'flex';
+        });
       }
       return; // Ne pas afficher le message de maintenance
     }
@@ -916,32 +1150,36 @@ const progressUI = (() => {
   return { open, close, set, bump, addLine, enableClose: () => (btnClose.disabled = false), isOpen: () => opened };
 })();
 
-// Ping serveur toutes les 5s pour activer/désactiver le bouton Jouer
+// Ping serveur toutes les 5s pour activer/désactiver les boutons Jouer (compatibilité)
 let _pingTimer = null;
 let _lastUp = undefined;
 async function pingOnce() {
   try {
+    // Vérifier le serveur principal par défaut pour compatibilité
     const host = '82.64.85.47';
     const port = 25565;
-    const btnPlay = document.getElementById('btnPlay');
     const res = await (window.eminium?.ping ? window.eminium.ping(host, port, 2500) : Promise.resolve({ ok: true, up: true }));
     const up = !!(res && res.up);
     if (_lastUp !== up) {
       _lastUp = up;
-      btnPlay.disabled = !up || btnPlay.disabled; // conserve disabled si non prêt côté installation
-      btnPlay.title = up ? '' : 'Serveur hors ligne';
-      if (!up) {
-        // S'assurer que le bouton est bien désactivé même si setReadyUI(true) a été appelé
-        btnPlay.disabled = true;
-      } else if (document.getElementById('btnCheck').style.display === 'none') {
-        // Prêt et serveur up → autoriser
-        btnPlay.disabled = false;
-      }
+      
+      // Gérer les boutons de serveur individuellement
+      ['server1', 'server2'].forEach(serverId => {
+        const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+        if (btnPlay) {
+          const config = serverConfig[serverId];
+          if (config.host) {
+            // Utiliser le ping individuel pour chaque serveur configuré
+            pingServer(serverId);
+          } else {
+            // Désactiver si non configuré
+            btnPlay.disabled = true;
+            btnPlay.title = 'Serveur non configuré';
+          }
+        }
+      });
     }
   } catch (_) {
-    const btnPlay = document.getElementById('btnPlay');
-    btnPlay.disabled = true;
-    btnPlay.title = 'Serveur hors ligne';
     _lastUp = false;
   }
 }
@@ -1004,16 +1242,33 @@ window.addEventListener('beforeunload', () => {
 // Helpers readiness UI + auto prepare
 function setReadyUI(ready) {
   const btnCheck = document.getElementById('btnCheck');
-  const btnPlay = document.getElementById('btnPlay');
   if (ready) {
     btnCheck.style.display = 'none';
-    btnPlay.style.display = 'inline-block';
-    btnPlay.disabled = false;
+    // Activer tous les boutons de serveur configurés
+    ['server1', 'server2'].forEach(serverId => {
+      const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+      if (btnPlay) {
+        btnPlay.style.display = 'inline-block';
+        const config = serverConfig[serverId];
+        if (config.host) {
+          btnPlay.disabled = false;
+        } else {
+          btnPlay.disabled = true;
+          btnPlay.title = 'Serveur non configuré';
+        }
+      }
+    });
   } else {
     btnCheck.style.display = 'inline-block';
     btnCheck.textContent = 'Installer / Mettre à jour';
-    btnPlay.style.display = 'none';
-    btnPlay.disabled = true;
+    // Désactiver tous les boutons de serveur
+    ['server1', 'server2'].forEach(serverId => {
+      const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
+      if (btnPlay) {
+        btnPlay.style.display = 'none';
+        btnPlay.disabled = true;
+      }
+    });
   }
 }
 
@@ -1052,48 +1307,7 @@ document.getElementById('btnCheck').addEventListener('click', async () => {
   await checkAndAutoPrepare();
 });
 
-document.getElementById('btnPlay').addEventListener('click', async () => {
-  // Vérifier l'état de maintenance avant de lancer le jeu
-  console.log('[Maintenance] Vérification avant lancement du jeu...');
-  const maintenanceState = await checkMaintenanceStatus();
-  console.log('[Maintenance] État de maintenance:', maintenanceState);
-  
-  const profile = await window.eminium?.getProfile?.() || null;
-  console.log('[Maintenance] Profil utilisateur:', JSON.stringify(profile, null, 2));
-  
-  if (maintenanceState.maintenance) {
-    const bypass = canBypassMaintenance(profile);
-    console.log(`[Maintenance] Maintenance active - Bypass ${bypass ? 'autorisé' : 'refusé'}`);
-    if (!bypass) {
-      log('Jeu en maintenance. Veuillez réessayer plus tard.');
-      return;
-    }
-  }
-
-  const memoryMB = parseInt(document.getElementById('memSlider').value, 10) || 2048;
-  const serverHost = '82.64.85.47';
-  const serverPort = 25565;
-  try {
-    progressUI.open('Lancement');
-    progressUI.set(10);
-    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${serverHost}:${serverPort})`);
-    const res = await window.eminium.play({ memoryMB, serverHost, serverPort });
-    if (res?.ok) {
-      log('Client lancé ✓');
-      progressUI.set(100);
-      progressUI.addLine('Client lancé ✓');
-      progressUI.enableClose();
-    } else {
-      log('Échec du lancement: ' + (res?.error || 'inconnu'));
-      progressUI.addLine('Échec du lancement: ' + (res?.error || 'inconnu'));
-      progressUI.enableClose();
-    }
-  } catch (e) {
-    log('Erreur IPC (play): ' + (e?.message || e));
-    progressUI.addLine('Erreur IPC (play): ' + (e?.message || e));
-    progressUI.enableClose();
-  }
-});
+// L'ancien gestionnaire d'événements btnPlay est remplacé par les gestionnaires individuels dans handlePlayClick()
 
 // Updater + startup flow
 async function runUpdaterIfNeeded() {
@@ -1323,73 +1537,73 @@ async function runUpdaterIfNeeded() {
     }
 
     // Chargement du changelog
-    async function loadChangelog() {
-      const container = document.getElementById('changelog-content');
-      if (!container) return;
+    // async function loadChangelog() {
+    //   const container = document.getElementById('changelog-content');
+    //   if (!container) return;
       
-      try {
-        container.innerHTML = '<div class="changelog-loading">Chargement des mises à jour...</div>';
+    //   try {
+    //     container.innerHTML = '<div class="changelog-loading">Chargement des mises à jour...</div>';
         
-        const response = await fetch('https://eminium.ovh/api/changelog/updates');
-        if (!response.ok) throw new Error('Erreur de chargement du changelog');
+    //     const response = await fetch('https://eminium.ovh/api/changelog/updates');
+    //     if (!response.ok) throw new Error('Erreur de chargement du changelog');
         
-        const data = await response.json();
-        const updates = data?.data;
+    //     const data = await response.json();
+    //     const updates = data?.data;
         
-        if (!updates || !Array.isArray(updates) || updates.length === 0) {
-          container.innerHTML = '<div class="changelog-empty">Aucune mise à jour disponible pour le moment.</div>';
-          return;
-        }
+    //     if (!updates || !Array.isArray(updates) || updates.length === 0) {
+    //       container.innerHTML = '<div class="changelog-empty">Aucune mise à jour disponible pour le moment.</div>';
+    //       return;
+    //     }
         
-        // Trier les mises à jour par date (les plus récentes en premier)
-        updates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    //     // Trier les mises à jour par date (les plus récentes en premier)
+    //     updates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
-        // Générer le HTML
-        let html = '<div class="changelog-list">';
+    //     // Générer le HTML
+    //     let html = '<div class="changelog-list">';
         
-        updates.forEach(update => {
-          const version = extractVersion(update.title);
-          const date = formatDate(update.created_at);
-          const content = update.content || 'Aucun détail disponible';
+    //     updates.forEach(update => {
+    //       const version = extractVersion(update.title);
+    //       const date = formatDate(update.created_at);
+    //       const content = update.content || 'Aucun détail disponible';
           
-          html += `
-            <div class="changelog-item">
-              <div class="changelog-header">
-                <span class="changelog-version">${version}</span>
-                <span class="changelog-date">${date}</span>
-              </div>
-              <div class="changelog-content">${content}</div>
-            </div>
-          `;
-        });
+    //       html += `
+    //         <div class="changelog-item">
+    //           <div class="changelog-header">
+    //             <span class="changelog-version">${version}</span>
+    //             <span class="changelog-date">${date}</span>
+    //           </div>
+    //           <div class="changelog-content">${content}</div>
+    //         </div>
+    //       `;
+    //     });
         
-        html += '</div>';
-        container.innerHTML = html;
+    //     html += '</div>';
+    //     container.innerHTML = html;
         
-      } catch (error) {
-        console.error('Erreur lors du chargement du changelog:', error);
-        container.innerHTML = `
-          <div class="changelog-error">
-            Impossible de charger les mises à jour. Vérifiez votre connexion internet.
-            <div style="margin-top: 10px; font-size: 12px; color: #ff9e9e;">${error.message || 'Erreur inconnue'}</div>
-          </div>
-        `;
-      }
-    }
+    //   } catch (error) {
+    //     console.error('Erreur lors du chargement du changelog:', error);
+    //     container.innerHTML = `
+    //       <div class="changelog-error">
+    //         Impossible de charger les mises à jour. Vérifiez votre connexion internet.
+    //         <div style="margin-top: 10px; font-size: 12px; color: #ff9e9e;">${error.message || 'Erreur inconnue'}</div>
+    //       </div>
+    //     `;
+    //   }
+    // }
     
-    // Initialisation au chargement du DOM
-    document.addEventListener('DOMContentLoaded', () => {
-      // Charger le changelog initial
-      loadChangelog();
+    // // Initialisation au chargement du DOM
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   // Charger le changelog initial
+    //   loadChangelog();
       
-      // Recharger le changelog quand on change d'onglet
-      document.querySelector('.tab[data-tab="changelog"]')?.addEventListener('click', () => {
-        const container = document.getElementById('changelog-content');
-        if (container && container.textContent === 'Chargement des mises à jour...') {
-          loadChangelog();
-        }
-      });
-    });
+    //   // Recharger le changelog quand on change d'onglet
+    //   document.querySelector('.tab[data-tab="changelog"]')?.addEventListener('click', () => {
+    //     const container = document.getElementById('changelog-content');
+    //     if (container && container.textContent === 'Chargement des mises à jour...') {
+    //       loadChangelog();
+    //     }
+    //     });
+    //   });
   </script>
   
   <script>
