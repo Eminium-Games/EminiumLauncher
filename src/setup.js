@@ -142,6 +142,96 @@ function setHiddenWindows(p) {
 
 const jreRoot = path.join(app.getPath('userData'), 'jre');
 
+// Copy all necessary JDK files to target directory
+async function copyJdkFiles(jdkDir, targetDir) {
+  const requiredDirs = ['bin', 'conf', 'include', 'jmods', 'legal', 'lib'];
+  
+  for (const dir of requiredDirs) {
+    const srcDir = path.join(jdkDir, dir);
+    const dstDir = path.join(targetDir, dir);
+    
+    if (fs.existsSync(srcDir)) {
+      console.log(`[Java] Copie du dossier ${dir}...`);
+      await copyDirectory(srcDir, dstDir);
+    }
+  }
+  
+  // Copier les fichiers racine importants
+  const rootFiles = ['release', 'NOTICE', 'LICENSE', 'README'];
+  for (const file of rootFiles) {
+    const srcFile = path.join(jdkDir, file);
+    const dstFile = path.join(targetDir, file);
+    
+    if (fs.existsSync(srcFile)) {
+      try {
+        fs.copyFileSync(srcFile, dstFile);
+      } catch (error) {
+        console.warn(`[Java] Impossible de copier ${file}:`, error.message);
+      }
+    }
+  }
+}
+
+// Copy directory recursively with permission handling
+async function copyDirectory(src, dst) {
+  ensureDir(dst);
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const dstPath = path.join(dst, entry.name);
+    
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, dstPath);
+    } else {
+      try {
+        fs.copyFileSync(srcPath, dstPath);
+      } catch (copyError) {
+        if (copyError.code === 'EPERM' || copyError.code === 'EACCES') {
+          // Demander les permissions administrateur
+          const { dialog } = require('electron');
+          const result = await dialog.showMessageBox({
+            type: 'warning',
+            title: 'Permissions requises',
+            message: 'Java 21 nécessite des permissions administrateur pour s\'installer.',
+            detail: 'Voulez-vous relancer le launcher avec des permissions administrateur ?',
+            buttons: ['Oui', 'Non'],
+            defaultId: 0
+          });
+          
+          if (result.response === 0) {
+            // Relancer avec les permissions administrateur
+            const { execSync } = require('child_process');
+            const scriptPath = process.execPath;
+            const args = process.argv.slice(1).join(' ');
+            const platform = process.platform;
+            
+            // Sur Windows, utiliser PowerShell pour demander l'élévation
+            if (platform === 'win32') {
+              const command = `Start-Process "${scriptPath}" -ArgumentList "${args}" -Verb RunAs`;
+              execSync(`powershell -Command "${command}"`, { detached: true });
+            } else {
+              // Sur macOS/Linux, utiliser sudo
+              execSync(`sudo "${scriptPath}" ${args}`, { detached: true });
+            }
+            
+            // Quitter l'instance actuelle
+            if (global.mainWindow && !global.mainWindow.isDestroyed()) {
+              global.mainWindow.close();
+            }
+            app.quit();
+            process.exit(0);
+          } else {
+            throw new Error('Installation de Java 21 annulée par l\'utilisateur.');
+          }
+        } else {
+          throw copyError;
+        }
+      }
+    }
+  }
+}
+
 // Install Java 21 automatically if needed
 async function installJava21() {
   const platform = process.platform;
@@ -181,59 +271,9 @@ async function installJava21() {
       const jdkDir = path.join(targetDir, extractedDirs[0]);
       const binDir = path.join(jdkDir, 'bin');
       
-      // Déplacer les fichiers binaires vers le bon emplacement
-      ensureDir(path.join(targetDir, 'bin'));
-      const files = fs.readdirSync(binDir);
-      
-      // Essayer de copier les fichiers, demander les droits admin si nécessaire
-      for (const file of files) {
-        const src = path.join(binDir, file);
-        const dst = path.join(targetDir, 'bin', file);
-        
-        try {
-          fs.copyFileSync(src, dst);
-        } catch (copyError) {
-          if (copyError.code === 'EPERM' || copyError.code === 'EACCES') {
-            // Demander les permissions administrateur
-            const { dialog } = require('electron');
-            const result = await dialog.showMessageBox({
-              type: 'warning',
-              title: 'Permissions requises',
-              message: 'Java 21 nécessite des permissions administrateur pour s\'installer.',
-              detail: 'Voulez-vous relancer le launcher avec des permissions administrateur ?',
-              buttons: ['Oui', 'Non'],
-              defaultId: 0
-            });
-            
-            if (result.response === 0) {
-              // Relancer avec les permissions administrateur
-              const { execSync } = require('child_process');
-              const scriptPath = process.execPath;
-              const args = process.argv.slice(1).join(' ');
-              
-              // Sur Windows, utiliser PowerShell pour demander l'élévation
-              if (platform === 'win32') {
-                const command = `Start-Process "${scriptPath}" -ArgumentList "${args}" -Verb RunAs`;
-                execSync(`powershell -Command "${command}"`, { detached: true });
-              } else {
-                // Sur macOS/Linux, utiliser sudo
-                execSync(`sudo "${scriptPath}" ${args}`, { detached: true });
-              }
-              
-              // Quitter l'instance actuelle
-              if (global.mainWindow && !global.mainWindow.isDestroyed()) {
-                global.mainWindow.close();
-              }
-              app.quit();
-              process.exit(0);
-            } else {
-              throw new Error('Installation de Java 21 annulée par l\'utilisateur.');
-            }
-          } else {
-            throw copyError;
-          }
-        }
-      }
+      // Copier tous les fichiers du JDK nécessaires (pas seulement bin/)
+      console.log('[Java] Copie des fichiers JDK...');
+      await copyJdkFiles(jdkDir, targetDir);
       
       // Supprimer le dossier temporaire JDK
       try { fs.rmSync(jdkDir, { recursive: true, force: true }); } catch {}
