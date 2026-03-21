@@ -227,7 +227,7 @@ async function copyDirectory(src, dst) {
 }
 
 // Install Java 21 automatically if needed
-async function installJava21() {
+async function installJava21(force = false) {
   const platform = process.platform;
   const arch = process.arch;
   let java21Url, targetDir, executableName;
@@ -254,12 +254,34 @@ async function installJava21() {
   }
   
   try {
+    // Vérifier si Java 21 est déjà installé et fonctionnel
+    if (!force) {
+      const javaExe = path.join(targetDir, 'bin', executableName);
+      if (fs.existsSync(javaExe)) {
+        console.log('[Java] Java 21 déjà détecté, validation de l\'installation...');
+        try {
+          const { spawnSync } = require('child_process');
+          const result = spawnSync(javaExe, ['-version'], { encoding: 'utf8', windowsHide: true });
+          const versionOutput = [result.stdout || '', result.stderr || ''].join('\n');
+          const versionMatch = versionOutput.match(/version "(\d+)/);
+          
+          if (versionMatch && parseInt(versionMatch[1]) >= 21) {
+            console.log('[Java] Java 21 déjà installé et fonctionnel');
+            return; // Installation déjà valide
+          }
+        } catch (validationError) {
+          console.log('[Java] Installation existante invalide, réinstallation...');
+        }
+      }
+    }
+    
     console.log('[Java] Téléchargement de Java 21 depuis BellSoft...');
     ensureDir(targetDir);
     
     // Supprimer l'ancienne installation si elle existe
     try {
       if (fs.existsSync(targetDir)) {
+        console.log('[Java] Suppression de l\'ancienne installation...');
         fs.rmSync(targetDir, { recursive: true, force: true });
       }
     } catch {}
@@ -306,7 +328,21 @@ async function installJava21() {
       throw new Error('Java executable not found after installation');
     }
     
-    console.log('[Java] Java 21 installé avec succès');
+    // Test de l'installation
+    try {
+      const { spawnSync } = require('child_process');
+      const result = spawnSync(javaExe, ['-version'], { encoding: 'utf8', windowsHide: true });
+      const versionOutput = [result.stdout || '', result.stderr || ''].join('\n');
+      const versionMatch = versionOutput.match(/version "(\d+)/);
+      
+      if (!versionMatch || parseInt(versionMatch[1]) < 21) {
+        throw new Error('Java 21 installation validation failed');
+      }
+    } catch (testError) {
+      throw new Error(`Java 21 installation test failed: ${testError.message}`);
+    }
+    
+    console.log('[Java] Java 21 installé et validé avec succès');
   } catch (error) {
     console.error('[Java] Erreur lors de l\'installation de Java 21:', error);
     throw new Error(`Échec de l'installation automatique de Java 21: ${error.message}`);
@@ -1451,7 +1487,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
         const majorVersion = parseInt(versionMatch[1]);
         if (majorVersion < 21) {
           console.log(`[Java] Java ${majorVersion} détecté, mise à jour vers Java 21...`);
-          await installJava21();
+          await installJava21(true); // Forcer la réinstallation
           // Relancer la résolution du chemin Java après l'installation
           const newJavaPath = resolveJavaPath();
           if (!newJavaPath) {
