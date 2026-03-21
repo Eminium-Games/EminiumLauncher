@@ -15,7 +15,7 @@ const { app, BrowserWindow } = require('electron');
 // ── Editable constants
 const MC_VERSION = '1.20.1';
 const FORGE_VERSION = '47.3.0'; // Legacy Forge (pour compatibilité)
-const NEOFORGE_VERSION = '21.1.192'; // NeoForge pour Minecraft 1.21.1
+const NEOFORGE_VERSION = '21.4.156'; // NeoForge pour Minecraft 1.21.1
 // Emplacement de stockage "invisible" pour Forge+mods
 // userData est déjà une zone app spécifique (ex: %AppData%/Eminium Launcher)
 const appDataRoot = path.join(process.cwd(), '..'); // fallback when packaged
@@ -499,7 +499,8 @@ async function ensureNeoForgeInstaller(mc, neoforge) {
   // NeoForge URLs (different from Forge)
   const urls = [
     `https://maven.neoforged.net/api/maven/redirect/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
-    `https://files.minecraftforge.net/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`
+    `https://maven.neoforged.net/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
+    `https://github.com/neoforged/NeoForge/releases/download/${neoforge}/neoforge-${neoforge}-installer.jar`
   ];
   let lastErr;
   for (const url of urls) {
