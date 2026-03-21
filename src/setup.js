@@ -232,64 +232,78 @@ async function installJava21() {
   const arch = process.arch;
   let java21Url, targetDir, executableName;
   
-  // Détecter l'architecture correcte
-  let archSuffix = '';
   if (platform === 'win32') {
-    if (arch === 'arm64') {
-      archSuffix = '-aarch64';
-    } else {
-      archSuffix = '-x64';
-    }
-    // Utiliser une source plus fiable pour le JRE
-    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/windows/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
+    // Utiliser BellSoft Liberica JRE - plus fiable et simple
+    java21Url = arch === 'arm64' 
+      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-windows-aarch64.zip'
+      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-windows-amd64.zip';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'win');
     executableName = 'java.exe';
   } else if (platform === 'darwin') {
-    if (arch === 'arm64') {
-      archSuffix = '-aarch64';
-    } else {
-      archSuffix = '-x64';
-    }
-    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/mac/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
+    java21Url = arch === 'arm64'
+      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-macos-aarch64.tar.gz'
+      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-macos-amd64.tar.gz';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'mac', 'Contents', 'Home');
     executableName = 'java';
   } else {
-    if (arch === 'arm64') {
-      archSuffix = '-aarch64';
-    } else {
-      archSuffix = '-x64';
-    }
-    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/linux/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
+    java21Url = arch === 'arm64'
+      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-linux-aarch64.tar.gz'
+      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-linux-amd64.tar.gz';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'linux');
     executableName = 'java';
   }
   
   try {
-    console.log('[Java] Téléchargement de Java 21...');
+    console.log('[Java] Téléchargement de Java 21 depuis BellSoft...');
     ensureDir(targetDir);
     
-    const tempZip = path.join(targetDir, 'java21-temp.zip');
-    await aSYNC_GET(java21Url, tempZip);
+    // Supprimer l'ancienne installation si elle existe
+    try {
+      if (fs.existsSync(targetDir)) {
+        fs.rmSync(targetDir, { recursive: true, force: true });
+      }
+    } catch {}
+    
+    ensureDir(targetDir);
+    
+    const tempFile = path.join(targetDir, 'java21-temp' + (platform === 'win32' ? '.zip' : '.tar.gz'));
+    await aSYNC_GET(java21Url, tempFile);
     
     console.log('[Java] Extraction de Java 21...');
-    const zip = new AdmZip(tempZip);
+    const zip = new AdmZip(tempFile);
     zip.extractAllTo(targetDir, true);
     
     // Nettoyer le fichier temporaire
-    try { fs.unlinkSync(tempZip); } catch {}
+    try { fs.unlinkSync(tempFile); } catch {}
     
-    // Trouver le dossier JDK extrait et déplacer les fichiers
-    const extractedDirs = fs.readdirSync(targetDir).filter(name => name.includes('jdk-21'));
-    if (extractedDirs.length > 0) {
-      const jdkDir = path.join(targetDir, extractedDirs[0]);
-      const binDir = path.join(jdkDir, 'bin');
+    // Trouver le dossier JRE extrait et le déplacer
+    const entries = fs.readdirSync(targetDir, { withFileTypes: true });
+    const jreEntry = entries.find(entry => 
+      entry.isDirectory() && entry.name.includes('jre')
+    );
+    
+    if (jreEntry) {
+      const jreDir = path.join(targetDir, jreEntry.name);
+      const tempDir = path.join(targetDir, 'temp-jre');
       
-      // Copier tous les fichiers du JDK nécessaires (pas seulement bin/)
-      console.log('[Java] Copie des fichiers JDK...');
-      await copyJdkFiles(jdkDir, targetDir);
+      // Déplacer le contenu du JRE vers un dossier temporaire
+      await copyDirectory(jreDir, tempDir);
       
-      // Supprimer le dossier temporaire JDK
-      try { fs.rmSync(jdkDir, { recursive: true, force: true }); } catch {}
+      // Supprimer l'ancien contenu
+      try { fs.rmSync(targetDir, { recursive: true, force: true }); } catch {}
+      ensureDir(targetDir);
+      
+      // Déplacer le contenu du JRE vers la cible
+      await copyDirectory(tempDir, targetDir);
+      
+      // Nettoyer le dossier temporaire
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+    }
+    
+    // Valider l'installation
+    const javaExe = path.join(targetDir, 'bin', executableName);
+    if (!fs.existsSync(javaExe)) {
+      throw new Error('Java executable not found after installation');
     }
     
     console.log('[Java] Java 21 installé avec succès');
