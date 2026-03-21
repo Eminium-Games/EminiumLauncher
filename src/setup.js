@@ -142,34 +142,28 @@ function setHiddenWindows(p) {
 
 const jreRoot = path.join(app.getPath('userData'), 'jre');
 
-// Copy all necessary JDK files to target directory
-async function copyJdkFiles(jdkDir, targetDir) {
-  const requiredDirs = ['bin', 'conf', 'include', 'jmods', 'legal', 'lib'];
+// Copy all necessary JRE files to target directory
+async function copyJdkFiles(jreDir, targetDir) {
+  // Pour le JRE, la structure est déjà correcte, il suffit de déplacer le contenu
+  console.log('[Java] Déplacement des fichiers JRE...');
   
-  for (const dir of requiredDirs) {
-    const srcDir = path.join(jdkDir, dir);
-    const dstDir = path.join(targetDir, dir);
-    
-    if (fs.existsSync(srcDir)) {
-      console.log(`[Java] Copie du dossier ${dir}...`);
-      await copyDirectory(srcDir, dstDir);
-    }
-  }
+  // Vérifier si le contenu est déjà dans un sous-dossier (ex: jdk-21-jre/)
+  const entries = fs.readdirSync(jreDir, { withFileTypes: true });
+  const jreSubDir = entries.find(entry => 
+    entry.isDirectory() && (entry.name.includes('jre') || entry.name.includes('jdk'))
+  );
   
-  // Copier les fichiers racine importants
-  const rootFiles = ['release', 'NOTICE', 'LICENSE', 'README'];
-  for (const file of rootFiles) {
-    const srcFile = path.join(jdkDir, file);
-    const dstFile = path.join(targetDir, file);
-    
-    if (fs.existsSync(srcFile)) {
-      try {
-        fs.copyFileSync(srcFile, dstFile);
-      } catch (error) {
-        console.warn(`[Java] Impossible de copier ${file}:`, error.message);
-      }
+  const sourceDir = jreSubDir ? path.join(jreDir, jreSubDir.name) : jreDir;
+  
+  // Vider le dossier cible d'abord
+  try {
+    if (fs.existsSync(targetDir)) {
+      fs.rmSync(targetDir, { recursive: true, force: true });
     }
-  }
+  } catch {}
+  
+  // Déplacer tous les fichiers et dossiers
+  await copyDirectory(sourceDir, targetDir);
 }
 
 // Copy directory recursively with permission handling
@@ -235,18 +229,37 @@ async function copyDirectory(src, dst) {
 // Install Java 21 automatically if needed
 async function installJava21() {
   const platform = process.platform;
+  const arch = process.arch;
   let java21Url, targetDir, executableName;
   
+  // Détecter l'architecture correcte
+  let archSuffix = '';
   if (platform === 'win32') {
-    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.zip';
+    if (arch === 'arm64') {
+      archSuffix = '-aarch64';
+    } else {
+      archSuffix = '-x64';
+    }
+    // Utiliser une source plus fiable pour le JRE
+    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/windows/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'win');
     executableName = 'java.exe';
   } else if (platform === 'darwin') {
-    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_macos-x64_bin.tar.gz';
+    if (arch === 'arm64') {
+      archSuffix = '-aarch64';
+    } else {
+      archSuffix = '-x64';
+    }
+    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/mac/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'mac', 'Contents', 'Home');
     executableName = 'java';
   } else {
-    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz';
+    if (arch === 'arm64') {
+      archSuffix = '-aarch64';
+    } else {
+      archSuffix = '-x64';
+    }
+    java21Url = `https://api.adoptium.net/v3/binary/latest/21/ga/linux/${arch === 'arm64' ? 'aarch64' : 'x64'}/jre/hotspot/normal/eclipse?project=jdk`;
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'linux');
     executableName = 'java';
   }
