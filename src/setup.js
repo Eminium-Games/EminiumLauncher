@@ -184,11 +184,56 @@ async function installJava21() {
       // Déplacer les fichiers binaires vers le bon emplacement
       ensureDir(path.join(targetDir, 'bin'));
       const files = fs.readdirSync(binDir);
-      files.forEach(file => {
+      
+      // Essayer de copier les fichiers, demander les droits admin si nécessaire
+      for (const file of files) {
         const src = path.join(binDir, file);
         const dst = path.join(targetDir, 'bin', file);
-        fs.copyFileSync(src, dst);
-      });
+        
+        try {
+          fs.copyFileSync(src, dst);
+        } catch (copyError) {
+          if (copyError.code === 'EPERM' || copyError.code === 'EACCES') {
+            // Demander les permissions administrateur
+            const { dialog } = require('electron');
+            const result = await dialog.showMessageBox({
+              type: 'warning',
+              title: 'Permissions requises',
+              message: 'Java 21 nécessite des permissions administrateur pour s\'installer.',
+              detail: 'Voulez-vous relancer le launcher avec des permissions administrateur ?',
+              buttons: ['Oui', 'Non'],
+              defaultId: 0
+            });
+            
+            if (result.response === 0) {
+              // Relancer avec les permissions administrateur
+              const { execSync } = require('child_process');
+              const scriptPath = process.execPath;
+              const args = process.argv.slice(1).join(' ');
+              
+              // Sur Windows, utiliser PowerShell pour demander l'élévation
+              if (platform === 'win32') {
+                const command = `Start-Process "${scriptPath}" -ArgumentList "${args}" -Verb RunAs`;
+                execSync(`powershell -Command "${command}"`, { detached: true });
+              } else {
+                // Sur macOS/Linux, utiliser sudo
+                execSync(`sudo "${scriptPath}" ${args}`, { detached: true });
+              }
+              
+              // Quitter l'instance actuelle
+              if (global.mainWindow && !global.mainWindow.isDestroyed()) {
+                global.mainWindow.close();
+              }
+              app.quit();
+              process.exit(0);
+            } else {
+              throw new Error('Installation de Java 21 annulée par l\'utilisateur.');
+            }
+          } else {
+            throw copyError;
+          }
+        }
+      }
       
       // Supprimer le dossier temporaire JDK
       try { fs.rmSync(jdkDir, { recursive: true, force: true }); } catch {}
