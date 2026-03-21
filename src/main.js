@@ -51,7 +51,7 @@ async function initDiscordRPC() {
       console.warn('[RPC] discord-rpc non disponible');
       return false;
     }
-    const clientId = String(DISCORD_APP_ID_SHARED || '').trim();
+    const clientId = String(DISCORD_APP_ID_SHARED || '1484903800266293379').trim();
     if (!clientId) {
       console.warn('[RPC] Client ID manquant');
       return false;
