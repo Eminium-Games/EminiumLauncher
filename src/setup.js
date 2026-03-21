@@ -15,7 +15,7 @@ const { app, BrowserWindow } = require('electron');
 // ── Editable constants
 const MC_VERSION = '1.20.1';
 const FORGE_VERSION = '47.3.0'; // Legacy Forge (pour compatibilité)
-const NEOFORGE_VERSION = '21.4.156'; // NeoForge pour Minecraft 1.21.1
+const NEOFORGE_VERSION = '21.4.156'; // NeoForge pour Minecraft 1.21.1 (nécessite Java 21)
 // Emplacement de stockage "invisible" pour Forge+mods
 // userData est déjà une zone app spécifique (ex: %AppData%/Eminium Launcher)
 const appDataRoot = path.join(process.cwd(), '..'); // fallback when packaged
@@ -1258,7 +1258,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
   let javaPath = resolveJavaPath();
   // Enforce bundled JRE so we don't rely on system Java silently
   if (!javaPath) {
-    throw new Error('JRE embarqué introuvable. Placez une JRE Java 17 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
+    throw new Error('JRE embarqué introuvable. Placez une JRE Java 21 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
   }
   // Validate Java by running -version; if javaw fails, try sibling java.exe
   const tryCheck = (exePath) => {
@@ -1272,6 +1272,17 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
         const msg = `exitCode=${res.status}${out ? `, output=\n${out}` : ''}`;
         throw new Error(msg);
       }
+      
+      // Check Java version for NeoForge compatibility
+      const versionOutput = [res.stdout || '', res.stderr || ''].join('\n');
+      const versionMatch = versionOutput.match(/version "(\d+)/);
+      if (versionMatch) {
+        const majorVersion = parseInt(versionMatch[1]);
+        if (majorVersion < 21) {
+          throw new Error(`Java ${majorVersion} détecté mais Java 21+ est requis pour NeoForge. Veuillez installer Java 21.`);
+        }
+      }
+      
       return true;
     } catch (err) {
       throw err;
