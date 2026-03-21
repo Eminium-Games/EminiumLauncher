@@ -14,7 +14,8 @@ const { app, BrowserWindow } = require('electron');
 
 // ── Editable constants
 const MC_VERSION = '1.20.1';
-const FORGE_VERSION = '47.3.0';
+const FORGE_VERSION = '47.3.0'; // Legacy Forge (pour compatibilité)
+const NEOFORGE_VERSION = '21.1.192'; // NeoForge pour Minecraft 1.21.1
 // Emplacement de stockage "invisible" pour Forge+mods
 // userData est déjà une zone app spécifique (ex: %AppData%/Eminium Launcher)
 const appDataRoot = path.join(process.cwd(), '..'); // fallback when packaged
@@ -467,6 +468,55 @@ async function ensureForgeInstaller(mc, forge) {
     }
   }
   throw new Error(`Impossible de télécharger l'installeur Forge ${mc}-${forge}: ${lastErr?.message || lastErr}`);
+}
+
+// NeoForge installer function (separate from Forge)
+async function ensureNeoForgeInstaller(mc, neoforge) {
+  const cacheDir = path.join(hiddenBase, 'cache');
+  ensureDir(cacheDir);
+  const dest = path.join(cacheDir, `neoforge-${mc}-${neoforge}-installer.jar`);
+  const isValidZip = (file) => {
+    try {
+      const zip = new AdmZip(file);
+      // Access entries to force zip parsing
+      const entries = zip.getEntries();
+      if (!entries || entries.length === 0) return false;
+      // NeoForge installer must contain these
+      const need1 = zip.getEntry('data/client.lzma');
+      const need2 = zip.getEntry('install_profile.json');
+      if (!need1 || !need2) return false;
+      if (need1.header?.size === 0) return false;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 1024 * 100) {
+    // Validate cached jar; if corrupted, remove and redownload
+    if (isValidZip(dest)) return dest;
+    try { fs.unlinkSync(dest); } catch {}
+  }
+  // NeoForge URLs (different from Forge)
+  const urls = [
+    `https://maven.neoforged.net/api/maven/redirect/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
+    `https://files.minecraftforge.net/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`
+  ];
+  let lastErr;
+  for (const url of urls) {
+    try {
+      await aSYNC_GET(url, dest);
+      if (fs.existsSync(dest)) {
+        if (isValidZip(dest)) return dest;
+        // Corrupted download → delete and try next mirror
+        try { fs.unlinkSync(dest); } catch {}
+        lastErr = new Error('NeoForge installer corrompu (zip invalide)');
+        continue;
+      }
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw new Error(`Impossible de télécharger l'installeur NeoForge ${mc}-${neoforge}: ${lastErr?.message || lastErr}`);
 }
 
 // Client Axios keep-alive pour accélérer les téléchargements
@@ -1152,7 +1202,7 @@ async function loginEminium(email, password, twoFactorCode) {
 
 const { Client, Authenticator } = require('minecraft-launcher-core');
 
-async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565 } = {}) {
+async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565, version = MC_VERSION, forgeVersion = FORGE_VERSION, useModpack = true, modpackUrl = MODPACK_URL } = {}) {
 
   const profile = readUserProfile();
   if (!profile) {
@@ -1176,21 +1226,33 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     console.log('[BMCL]', msg);
     if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: msg });
   };
-  // Synchroniser le modpack distant avant tout
-  await syncModpackFromUrl(MODPACK_URL, (m) => console.log(m));
-  await ensureVersionFilesBMCL(MC_VERSION, log);
+  // Synchroniser le modpack distant uniquement si nécessaire
+  if (useModpack) {
+    await syncModpackFromUrl(modpackUrl, (m) => console.log(m));
+  }
+  await ensureVersionFilesBMCL(version, log);
 
-  const installerPath = await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
+  const installerPath = useModpack ? (forgeVersion.startsWith('21.') ? await ensureNeoForgeInstaller(version, forgeVersion) : await ensureForgeInstaller(version, forgeVersion)) : null;
   // Validate installer again defensively (may have been corrupted externally)
-  try {
-    const testZip = new AdmZip(installerPath);
-    if (!testZip.getEntry('data/client.lzma') || !testZip.getEntry('install_profile.json')) {
+  if (useModpack && installerPath) {
+    try {
+      const testZip = new AdmZip(installerPath);
+      if (!testZip.getEntry('data/client.lzma') || !testZip.getEntry('install_profile.json')) {
+        try { fs.unlinkSync(installerPath); } catch {}
+        if (forgeVersion.startsWith('21.')) {
+          await ensureNeoForgeInstaller(version, forgeVersion);
+        } else {
+          await ensureForgeInstaller(version, forgeVersion);
+        }
+      }
+    } catch {
       try { fs.unlinkSync(installerPath); } catch {}
-      await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
+      if (forgeVersion.startsWith('21.')) {
+        await ensureNeoForgeInstaller(version, forgeVersion);
+      } else {
+        await ensureForgeInstaller(version, forgeVersion);
+      }
     }
-  } catch {
-    try { fs.unlinkSync(installerPath); } catch {}
-    await ensureForgeInstaller(MC_VERSION, FORGE_VERSION);
   }
   let javaPath = resolveJavaPath();
   // Enforce bundled JRE so we don't rely on system Java silently
@@ -1249,10 +1311,10 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
   const opts = {
     root: hiddenBase, // dossier "invisible" avec Forge et mods
     version: {
-      number: MC_VERSION,
+      number: version,
       type: 'release'
     },
-    forge: installerPath,
+    ...(useModpack && installerPath ? { forge: installerPath } : {}),
     ...(javaPath ? { javaPath } : {}),
     // Use QuickPlay to auto-join the server (avoids deprecated server/port flags)
     quickPlay: {

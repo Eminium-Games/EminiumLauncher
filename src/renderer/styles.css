@@ -155,6 +155,7 @@
 .server-content {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: clamp(0.5rem, 1vw, 1rem);
   margin-bottom: clamp(0.5rem, 1vw, 1rem);
   width: 100%;
@@ -166,6 +167,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin: 0 auto;
 }
 
 .server-icon img {

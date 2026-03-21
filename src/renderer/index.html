@@ -261,19 +261,27 @@ const serverConfig = {
     host: '82.64.85.47', 
     port: 25565, 
     name: 'Eminium Mini-Jeux',
-    subtitle: 'Serveur principal'
+    subtitle: 'Serveur principal',
+    version: '1.21.8',
+    useModpack: false,
+    forgeVersion: null,
+    modpackUrl: null
   },
   server2: { 
     host: '82.64.85.47', 
     port: 25566, 
     name: 'Eminium Factions',
-    subtitle: 'Serveur secondaire'
+    subtitle: 'Serveur secondaire',
+    version: '1.21.1',
+    useModpack: true,
+    forgeVersion: '21.1.192',
+    modpackUrl: 'https://github.com/Fourty3000/get-zip-for-eminium-launcher/archive/refs/tags/ZIP.zip'
   }
 };
 
 // Initialiser l'interface des serveurs
 function initServerUI() {
-  ['server1', 'server2', 'server3'].forEach(serverId => {
+  ['server1', 'server2'].forEach(serverId => {
     const config = serverConfig[serverId];
     const card = document.querySelector(`[data-server="${serverId}"]`);
     
@@ -383,7 +391,7 @@ async function pingServer(serverId) {
 // Ping périodique des serveurs
 let serverPingTimer = null;
 async function pingAllServers() {
-  await Promise.all(['server1', 'server2', 'server3'].map(id => pingServer(id)));
+  await Promise.all(['server1', 'server2'].map(id => pingServer(id)));
 }
 
 function startServerPings() {
@@ -412,8 +420,27 @@ async function handlePlayClick(serverId) {
   try {
     progressUI.open('Lancement');
     progressUI.set(10);
-    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${config.host}:${config.port})`);
-    const res = await window.eminium.play({ memoryMB, serverHost: config.host, serverPort: config.port });
+    let versionInfo;
+    if (!config.useModpack) {
+      versionInfo = `Vanilla ${config.version}`;
+    } else if (config.forgeVersion && config.forgeVersion.startsWith('21.')) {
+      versionInfo = `NeoForge ${config.version}`;
+    } else {
+      versionInfo = `Forge ${config.version}`;
+    }
+    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${versionInfo}, ${config.host}:${config.port})`);
+    
+    const launchOptions = {
+      memoryMB,
+      serverHost: config.host,
+      serverPort: config.port,
+      version: config.version,
+      useModpack: config.useModpack,
+      forgeVersion: config.forgeVersion,
+      modpackUrl: config.modpackUrl
+    };
+    
+    const res = await window.eminium.play(launchOptions);
     if (res?.ok) {
       log('Client lancé ✓');
       progressUI.set(100);
@@ -436,7 +463,6 @@ function showAddServerDialog() {
 // Attacher les événements aux boutons de jeu
 document.getElementById('btnPlayServer1')?.addEventListener('click', () => handlePlayClick('server1'));
 document.getElementById('btnPlayServer2')?.addEventListener('click', () => handlePlayClick('server2'));
-document.getElementById('btnPlayServer3')?.addEventListener('click', () => handlePlayClick('server3'));
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
