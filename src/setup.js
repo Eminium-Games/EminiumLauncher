@@ -142,6 +142,65 @@ function setHiddenWindows(p) {
 
 const jreRoot = path.join(app.getPath('userData'), 'jre');
 
+// Install Java 21 automatically if needed
+async function installJava21() {
+  const platform = process.platform;
+  let java21Url, targetDir, executableName;
+  
+  if (platform === 'win32') {
+    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.zip';
+    targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'win');
+    executableName = 'java.exe';
+  } else if (platform === 'darwin') {
+    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_macos-x64_bin.tar.gz';
+    targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'mac', 'Contents', 'Home');
+    executableName = 'java';
+  } else {
+    java21Url = 'https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz';
+    targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'linux');
+    executableName = 'java';
+  }
+  
+  try {
+    console.log('[Java] Téléchargement de Java 21...');
+    ensureDir(targetDir);
+    
+    const tempZip = path.join(targetDir, 'java21-temp.zip');
+    await aSYNC_GET(java21Url, tempZip);
+    
+    console.log('[Java] Extraction de Java 21...');
+    const zip = new AdmZip(tempZip);
+    zip.extractAllTo(targetDir, true);
+    
+    // Nettoyer le fichier temporaire
+    try { fs.unlinkSync(tempZip); } catch {}
+    
+    // Trouver le dossier JDK extrait et déplacer les fichiers
+    const extractedDirs = fs.readdirSync(targetDir).filter(name => name.includes('jdk-21'));
+    if (extractedDirs.length > 0) {
+      const jdkDir = path.join(targetDir, extractedDirs[0]);
+      const binDir = path.join(jdkDir, 'bin');
+      
+      // Déplacer les fichiers binaires vers le bon emplacement
+      ensureDir(path.join(targetDir, 'bin'));
+      const files = fs.readdirSync(binDir);
+      files.forEach(file => {
+        const src = path.join(binDir, file);
+        const dst = path.join(targetDir, 'bin', file);
+        fs.copyFileSync(src, dst);
+      });
+      
+      // Supprimer le dossier temporaire JDK
+      try { fs.rmSync(jdkDir, { recursive: true, force: true }); } catch {}
+    }
+    
+    console.log('[Java] Java 21 installé avec succès');
+  } catch (error) {
+    console.error('[Java] Erreur lors de l\'installation de Java 21:', error);
+    throw new Error(`Échec de l'installation automatique de Java 21: ${error.message}`);
+  }
+}
+
 // Try to resolve a bundled Java runtime shipped with the app
 function resolveJavaPath() {
   try {
@@ -1261,7 +1320,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     throw new Error('JRE embarqué introuvable. Placez une JRE Java 21 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
   }
   // Validate Java by running -version; if javaw fails, try sibling java.exe
-  const tryCheck = (exePath) => {
+  const tryCheck = async (exePath) => {
     try {
       const { loginEminium, testServerConnection } = require('./setup.js');
       const res = spawnSync(exePath, ['-version'], { encoding: 'utf8', windowsHide: true });
@@ -1279,7 +1338,14 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
       if (versionMatch) {
         const majorVersion = parseInt(versionMatch[1]);
         if (majorVersion < 21) {
-          throw new Error(`Java ${majorVersion} détecté mais Java 21+ est requis pour NeoForge. Veuillez installer Java 21.`);
+          console.log(`[Java] Java ${majorVersion} détecté, mise à jour vers Java 21...`);
+          await installJava21();
+          // Relancer la résolution du chemin Java après l'installation
+          const newJavaPath = resolveJavaPath();
+          if (!newJavaPath) {
+            throw new Error('Échec de l\'installation de Java 21. Veuillez l\'installer manuellement.');
+          }
+          return newJavaPath; // Retourner le nouveau chemin
         }
       }
       
@@ -1294,13 +1360,15 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     if (process.platform === 'win32' && javaPath.toLowerCase().endsWith('javaw.exe')) {
       const alt = path.join(path.dirname(javaPath), 'java.exe');
       if (fs.existsSync(alt)) {
-        tryCheck(alt);
-        javaPath = alt;
+        const result = await tryCheck(alt);
+        if (result && typeof result === 'string') {
+          javaPath = result;
+        }
       } else {
-        tryCheck(javaPath);
+        await tryCheck(javaPath);
       }
     } else {
-      tryCheck(javaPath);
+      await tryCheck(javaPath);
     }
   } catch (e2) {
     throw new Error(`Java invalide ou non exécutable: ${javaPath}. Détail: ${e2?.message || e2}`);
