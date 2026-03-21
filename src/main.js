@@ -175,7 +175,8 @@ function isGithubRateLimited(error) {
 }
 
 function getIconPath() {
-  // En dev: ../assets/icon/icon.ico ; En prod: resources/assets/icon/icon.ico (grâce à extraResources)
+  // Utiliser l'icône locale par défaut pour l'instant
+  // L'icône web nécessite une gestion asynchrone plus complexe
   const devPath = path.join(__dirname, '..', 'assets', 'icon', 'icon.ico');
   const prodPath = path.join(process.resourcesPath || '', 'assets', 'icon', 'icon.ico');
   return fs.existsSync(devPath) ? devPath : prodPath;
@@ -653,16 +654,21 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
 
     // Enforce server availability before launching
     const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : '82.64.85.47';
-    const port = (userOpts && userOpts.serverPort) ? Number(userOpts.serverPort) : 25565;
-    const up = await tcpPing(host, port, 2500);
-    if (!up) {
-      const msg = `Serveur ${host}:${port} hors ligne. Lancement bloqué.`;
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('play:progress', { type: 'error', line: msg });
+    const port = (userOpts && userOpts.serverPort) ? Number(userOpts.serverPort) : 25565; 
+    const serverStatus = await checkMinecraftServerStatus(host, port, 5000);
+    
+    if (!serverStatus.minecraftUp) {
+      let errorMsg = `Serveur ${host}:${port} hors ligne ou inaccessible. Lancement bloqué.`;
+      if (serverStatus.error) {
+        errorMsg += ` (${serverStatus.error})`;
       }
-      return { ok: false, error: msg };
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('play:progress', { type: 'error', line: errorMsg });
+      }
+      return { ok: false, error: errorMsg };
     }
-
+    
+    
     try { setPresencePreparing(); } catch { }
     const launcher = await launchMinecraft(userOpts);
     if (launcher) {
@@ -736,7 +742,89 @@ ipcMain.handle('launcher:prepare', async () => {
   }
 });
 
-// Simple TCP ping to check if the server port is open
+// Enhanced Minecraft server status check using multiple methods
+async function checkMinecraftServerStatus(host, port, timeout = 5000) {
+  const results = {
+    tcpUp: false,
+    minecraftUp: false,
+    onlinePlayers: 0,
+    maxPlayers: 0,
+    version: '',
+    motd: '',
+    latency: -1,
+    error: null
+  };
+
+  try {
+    // Method 1: TCP ping (basic connectivity)
+    const tcpStart = Date.now();
+    results.tcpUp = await tcpPing(host, port, timeout);
+    results.latency = results.tcpUp ? Date.now() - tcpStart : -1;
+
+    if (!results.tcpUp) {
+      results.error = 'Port fermé ou serveur inaccessible';
+      return results;
+    }
+
+    // Method 2: Minecraft server list API (most reliable)
+    try {
+      const apiUrl = `https://api.mcsrvstat.us/3/${host}:${port}`;
+      const response = await axios.get(apiUrl, { 
+        timeout: 3000,
+        headers: { 'User-Agent': 'EminiumLauncher/1.0' }
+      });
+      
+      if (response.data && response.data.online) {
+        results.minecraftUp = true;
+        results.onlinePlayers = response.data.players?.online || 0;
+        results.maxPlayers = response.data.players?.max || 0;
+        results.version = response.data.version || '';
+        results.motd = response.data.motd?.clean || response.data.motd?.raw || '';
+        return results;
+      }
+    } catch (apiError) {
+      // API failed, continue to next method
+    }
+
+    // Method 3: Alternative API (mc-api.net)
+    try {
+      const altApiUrl = `https://mc-api.net/v3/server/ping/${host}/${port}`;
+      const response = await axios.get(altApiUrl, { 
+        timeout: 3000,
+        headers: { 'User-Agent': 'EminiumLauncher/1.0' }
+      });
+      
+      if (response.data && response.data.online) {
+        results.minecraftUp = true;
+        results.onlinePlayers = response.data.players?.online || 0;
+        results.maxPlayers = response.data.players?.max || 0;
+        results.version = response.data.version || '';
+        results.motd = response.data.motd || '';
+        return results;
+      }
+    } catch (altApiError) {
+      // Alternative API failed, continue to next method
+    }
+
+    // Method 4: Direct Minecraft protocol check (fallback)
+    try {
+      results.minecraftUp = await minecraftProtocolPing(host, port, 2000);
+    } catch (protocolError) {
+      // Protocol failed
+    }
+
+    if (!results.minecraftUp) {
+      results.error = 'Port ouvert mais serveur Minecraft non répondant';
+    }
+
+  } catch (error) {
+    results.error = error.message;
+  }
+
+  return results;
+}
+
+// Simple TCP ping (kept as fallback for basic connectivity)
 function tcpPing(host, port, timeout = 3000) {
   return new Promise((resolve) => {
     let done = false;
@@ -755,13 +843,102 @@ function tcpPing(host, port, timeout = 3000) {
   });
 }
 
-// IPC: ping Minecraft server (port open check)
+// Direct Minecraft protocol ping (advanced fallback)
+async function minecraftProtocolPing(host, port, timeout = 2000) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let connected = false;
+    
+    const cleanup = () => {
+      try { socket.destroy(); } catch { }
+    };
+
+    socket.setTimeout(timeout);
+    
+    socket.once('connect', () => {
+      connected = true;
+      
+      // Send Minecraft server list ping packet
+      const packet = Buffer.from([
+        0x00, // Handshake packet ID
+        0x00, // Protocol version (varint - 0 for status)
+        ...Buffer.from(host.length.toString(), 'utf8'), // Host length
+        ...Buffer.from(host, 'utf8'), // Host name
+        (port >> 8) & 0xFF, // Port high byte
+        port & 0xFF, // Port low byte
+        0x01, // Next state (status)
+        0x01, // Status request packet ID
+        0x00  // Empty payload
+      ]);
+      
+      socket.write(packet);
+    });
+
+    socket.once('data', (data) => {
+      if (data.length > 0) {
+        cleanup();
+        resolve(true);
+      }
+    });
+
+    socket.once('timeout', () => {
+      cleanup();
+      resolve(false);
+    });
+
+    socket.once('error', () => {
+      cleanup();
+      resolve(false);
+    });
+
+    try {
+      socket.connect(port, host);
+    } catch {
+      cleanup();
+      resolve(false);
+    }
+  });
+}
+
+// IPC: Enhanced Minecraft server status check
 ipcMain.handle('launcher:ping', async (_evt, { host, port, timeout }) => {
   try {
-    if (!host || !port) return { ok: true, up: false };
-    const up = await tcpPing(String(host), Number(port), typeof timeout === 'number' ? timeout : 3000);
-    return { ok: true, up };
+    if (!host || !port) return { ok: true, up: false, details: null };
+    
+    const status = await checkMinecraftServerStatus(
+      String(host), 
+      Number(port), 
+      typeof timeout === 'number' ? timeout : 5000
+    );
+    
+    return { 
+      ok: true, 
+      up: status.minecraftUp, // Use Minecraft status instead of just TCP
+      details: {
+        tcpUp: status.tcpUp,
+        minecraftUp: status.minecraftUp,
+        onlinePlayers: status.onlinePlayers,
+        maxPlayers: status.maxPlayers,
+        version: status.version,
+        motd: status.motd,
+        latency: status.latency,
+        error: status.error
+      }
+    };
   } catch (e) {
-    return { ok: true, up: false };
+    return { 
+      ok: true, 
+      up: false, 
+      details: { 
+        error: e.message,
+        tcpUp: false,
+        minecraftUp: false,
+        onlinePlayers: 0,
+        maxPlayers: 0,
+        version: '',
+        motd: '',
+        latency: -1
+      }
+    };
   }
 });

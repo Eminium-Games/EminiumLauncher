@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="shortcut icon" href="https://eminium.ovh/storage/img/appicon-white.png" type="image/x-icon">
+<link rel="shortcut icon" href="https://eminium.ovh/storage/img/eminium-logo.png" type="image/x-icon">
 <title>Eminium Launcher</title>
 <!-- Premium font import -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,6 +97,7 @@
               </div>
               <div class="server-status-indicator" id="server1Status">
                 <span class="status-dot"></span>
+                <span class="status-text">Vérification...</span>
               </div>
             </div>
             <div class="server-content">
@@ -123,6 +124,7 @@
               </div>
               <div class="server-status-indicator" id="server2Status">
                 <span class="status-dot"></span>
+                <span class="status-text">Vérification...</span>
               </div>
             </div>
             <div class="server-content">
@@ -266,12 +268,6 @@ const serverConfig = {
     port: 25566, 
     name: 'Eminium Factions',
     subtitle: 'Serveur secondaire'
-  },
-  server3: { 
-    host: 'play.eminium.ovh', 
-    port: 25565, 
-    name: 'Eminium Official',
-    subtitle: 'Serveur officiel'
   }
 };
 
@@ -301,33 +297,86 @@ function initServerUI() {
   });
 }
 
-// Ping des serveurs pour vérifier leur statut
+// Ping des serveurs pour vérifier leur statut avec informations détaillées
 async function pingServer(serverId) {
   const config = serverConfig[serverId];
   const statusIndicator = document.getElementById(`${serverId}Status`);
+  const btnPlay = document.getElementById(`btnPlay${serverId.charAt(0).toUpperCase() + serverId.slice(1)}`);
   
   if (!statusIndicator) return false;
   
   const statusDot = statusIndicator.querySelector('.status-dot');
+  const statusText = statusIndicator.querySelector('.status-text');
   
+  // Reset status
   if (statusDot) {
-    statusDot.className = 'status-dot';
+    statusDot.className = 'status-dot checking';
+  }
+  if (statusText) {
+    statusText.textContent = 'Vérification...';
+  }
+  if (btnPlay) {
+    btnPlay.disabled = true;
   }
   
   try {
-    const result = await window.eminium?.ping?.(config.host, config.port, 2500);
+    const result = await window.eminium?.ping?.(config.host, config.port, 5000);
     const isOnline = !!(result && result.up);
+    const details = result?.details || {};
     
+    // Update status dot
     if (statusDot) {
       statusDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
     }
     
+    // Update status text with detailed information
+    if (statusText) {
+      if (isOnline && details.minecraftUp) {
+        const players = details.onlinePlayers || 0;
+        const maxPlayers = details.maxPlayers || 0;
+        const latency = details.latency || -1;
+        
+        let statusInfo = `${players}/${maxPlayers} joueurs`;
+        if (latency > 0) {
+          statusInfo += ` • ${latency}ms`;
+        }
+        if (details.version) {
+          statusInfo += ` • ${details.version}`;
+        }
+        
+        statusText.textContent = statusInfo;
+      } else if (details.tcpUp && !details.minecraftUp) {
+        statusText.textContent = 'Port ouvert, serveur non répondant';
+      } else {
+        statusText.textContent = details.error || 'Hors ligne';
+      }
+    }
+    
+    // Update play button
+    if (btnPlay) {
+      btnPlay.disabled = !isOnline;
+      if (!isOnline) {
+        btnPlay.title = details.error || 'Serveur hors ligne';
+      } else {
+        btnPlay.title = '';
+      }
+    }
+    
+        
     return isOnline;
   } catch (e) {
     if (statusDot) {
       statusDot.className = 'status-dot offline';
     }
-    return false;
+    if (statusText) {
+      statusText.textContent = 'Erreur de vérification';
+    }
+    if (btnPlay) {
+      btnPlay.disabled = true;
+      btnPlay.title = 'Erreur de vérification du serveur';
+    }
+    
+        return false;
   }
 }
 
