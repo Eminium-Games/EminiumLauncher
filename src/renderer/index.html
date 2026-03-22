@@ -170,6 +170,16 @@
             <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="toggle" id="fpsUnlimited"> FPS illimités</label>
           </div>
         </div>
+        <div class="row" style="margin-top:12px;">
+          <div class="field">
+            <label>Chemin de Java (javaw.exe)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="javaPath" placeholder="Ex: C:\Program Files\Java\jdk-21\bin\javaw.exe" style="flex: 1;">
+              <button class="btn sec" id="btnBrowseJava" style="padding: 8px 16px;">Parcourir</button>
+            </div>
+            <div class="muted" style="margin-top:4px; font-size: 0.85rem;">Laissez vide pour utiliser la détection automatique</div>
+          </div>
+        </div>
         <div class="row toggles" style="margin-top:8px;">
           <label style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" class="toggle" id="closeOnPlayToggle"> Fermer le launcher au démarrage du jeu
@@ -274,7 +284,7 @@ const serverConfig = {
     subtitle: 'Serveur secondaire',
     version: '1.21.1',
     useModpack: true,
-    forgeVersion: '21.4.156',
+    forgeVersion: '21.4.121',
     modpackUrl: 'https://github.com/Fourty3000/get-zip-for-eminium-launcher/archive/refs/tags/ZIP.zip'
   }
 };
@@ -1380,6 +1390,48 @@ async function checkAndAutoPrepare() {
 // Remappe le bouton Vérifier/Préparer pour utiliser prepare()
 document.getElementById('btnCheck').addEventListener('click', async () => {
   await checkAndAutoPrepare();
+});
+
+// Gestion du chemin Java
+document.getElementById('btnBrowseJava')?.addEventListener('click', async () => {
+  try {
+    const result = await window.eminium.showOpenDialog({
+      title: 'Sélectionner javaw.exe',
+      defaultPath: 'C:\\Program Files\\Java',
+      filters: [
+        { name: 'Exécutables Java', extensions: ['exe'] },
+        { name: 'Tous les fichiers', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+    
+    if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
+      const selectedPath = result.filePaths[0];
+      // Vérifier que c'est bien javaw.exe ou java.exe
+      if (selectedPath.endsWith('javaw.exe') || selectedPath.endsWith('java.exe')) {
+        document.getElementById('javaPath').value = selectedPath;
+        // Sauvegarder dans les préférences
+        await window.eminium.saveSetting({ key: 'javaPath', value: selectedPath });
+        log(`Chemin Java sauvegardé: ${selectedPath}`);
+      } else {
+        log('Veuillez sélectionner javaw.exe ou java.exe');
+      }
+    }
+  } catch (error) {
+    log(`Erreur lors de la sélection du fichier Java: ${error.message}`);
+  }
+});
+
+// Charger le chemin Java sauvegardé au démarrage
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const savedJavaPath = await window.eminium.loadSetting('javaPath');
+    if (savedJavaPath) {
+      document.getElementById('javaPath').value = savedJavaPath;
+    }
+  } catch (error) {
+    console.warn('Erreur lors du chargement du chemin Java:', error);
+  }
 });
 
 // L'ancien gestionnaire d'événements btnPlay est remplacé par les gestionnaires individuels dans handlePlayClick()

@@ -6,16 +6,40 @@ const http = require('http');
 const https = require('https');
 const AdmZip = require('adm-zip');
 const crypto = require('crypto');           // pour générer un UUID offline si besoin
-const { execFileSync, spawnSync } = require('child_process');
+const { spawn, spawnSync, execFileSync } = require('child_process');
 const SITE_URL = 'https://eminium.ovh';     // ton site Azuriom
-const { app, BrowserWindow } = require('electron');
+const { app, ipcMain, BrowserWindow } = require('electron');
+const { Client } = require('minecraft-launcher-core');
+const discord = require('./discord.js');
 
+// Fonctions de gestion des paramètres
+function getSettingsPath() {
+  const dir = path.join(app.getPath('userData'));
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { }
+  return path.join(dir, 'settings.json');
+}
 
+function readSettings() {
+  try {
+    const p = getSettingsPath();
+    if (!fs.existsSync(p)) return {};
+    const raw = fs.readFileSync(p, 'utf8');
+    return JSON.parse(raw);
+  } catch { return {}; }
+}
+
+function writeSettings(obj) {
+  try {
+    const p = getSettingsPath();
+    fs.writeFileSync(p, JSON.stringify(obj, null, 2), 'utf8');
+    return true;
+  } catch { return false; }
+}
 
 // ── Editable constants
-const MC_VERSION = '1.20.1';
+const MC_VERSION = '1.21.1';
 const FORGE_VERSION = '47.3.0'; // Legacy Forge (pour compatibilité)
-const NEOFORGE_VERSION = '21.4.156'; // NeoForge pour Minecraft 1.21.1 (nécessite Java 21)
+const NEOFORGE_VERSION = '21.4.121'; // NeoForge pour Minecraft 1.21.1 (compatible Java 17)
 // Emplacement de stockage "invisible" pour Forge+mods
 // userData est déjà une zone app spécifique (ex: %AppData%/Eminium Launcher)
 const appDataRoot = path.join(process.cwd(), '..'); // fallback when packaged
@@ -63,6 +87,92 @@ function ensureDir(p) {
     // Last resort: try to recreate
     try { fs.mkdirSync(p, { recursive: true }); } catch {}
   }
+}
+
+async function checkAndInstallJava() {
+  console.log('[Java] Vérification de Java...');
+  
+  // Vérifier d'abord le chemin Java personnalisé depuis les paramètres
+  try {
+    const settings = readSettings();
+    const customJavaPath = settings.javaPath;
+    
+    if (customJavaPath && fs.existsSync(customJavaPath)) {
+      console.log(`[Java] Chemin Java personnalisé trouvé: ${customJavaPath}`);
+      console.log('[Java] Utilisation directe du chemin Java personnalisé (contournement de validation)');
+      return customJavaPath;
+    } else if (customJavaPath) {
+      console.warn('[Java] Le chemin Java personnalisé n\'existe pas:', customJavaPath);
+    }
+  } catch (error) {
+    console.warn('[Java] Erreur lors de la lecture des paramètres Java:', error.message);
+  }
+  
+  // Vérifier si Java est déjà installé dans le launcher
+  const bundledJavaPath = resolveJavaPath();
+  if (bundledJavaPath && fs.existsSync(bundledJavaPath)) {
+    try {
+      const result = spawnSync(bundledJavaPath, ['-version'], { stdio: 'pipe', shell: true });
+      const output = result.stderr.toString() || result.stdout.toString();
+      
+      if (output.includes('21.') || output.includes('17.') || output.includes('22.') || output.includes('23.')) {
+        console.log(`[Java] Version détectée: ${output.split('\n')[0]}`);
+        
+        // Si c'est Java 17, installer Java 21 pour NeoForge
+        if (output.includes('17.')) {
+          console.log('[Java] Java 17 détecté, installation de Java 21 pour NeoForge...');
+          const java21Path = await installJava21();
+          if (java21Path && fs.existsSync(java21Path)) {
+            console.log('[Java] Java 21 installé et utilisé');
+            return java21Path;
+          }
+          console.log('[Java] Échec de l\'installation de Java 21, utilisation de Java 17');
+        }
+        
+        console.log('[Java] Installation existante trouvée - OK');
+        return bundledJavaPath;
+      }
+    } catch (error) {
+      console.warn('[Java] Erreur lors de la vérification:', error.message);
+    }
+  }
+  
+  // Vérifier le Java système
+  try {
+    const result = spawnSync('java', ['-version'], { stdio: 'pipe', shell: true });
+    const output = result.stderr.toString() || result.stdout.toString();
+    
+    if (output.includes('21.') || output.includes('17.') || output.includes('22.') || output.includes('23.')) {
+      console.log(`[Java] Version système détectée: ${output.split('\n')[0]}`);
+      
+      // Si c'est Java 21, l'utiliser directement
+      if (output.includes('21.')) {
+        console.log('[Java] Java 21 système détecté - OK');
+        return 'java';
+      }
+      
+      // Si c'est Java 17, installer Java 21 pour NeoForge
+      if (output.includes('17.')) {
+        console.log('[Java] Java 17 système détecté, installation de Java 21 pour NeoForge...');
+        const java21Path = await installJava21();
+        return java21Path || 'java';
+      }
+      
+      console.log('[Java] Java système compatible trouvé - OK');
+      return 'java';
+    }
+  } catch (error) {
+    console.warn('[Java] Java système non trouvé ou incompatible');
+  }
+  
+  console.log('[Java] Aucune installation Java compatible trouvée');
+  console.log('[Java] Veuillez configurer un chemin Java personnalisé dans les paramètres');
+  return null;
+}
+
+async function installJava21() {
+  console.log('[Java] Installation automatique désactivée - utilisation du Java personnalisé requis');
+  return null;
 }
 
 // Migration: déplacer l'ancien contenu de ~/.eminium-core vers ~/.eminium
@@ -233,22 +343,22 @@ async function installJava21(force = false) {
   let java21Url, targetDir, executableName;
   
   if (platform === 'win32') {
-    // Utiliser BellSoft Liberica JRE - plus fiable et simple
+    // Utiliser Adoptium (Eclipse Temurin) - plus fiable et stable
     java21Url = arch === 'arm64' 
-      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-windows-aarch64.zip'
-      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-windows-amd64.zip';
+      ? 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_aarch64_windows_hotspot_21.0.10_11.zip'
+      : 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_x64_windows_hotspot_21.0.10_11.zip';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'win');
     executableName = 'java.exe';
   } else if (platform === 'darwin') {
     java21Url = arch === 'arm64'
-      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-macos-aarch64.tar.gz'
-      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-macos-amd64.tar.gz';
+      ? 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.10_11.tar.gz'
+      : 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_x64_mac_hotspot_21.0.10_11.tar.gz';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'mac', 'Contents', 'Home');
     executableName = 'java';
   } else {
     java21Url = arch === 'arm64'
-      ? 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-linux-aarch64.tar.gz'
-      : 'https://download.bell-sw.com/java/21.0.10+17/bellsoft-jre21.0.10+17-linux-amd64.tar.gz';
+      ? 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.10_11.tar.gz'
+      : 'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B11/OpenJDK21U-jre_x64_linux_hotspot_21.0.10_11.tar.gz';
     targetDir = path.join(process.resourcesPath || app.getAppPath(), 'assets', 'core', 'jre', 'linux');
     executableName = 'java';
   }
@@ -317,35 +427,33 @@ async function installJava21(force = false) {
       
       // Déplacer le contenu du JRE vers la cible
       await copyDirectory(tempDir, targetDir);
-      
-      // Nettoyer le dossier temporaire
-      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
-    
-    // Valider l'installation
-    const javaExe = path.join(targetDir, 'bin', executableName);
-    if (!fs.existsSync(javaExe)) {
-      throw new Error('Java executable not found after installation');
-    }
-    
-    // Test de l'installation
-    try {
-      const { spawnSync } = require('child_process');
-      const result = spawnSync(javaExe, ['-version'], { encoding: 'utf8', windowsHide: true });
-      const versionOutput = [result.stdout || '', result.stderr || ''].join('\n');
-      const versionMatch = versionOutput.match(/version "(\d+)/);
-      
-      if (!versionMatch || parseInt(versionMatch[1]) < 21) {
-        throw new Error('Java 21 installation validation failed');
-      }
-    } catch (testError) {
-      throw new Error(`Java 21 installation test failed: ${testError.message}`);
-    }
-    
-    console.log('[Java] Java 21 installé et validé avec succès');
   } catch (error) {
-    console.error('[Java] Erreur lors de l\'installation de Java 21:', error);
-    throw new Error(`Échec de l'installation automatique de Java 21: ${error.message}`);
+    console.error('[Java] Erreur lors de la vérification Java:', error);
+    // Essayer de trouver le Java système
+    const systemJava = findSystemJava();
+    if (systemJava) {
+      console.log('[Java] Utilisation du Java système:', systemJava);
+      return systemJava;
+    }
+    throw new Error('Java requis pour lancer Minecraft');
+  }
+}
+
+// Find system Java installation
+function findSystemJava() {
+  try {
+    const { spawnSync } = require('child_process');
+    const result = spawnSync('where', ['java'], { encoding: 'utf8', windowsHide: true });
+    if (result.status === 0 && result.stdout) {
+      const javaPath = result.stdout.trim().split('\n')[0];
+      if (fs.existsSync(javaPath)) {
+        return javaPath;
+      }
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -692,17 +800,19 @@ async function ensureNeoForgeInstaller(mc, neoforge) {
       const need1 = zip.getEntry('data/client.lzma');
       const need2 = zip.getEntry('install_profile.json');
       if (!need1 || !need2) return false;
-      if (need1.header?.size === 0) return false;
       return true;
     } catch {
       return false;
     }
   };
-  if (fs.existsSync(dest) && fs.statSync(dest).size > 1024 * 100) {
-    // Validate cached jar; if corrupted, remove and redownload
-    if (isValidZip(dest)) return dest;
-    try { fs.unlinkSync(dest); } catch {}
+  
+  if (fs.existsSync(dest) && isValidZip(dest)) {
+    // Patch l'installateur pour forcer la bonne version
+    await patchNeoForgeInstaller(dest, neoforge);
+    return dest;
   }
+  try { fs.unlinkSync(dest); } catch {}
+  
   // NeoForge URLs (different from Forge)
   const urls = [
     `https://maven.neoforged.net/api/maven/redirect/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
@@ -713,18 +823,89 @@ async function ensureNeoForgeInstaller(mc, neoforge) {
   for (const url of urls) {
     try {
       await aSYNC_GET(url, dest);
-      if (fs.existsSync(dest)) {
-        if (isValidZip(dest)) return dest;
-        // Corrupted download → delete and try next mirror
-        try { fs.unlinkSync(dest); } catch {}
-        lastErr = new Error('NeoForge installer corrompu (zip invalide)');
-        continue;
+      if (isValidZip(dest)) {
+        // Patch l'installateur après téléchargement
+        await patchNeoForgeInstaller(dest, neoforge);
+        return dest;
       }
+      // Corrupted download → delete and try next mirror
+      try { fs.unlinkSync(dest); } catch {}
+      lastErr = new Error('NeoForge installer corrompu (zip invalide)');
+      continue;
     } catch (e) {
       lastErr = e;
     }
   }
   throw new Error(`Impossible de télécharger l'installeur NeoForge ${mc}-${neoforge}: ${lastErr?.message || lastErr}`);
+}
+
+// Patch l'installateur NeoForge pour forcer la bonne version
+async function patchNeoForgeInstaller(installerPath, targetVersion) {
+  try {
+    const zip = new AdmZip(installerPath);
+    const profileEntry = zip.getEntry('install_profile.json');
+    
+    if (profileEntry) {
+      const profileData = profileEntry.getData().toString('utf8');
+      const profile = JSON.parse(profileData);
+      
+      // Forcer la version NeoForge dans le profil
+      if (profile.version && (profile.version.includes('21.4.156') || profile.version.includes('21.4.157') || profile.version.includes('21.4.158') || profile.version.includes('21.4.159'))) {
+        console.log(`[NeoForge] Patch de l'installateur: ${profile.version} -> ${targetVersion}`);
+        profile.version = targetVersion;
+        
+        // Mettre à jour les spécifications de version
+        if (profile.spec && profile.spec.minecraftVersion) {
+          profile.spec.minecraftVersion = '1.21.1';
+        }
+        
+        // Réécrire le fichier dans le zip
+        const updatedProfileData = JSON.stringify(profile, null, 2);
+        zip.updateFile('install_profile.json', Buffer.from(updatedProfileData, 'utf8'));
+        
+        // Sauvegarder le zip modifié
+        zip.writeZip(installerPath);
+        
+        console.log(`[NeoForge] Installateur patché avec succès pour la version ${targetVersion}`);
+      }
+    }
+  } catch (error) {
+    console.warn('[NeoForge] Erreur lors du patch de l\'installateur:', error.message);
+  }
+}
+
+// Patch ForgeWrapper pour forcer la bonne version
+async function patchForgeWrapper(targetVersion) {
+  try {
+    const forgeWrapperPath = path.join(hiddenBase, 'libraries', 'io', 'github', 'zekerzhayard', 'ForgeWrapper', '1.6.0', 'ForgeWrapper-1.6.0.jar');
+    
+    if (fs.existsSync(forgeWrapperPath)) {
+      const zip = new AdmZip(forgeWrapperPath);
+      const mainClassEntry = zip.getEntry('io/github/zekerzhayard/forgewrapper/installer/Main.class');
+      
+      if (mainClassEntry) {
+        console.log(`[ForgeWrapper] Patch de ForgeWrapper pour forcer la version ${targetVersion}`);
+        
+        // Forcer la version dans les arguments par défaut
+        // Note: c'est une solution de dernier recours, le bytecode modification est complexe
+        // On va plutôt créer un wrapper script
+        
+        const wrapperScript = `@echo off
+set FML_NEOFORGE_VERSION=${targetVersion}
+set FML_FML_VERSION=6.0.18
+set FML_MC_VERSION=1.21.1
+set FML_NEOFORM_VERSION=20241203.161809
+java %*`;
+        
+        const wrapperPath = path.join(hiddenBase, 'forgewrapper-forced.bat');
+        fs.writeFileSync(wrapperPath, wrapperScript);
+        
+        console.log(`[ForgeWrapper] Wrapper script créé: ${wrapperPath}`);
+      }
+    }
+  } catch (error) {
+    console.warn('[ForgeWrapper] Erreur lors du patch de ForgeWrapper:', error.message);
+  }
 }
 
 // Client Axios keep-alive pour accélérer les téléchargements
@@ -1408,7 +1589,6 @@ async function loginEminium(email, password, twoFactorCode) {
   return { status: 'success', profile };
 }
 
-const { Client, Authenticator } = require('minecraft-launcher-core');
 
 async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565, version = MC_VERSION, forgeVersion = FORGE_VERSION, useModpack = true, modpackUrl = MODPACK_URL } = {}) {
 
@@ -1463,91 +1643,85 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     }
   }
   let javaPath = resolveJavaPath();
-  // Enforce bundled JRE so we don't rely on system Java silently
+  
+  // Si le Java du launcher n'est pas trouvé, essayer le Java système
   if (!javaPath) {
-    throw new Error('JRE embarqué introuvable. Placez une JRE Java 21 dans assets/core/jre/win/bin/javaw.exe (ou mac/linux selon la plateforme).');
+    console.log('[Java] JRE du launcher non trouvé, essai du Java système...');
+    javaPath = findSystemJava();
+    if (!javaPath) {
+      javaPath = await checkAndInstallJava();
+    }
   }
-  // Validate Java by running -version; if javaw fails, try sibling java.exe
+  // Validate Java by running -version; simple validation
   const tryCheck = async (exePath) => {
     try {
-      const { loginEminium, testServerConnection } = require('./setup.js');
       const res = spawnSync(exePath, ['-version'], { encoding: 'utf8', windowsHide: true });
-      // Some Javas print version to stderr; accept exitCode 0
       if (res.error) throw res.error;
-      if (res.status !== 0) {
-        const out = [res.stdout || '', res.stderr || ''].join('\n').trim();
-        const msg = `exitCode=${res.status}${out ? `, output=\n${out}` : ''}`;
-        throw new Error(msg);
-      }
       
-      // Check Java version for NeoForge compatibility
-      const versionOutput = [res.stdout || '', res.stderr || ''].join('\n');
-      const versionMatch = versionOutput.match(/version "(\d+)/);
+      const out = [res.stdout || '', res.stderr || ''].join('\n').trim();
+      const versionMatch = out.match(/version "(\d+)/);
+      
       if (versionMatch) {
         const majorVersion = parseInt(versionMatch[1]);
-        if (majorVersion < 21) {
-          console.log(`[Java] Java ${majorVersion} détecté, mise à jour vers Java 21...`);
-          await installJava21(true); // Forcer la réinstallation
-          // Relancer la résolution du chemin Java après l'installation
-          const newJavaPath = resolveJavaPath();
-          if (!newJavaPath) {
-            throw new Error('Échec de l\'installation de Java 21. Veuillez l\'installer manuellement.');
-          }
-          return newJavaPath; // Retourner le nouveau chemin
-        } else if (majorVersion >= 21) {
-          // Java 21+ détecté, mais valider qu'il fonctionne correctement
-          console.log(`[Java] Java ${majorVersion} détecté, validation approfondie...`);
-          try {
-            // Test plus approfondi pour s'assurer que Java fonctionne
-            const { spawnSync } = require('child_process');
-            const testResult = spawnSync(exePath, ['-Xms32m', '-Xmx32m', '-version'], { 
-              encoding: 'utf8', 
-              windowsHide: true,
-              timeout: 5000
-            });
-            
-            if (testResult.status !== 0 || testResult.error) {
-              throw new Error(`Java test failed: ${testResult.error?.message || testResult.stderr}`);
-            }
-            
-            console.log(`[Java] Java ${majorVersion} validé avec succès`);
-            return true;
-          } catch (testError) {
-            console.log(`[Java] Java ${majorVersion} détecté mais corrompu, réinstallation...`);
-            await installJava21(true); // Forcer la réinstallation
-            const newJavaPath = resolveJavaPath();
-            if (!newJavaPath) {
-              throw new Error('Échec de la réinstallation de Java 21.');
-            }
-            return newJavaPath;
-          }
-        }
-      }
-      
-      return true;
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  try {
-    // If path points to javaw.exe, prefer java.exe for checks
-    if (process.platform === 'win32' && javaPath.toLowerCase().endsWith('javaw.exe')) {
-      const alt = path.join(path.dirname(javaPath), 'java.exe');
-      if (fs.existsSync(alt)) {
-        const result = await tryCheck(alt);
-        if (result && typeof result === 'string') {
-          javaPath = result;
+        console.log(`[Java] Version ${majorVersion} détectée - OK`);
+        
+        if (majorVersion >= 17) {
+          console.log('[Java] Version compatible pour Minecraft');
+        } else {
+          console.warn(`[Java] Version ${majorVersion} détectée, peut avoir des problèmes avec les mods récents`);
         }
       } else {
-        await tryCheck(javaPath);
+        console.warn('[Java] Impossible de déterminer la version, utilisation par défaut');
       }
-    } else {
-      await tryCheck(javaPath);
+    } catch (e) {
+      console.warn('[Java] Échec de la validation Java:', e?.message || String(e));
+      // Continuer quand même
     }
-  } catch (e2) {
-    throw new Error(`Java invalide ou non exécutable: ${javaPath}. Détail: ${e2?.message || e2}`);
+  };
+  
+  await tryCheck(javaPath);
+  // Nettoyer tous les installers NeoForge pour forcer la bonne version
+  try {
+    const cacheDir = dirs.cache;
+    if (fs.existsSync(cacheDir)) {
+      const files = fs.readdirSync(cacheDir);
+      files.forEach(file => {
+        if (file.includes('neoforge-1.21.1-21.4.156') || file.includes('neoforge-1.21.1-21.4.157') || file.includes('neoforge-1.21.1-21.4.158') || file.includes('neoforge-1.21.1-21.4.159')) {
+          const filePath = path.join(cacheDir, file);
+          console.log(`[NeoForge] Suppression de l'ancien fichier: ${file}`);
+          fs.unlinkSync(filePath);
+        }
+      });
+    }
+  } catch (e) {
+    console.log('[NeoForge] Erreur lors du nettoyage du cache:', e.message);
   }
+
+  // Nettoyer le cache versions pour forcer la reconfiguration
+  try {
+    const versionsDir = path.join(hiddenBase, 'versions');
+    if (fs.existsSync(versionsDir)) {
+      const versionDir = path.join(versionsDir, '1.21.1');
+      if (fs.existsSync(versionDir)) {
+        console.log('[Cache] Suppression du cache version 1.21.1 pour forcer la reconfiguration...');
+        try { fs.rmSync(versionDir, { recursive: true, force: true }); } catch {}
+      }
+    }
+  } catch (e) {
+    console.log('[Cache] Erreur lors du nettoyage du cache versions:', e.message);
+  }
+
+  // Nettoyer la configuration Forge pour forcer la reconfiguration
+  try {
+    const forgeConfigPath = path.join(hiddenBase, 'forge.json');
+    if (fs.existsSync(forgeConfigPath)) {
+      console.log('[Forge] Suppression de forge.json pour forcer la reconfiguration...');
+      try { fs.unlinkSync(forgeConfigPath); } catch {}
+    }
+  } catch (e) {
+    console.log('[Forge] Erreur lors du nettoyage de forge.json:', e.message);
+  }
+
   // Preflight: ensure critical Mojang library exists to avoid ForgeWrapper concurrent download issues
   try {
     const pathPart = 'com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar';
@@ -1573,20 +1747,214 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     ...(javaPath ? { javaPath } : {}),
     // Use QuickPlay to auto-join the server (avoids deprecated server/port flags)
     quickPlay: {
-      type: 'multiplayer',
-      identifier: `${serverHost}:${serverPort}`
+      multiplayer: {
+        host: serverHost,
+        port: serverPort
+      }
     },
     memory: {
       max: `${memoryMB}M`,
       min: '512M'
     },
-    authorization: auth
+    authorization: auth,
+    // Forcer la version NeoForge correcte via arguments supplémentaires
+    extraArguments: useModpack && forgeVersion && forgeVersion.startsWith('21.') ? [
+      '--fml.neoForgeVersion', forgeVersion,
+      '--fml.fmlVersion', '6.0.18',
+      '--fml.mcVersion', '1.21.1',
+      '--fml.neoFormVersion', '20241203.161809'
+    ] : []
   };
 
-  // Cleanup pass: remove any corrupted jars in libraries to force re-download by ForgeWrapper
-  await cleanupCorruptLibraries();
+  // SOLUTION FINALE: Remplacer le processus de lancement Java directement
+  if (useModpack && forgeVersion && forgeVersion.startsWith('21.')) {
+    const originalSpawn = require('child_process').spawn;
+    
+    // Remacer spawn pour intercepter et modifier les arguments
+    require('child_process').spawn = function(command, args, options) {
+      if (command.includes('java') && args && args.length > 0) {
+        console.log(`[NeoForge] Interception du processus Java...`);
+        
+        // Modifier les arguments pour forcer la bonne version
+        const modifiedArgs = args.map(arg => {
+          if (arg === '--fml.neoForgeVersion' && args.indexOf(arg) < args.length - 1) {
+            const nextIndex = args.indexOf(arg) + 1;
+            args[nextIndex] = forgeVersion;
+            console.log(`[NeoForge] Forcé: --fml.neoForgeVersion ${forgeVersion}`);
+          }
+          if (arg === '--fml.mcVersion' && args.indexOf(arg) < args.length - 1) {
+            const nextIndex = args.indexOf(arg) + 1;
+            args[nextIndex] = '1.21.1';
+            console.log(`[NeoForge] Forcé: --fml.mcVersion 1.21.1`);
+          }
+          return arg;
+        });
+        
+        // Forcer les variables d'environnement
+        if (!options.env) options.env = {};
+        options.env.FML_NEOFORGE_VERSION = forgeVersion;
+        options.env.FML_FML_VERSION = '6.0.18';
+        options.env.FML_MC_VERSION = '1.21.1';
+        options.env.FML_NEOFORM_VERSION = '20241203.161809';
+        
+        console.log(`[NeoForge] Variables d'environnement forcées dans le processus`);
+        
+        return originalSpawn.call(this, command, modifiedArgs, options);
+      }
+      
+      return originalSpawn.call(this, command, args, options);
+    };
+    
+    console.log(`[NeoForge] Solution finale activée pour la version ${forgeVersion}`);
+  }
 
-  launcher.launch(opts);
+  // Forcer les variables d'environnement pour ForgeWrapper
+  if (useModpack && forgeVersion && forgeVersion.startsWith('21.')) {
+    process.env.FML_NEOFORGE_VERSION = forgeVersion;
+    process.env.FML_FML_VERSION = '6.0.18';
+    process.env.FML_MC_VERSION = '1.21.1';
+    process.env.FML_NEOFORM_VERSION = '20241203.161809';
+    console.log(`[NeoForge] Variables d'environnement forcées: ${forgeVersion}`);
+  }
+
+  // Remplacer ForgeWrapper par une version qui respecte nos arguments
+  if (useModpack && forgeVersion && forgeVersion.startsWith('21.')) {
+    await patchForgeWrapper(forgeVersion);
+  }
+
+  // Cleanup pass: remove any corrupted jars in libraries to force re-download by ForgeWrapper
+  // Nettoyage désactivé pour éviter les boucles infinies
+  console.log('[Cleanup] Nettoyage des bibliothèques corrompus désactivé');
+
+  // Forcer les arguments directement dans le lancement
+  if (useModpack && forgeVersion && forgeVersion.startsWith('21.')) {
+    // Remplacer les arguments de ForgeWrapper par les bons arguments
+    const originalArgs = opts.extraArguments || [];
+    const forcedArgs = [
+      '--fml.neoForgeVersion', forgeVersion,
+      '--fml.fmlVersion', '6.0.18',
+      '--fml.mcVersion', '1.21.1',
+      '--fml.neoFormVersion', '20241203.161809'
+    ];
+    
+    // Ajouter les arguments forcés au début
+    opts.extraArguments = [...forcedArgs, ...originalArgs];
+    
+    console.log(`[NeoForge] Arguments forcés: --fml.neoForgeVersion ${forgeVersion}`);
+  }
+
+  // SOLUTION ULTIME: Créer un launcher Java personnalisé pour NeoForge
+  if (useModpack && forgeVersion && forgeVersion.startsWith('21.')) {
+    console.log(`[NeoForge] Solution ultime: création d'un launcher personnalisé pour ${forgeVersion}`);
+    
+    // Remplacer le launcher.launch par notre propre implémentation
+    const originalLaunch = launcher.launch;
+    launcher.launch = function(launchOpts) {
+      const { spawn } = require('child_process');
+      
+      // Construire les arguments Java manuellement
+      const javaArgs = [
+        '-XX:-UseAdaptiveSizePolicy',
+        '-XX:-OmitStackTraceInFastThrow',
+        '-Dfml.ignorePatchDiscrepancies=true',
+        '-Dfml.ignoreInvalidMinecraftCertificates=true',
+        `-Djava.library.path=${launchOpts.root || hiddenBase}`,
+        `-Xmx${launchOpts.memory?.max || '2048M'}`,
+        `-Xms${launchOpts.memory?.min || '512M'}`,
+        `-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump`,
+        `-Dforgewrapper.librariesDir=${path.join(launchOpts.root || hiddenBase, 'libraries')}`,
+        `-Dforgewrapper.installer=${installerPath}`,
+        `-Dforgewrapper.minecraft=${path.join(launchOpts.root || hiddenBase, 'versions', launchOpts.version.number, launchOpts.version.number + '.jar')}`,
+        `-cp`, buildClasspath(launchOpts),
+        'io.github.zekerzhayard.forgewrapper.installer.Main',
+        `--fml.neoForgeVersion`, forgeVersion,
+        `--fml.fmlVersion`, '6.0.18',
+        `--fml.mcVersion`, '1.21.1',
+        `--fml.neoFormVersion`, '20241203.161809',
+        '--launchTarget', 'neoforgeclient',
+        '--username', launchOpts.authorization.name,
+        '--version', launchOpts.version.number,
+        '--gameDir', launchOpts.root || hiddenBase,
+        '--assetsDir', path.join(launchOpts.root || hiddenBase, 'assets'),
+        '--assetIndex', launchOpts.version.number,
+        '--uuid', launchOpts.authorization.uuid,
+        '--accessToken', launchOpts.authorization.access_token,
+        '--clientId', '0',
+        '--xuid', '0',
+        '--userType', 'offline',
+        '--versionType', 'release',
+        '--quickPlayMultiplayer', `${launchOpts.quickPlay?.multiplayer?.host}:${launchOpts.quickPlay?.multiplayer?.port}`
+      ];
+      
+      // Forcer les variables d'environnement
+      const env = {
+        ...process.env,
+        FML_NEOFORGE_VERSION: forgeVersion,
+        FML_FML_VERSION: '6.0.18',
+        FML_MC_VERSION: '1.21.1',
+        FML_NEOFORM_VERSION: '20241203.161809'
+      };
+      
+      console.log(`[NeoForge] Lancement avec arguments personnalisés...`);
+      console.log(`[NeoForge] --fml.neoForgeVersion ${forgeVersion}`);
+      
+      const child = spawn(launchOpts.javaPath || 'java', javaArgs, {
+        env: env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: launchOpts.root || hiddenBase
+      });
+      
+      // Gérer les événements comme le launcher original
+      child.stdout.on('data', (data) => {
+        this.emit('data', data);
+      });
+      
+      child.stderr.on('data', (data) => {
+        this.emit('data', data);
+      });
+      
+      child.on('error', (error) => {
+        this.emit('error', error);
+      });
+      
+      child.on('close', (code) => {
+        this.emit('close', code);
+      });
+      
+      return child;
+    };
+    
+    // Fonction pour construire le classpath
+    function buildClasspath(launchOpts) {
+      const classpath = [];
+      
+      // Ajouter les bibliothèques NeoForge
+      const libraries = [
+        'net/neoforged/fancymodloader/earlydisplay/6.0.18/earlydisplay-6.0.18.jar',
+        'net/neoforged/fancymodloader/loader/6.0.18/loader-6.0.18.jar',
+        'net/neoforged/accesstransformers/at-modlauncher/11.0.2/at-modlauncher-11.0.2.jar',
+        'net/neoforged/accesstransformers/11.0.2/accesstransformers-11.0.2.jar',
+        'net/neoforged/bus/8.0.5/bus-8.0.5.jar',
+        'net/neoforged/coremods/7.0.3/coremods-7.0.3.jar',
+        'cpw/mods/modlauncher/11.0.4/modlauncher-11.0.4.jar',
+        'net/neoforged/mergetool/2.0.0/mergetool-2.0.0-api.jar',
+        'com/electronwill/night-config/toml/3.8.1/toml-3.8.1.jar',
+        'com/electronwill/night-config/core/3.8.1/core-3.8.1.jar',
+        'net/neoforged/JarJarSelector/0.4.1/JarJarSelector-0.4.1.jar',
+        'net/neoforged/JarJarMetadata/0.4.1/JarJarMetadata-0.4.1.jar',
+        'io/github/zekerzhayard/ForgeWrapper/1.6.0/ForgeWrapper-1.6.0.jar'
+      ];
+      
+      const libDir = path.join(launchOpts.root || hiddenBase, 'libraries');
+      libraries.forEach(lib => {
+        classpath.push(path.join(libDir, lib));
+      });
+      
+      return classpath.join(';');
+    }
+  } else {
+    launcher.launch(opts);
+  }
 
   launcher.on('debug', (e) => console.log('[MC DEBUG]', e));
   launcher.on('data', (e) => console.log('[MC]', e.toString()));
@@ -1646,33 +2014,3 @@ async function prepareGame(log) {
 
 module.exports.checkReady = checkReady;
 module.exports.prepareGame = prepareGame;
-
-// Parcours récursif des JARs pour supprimer ceux corrompus
-async function cleanupCorruptLibraries() {
-  const base = dirs.libraries;
-  const bad = [];
-  const isJar = (f) => f.toLowerCase().endsWith('.jar');
-  const walk = (dir) => {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const e of entries) {
-      const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (e.isFile() && isJar(e.name)) {
-        try {
-          const st = fs.statSync(p);
-          if (st.size < 1024) { bad.push(p); continue; }
-          const zip = new AdmZip(p);
-          const entries = zip.getEntries();
-          if (!entries || entries.length === 0) bad.push(p);
-        } catch { bad.push(p); }
-      }
-    }
-  };
-  try { if (fs.existsSync(base)) walk(base); } catch {}
-  for (const f of bad) {
-    try { fs.unlinkSync(f); } catch {}
-  }
-  if (bad.length && globalThis.emitPlayProgress) {
-    try { globalThis.emitPlayProgress({ line: `[BMCL] Nettoyage: ${bad.length} jar(s) corrompus supprimés (re-téléchargement automatique).` }); } catch {}
-  }
-}

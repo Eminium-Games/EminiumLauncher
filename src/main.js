@@ -11,6 +11,7 @@ try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
 const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
+const discordRPC = require('./discord');
 
 let mainWindow;
 let windowIcon; // nativeImage pour l'icône
@@ -47,98 +48,104 @@ const remoteMaintenance = false;
 // --- Discord Rich Presence helpers ---
 async function initDiscordRPC() {
   try {
-    if (!DiscordRPC) {
-      console.warn('[RPC] discord-rpc non disponible');
-      return false;
-    }
-    const clientId = String(DISCORD_APP_ID_SHARED || '1484903800266293379').trim();
-    if (!clientId) {
-      console.warn('[RPC] Client ID manquant');
-      return false;
-    }
-    if (rpcClient) {
-      try { rpcClient.destroy?.(); } catch { }
-      rpcClient = null;
-      rpcReady = false;
-    }
-    rpcClient = new DiscordRPC.Client({ transport: 'ipc' });
-    rpcClient.on('ready', () => {
-      rpcReady = true;
-      console.log('[RPC] prêt');
-      try { setPresenceIdle(); } catch { }
-    });
-    rpcClient.on('error', (e) => {
-      console.error('[RPC] erreur:', e?.message || String(e));
-      rpcReady = false;
-    });
-    try { await DiscordRPC.register(clientId); } catch { }
-    await rpcClient.login({ clientId });
-    console.log('[RPC] initialisation envoyée');
+    await discordRPC.initializeDiscordRPC();
     return true;
-  } catch (e) {
-    console.error('[RPC] init error:', e?.message || String(e));
+  } catch (error) {
+    console.error('[RPC] Erreur d\'initialisation:', error);
     return false;
   }
 }
 
 function clearPresence() {
-  try { if (rpcClient && rpcReady) rpcClient.clearActivity().catch(() => { }); } catch { }
+  try {
+    if (discordRPC.isConnected()) {
+      discordRPC.updatePresence('', '', '');
+    }
+  } catch (error) {
+    console.error('[RPC] Erreur lors du clear presence:', error);
+  }
 }
 
 function destroyDiscordRPC() {
   try {
-    rpcReady = false;
-    if (rpcClient) {
-      try { rpcClient.clearActivity?.().catch(() => { }); } catch { }
-      try { rpcClient.removeAllListeners?.(); } catch { }
-      try { rpcClient.destroy?.(); } catch { }
-    }
-  } catch { }
-  rpcClient = null;
+    discordRPC.disconnectDiscordRPC();
+  } catch (error) {
+    console.error('[RPC] Erreur lors de la déconnexion:', error);
+  }
 }
 
 function setPresenceIdle() {
   try {
-    if (!rpcClient || !rpcReady) return;
-    rpcClient.setActivity({
-      details: 'Dans le launcher — Navigation',
-      state: 'Eminium',
-      largeImageKey: 'eminium',
-      largeImageText: 'Eminium Launcher',
-      instance: false
-    }).catch(() => { });
-  } catch { }
+    discordRPC.setPresenceIdle();
+  } catch (error) {
+    console.error('[RPC] Erreur setPresenceIdle:', error);
+  }
 }
 
 function setPresencePreparing() {
   try {
-    if (!rpcClient || !rpcReady) return;
-    rpcClient.setActivity({
-      details: 'Préparation du jeu',
-      state: 'Téléchargements et vérifications',
-      largeImageKey: 'eminium',
-      largeImageText: 'Préparation en cours…',
-      instance: false
-    }).catch(() => { });
-  } catch { }
+    discordRPC.setPresenceDownloading();
+  } catch (error) {
+    console.error('[RPC] Erreur setPresencePreparing:', error);
+  }
 }
 
-function setPresencePlaying() {
+function setPresencePlaying(serverName = 'Eminium') {
   try {
-    if (!rpcClient || !rpcReady) return;
-    rpcClient.setActivity({
-      details: 'En jeu sur Eminium',
-      state: 'Joue à Eminium',
-      largeImageKey: 'eminium',
-      largeImageText: 'Minecraft',
-      instance: true
-    }).catch(() => { });
-  } catch { }
+    discordRPC.setPresencePlaying(serverName);
+  } catch (error) {
+    console.error('[RPC] Erreur setPresencePlaying:', error);
+  }
+}
+
+function setPresenceLaunching() {
+  try {
+    discordRPC.setPresenceLaunching();
+  } catch (error) {
+    console.error('[RPC] Erreur setPresenceLaunching:', error);
+  }
+}
+
+function setPresenceConnecting(serverName) {
+  try {
+    discordRPC.setPresenceConnecting(serverName);
+  } catch (error) {
+    console.error('[RPC] Erreur setPresenceConnecting:', error);
+  }
 }
 
 const { loginEminium } = require('./setup.js');
+
+// Enregistrer tous les handlers IPC avant app.whenReady()
 ipcMain.handle('auth:login', async (_evt, { email, password, code }) => {
   return await loginEminium(email, password, code);
+});
+
+// Gestion des préférences Java
+ipcMain.handle('saveSetting', async (_evt, { key, value }) => {
+  try {
+    const settings = readSettings();
+    settings[key] = value;
+    writeSettings(settings);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e?.message || String(e) }; }
+});
+
+ipcMain.handle('loadSetting', async (_evt, key) => {
+  try {
+    const settings = readSettings();
+    return settings[key] || null;
+  } catch (e) { return null; }
+});
+
+// Boîte de dialogue pour sélectionner un fichier
+ipcMain.handle('showOpenDialog', async (_evt, options) => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, options);
+    return result;
+  } catch (e) { 
+    return { canceled: true, filePaths: [] }; 
+  }
 });
 
 // (payments notifications removed)
@@ -219,8 +226,18 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   createWindow();
-  // Init Discord RPC if configured
-  try { await initDiscordRPC(); } catch { }
+  // Init Discord RPC if configured (non-blocking)
+  setTimeout(async () => {
+    try {
+      const rpcInitialized = await initDiscordRPC();
+      if (!rpcInitialized) {
+        console.log('[RPC] RPC Discord non initialisé (Discord fermé ou non disponible)');
+      }
+    } catch (error) {
+      console.log('[RPC] RPC Discord désactivé (erreur non critique)');
+    }
+  }, 2000); // Démarrer après 2 secondes pour ne pas bloquer le lancement
+  
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -450,6 +467,7 @@ ipcMain.handle('auth:profile:get', async () => {
 ipcMain.handle('auth:logout', async () => {
   return logoutEminium();
 });
+
 ipcMain.handle('launcher:ensure', async () => {
   try {
     try { setPresencePreparing(); } catch { }
@@ -669,12 +687,38 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     }
     
     
+    // RPC: Préparation du lancement
     try { setPresencePreparing(); } catch { }
+    
+    // Déterminer le nom du serveur pour le RPC
+    const serverName = userOpts?.serverName || 'Eminium';
+    
+    // RPC: Connexion au serveur
+    try { setPresenceConnecting(serverName); } catch { }
+    
     const launcher = await launchMinecraft(userOpts);
     if (launcher) {
       launcher.on('data', (buf) => {
         const line = buf?.toString ? buf.toString() : String(buf);
         try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'log', line }); } catch { }
+        
+        // RPC: Détecter le lancement du jeu
+        if (line.includes('Launching with arguments') || line.includes('Minecraft Launcher') || line.includes('Starting game')) {
+          try { setPresenceLaunching(); } catch { }
+        }
+        
+        // RPC: Détecter la connexion au serveur (plus de patterns)
+        if (line.includes('Logging in to') || line.includes('Connecting to') || 
+            line.includes('joined the game') || line.includes('Logged in') ||
+            line.includes('Server connected') || line.includes('Loading world')) {
+          try { setPresencePlaying(serverName); } catch { }
+        }
+        
+        // RPC: Détecter quand le joueur est vraiment en jeu
+        if (line.includes('[CHAT]') || line.includes('joined the game') || 
+            line.includes('Done') && line.includes('For help')) {
+          try { setPresencePlaying(serverName); } catch { }
+        }
       });
       launcher.on('debug', (msg) => {
         try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('play:progress', { type: 'debug', line: String(msg) }); } catch { }

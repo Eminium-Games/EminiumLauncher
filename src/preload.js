@@ -64,6 +64,15 @@ contextBridge.exposeInMainWorld('eminium', {
   setSettings: withLogging('settings:set', (patch) => 
     ipcRenderer.invoke('settings:set', patch)
   ),
+  saveSetting: withLogging('saveSetting', ({ key, value }) => 
+    ipcRenderer.invoke('saveSetting', { key, value })
+  ),
+  loadSetting: withLogging('loadSetting', (key) => 
+    ipcRenderer.invoke('loadSetting', key)
+  ),
+  showOpenDialog: withLogging('showOpenDialog', (options) => 
+    ipcRenderer.invoke('showOpenDialog', options)
+  ),
   
   // Maintenance
   getMaintenance: withLogging('maintenance:get', () => 
