@@ -1,0 +1,14 @@
+{
+  "name": "eminium-neoforge-installer",
+  "version": "1.0.0",
+  "description": "Installation complète NeoForge pour Eminium Launcher",
+  "scripts": {
+    "install-neoforge": "node scripts/install-neoforge.js",
+    "verify-neoforge": "node scripts/verify-neoforge.js", 
+    "test-neoforge": "node scripts/test-simple.js",
+    "setup-all": "node scripts/install-neoforge.js && node scripts/verify-neoforge.js && node scripts/test-simple.js"
+  },
+  "keywords": ["neoforge", "minecraft", "eminium", "launcher"],
+  "author": "Eminium Team",
+  "license": "MIT"
+}

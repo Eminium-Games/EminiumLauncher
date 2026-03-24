@@ -785,58 +785,84 @@ async function ensureForgeInstaller(mc, forge) {
   throw new Error(`Impossible de télécharger l'installeur Forge ${mc}-${forge}: ${lastErr?.message || lastErr}`);
 }
 
+// Fonction pour utiliser un NeoForge préinstallé
+async function usePreInstalledNeoForge(mc, neoforge) {
+  console.log(`[NeoForge] Recherche NeoForge préinstallé version ${neoforge}...`);
+  
+  // Chemin prioritaire : notre installation complète
+  const primaryPath = path.join(__dirname, '..', 'neoforge', '21.4.121', `neoforge-${mc}-${neoforge}-installer.jar`);
+  
+  if (fs.existsSync(primaryPath)) {
+    console.log(`[NeoForge] NeoForge préinstallé trouvé: ${primaryPath}`);
+    
+    // Valider que le fichier est un zip valide
+    try {
+      const zip = new AdmZip(primaryPath);
+      const entries = zip.getEntries();
+      if (entries && entries.length > 0) {
+        const need1 = zip.getEntry('data/client.lzma');
+        const need2 = zip.getEntry('install_profile.json');
+        if (need1 && need2) {
+          console.log(`[NeoForge] Fichier préinstallé valide ✓`);
+          console.log(`[NeoForge] Installation complète NeoForge utilisée`);
+          return primaryPath;
+        }
+      }
+    } catch (e) {
+      console.warn(`[NeoForge] Fichier préinstallé invalide: ${primaryPath} - ${e.message}`);
+    }
+  }
+  
+  // Chemins alternatifs (compatibilité)
+  const possiblePaths = [
+    path.join(__dirname, '..', 'neoforge', `${neoforge}`, `neoforge-${mc}-${neoforge}-installer.jar`),
+    path.join(__dirname, '..', 'neoforge', `neoforge-${mc}-${neoforge}-installer.jar`),
+    path.join(process.resourcesPath || '.', 'neoforge', `${neoforge}`, `neoforge-${mc}-${neoforge}-installer.jar`),
+    path.join(process.resourcesPath || '.', 'neoforge', `neoforge-${mc}-${neoforge}-installer.jar`),
+    path.join(app.getPath('userData'), 'neoforge', `${neoforge}`, `neoforge-${mc}-${neoforge}-installer.jar`),
+    path.join(app.getPath('userData'), 'neoforge', `neoforge-${mc}-${neoforge}-installer.jar`)
+  ];
+  
+  for (const neoForgePath of possiblePaths) {
+    if (fs.existsSync(neoForgePath)) {
+      console.log(`[NeoForge] NeoForge alternatif trouvé: ${neoForgePath}`);
+      
+      // Valider que le fichier est un zip valide
+      try {
+        const zip = new AdmZip(neoForgePath);
+        const entries = zip.getEntries();
+        if (entries && entries.length > 0) {
+          const need1 = zip.getEntry('data/client.lzma');
+          const need2 = zip.getEntry('install_profile.json');
+          if (need1 && need2) {
+            console.log(`[NeoForge] Fichier alternatif valide ✓`);
+            return neoForgePath;
+          }
+        }
+      } catch (e) {
+        console.warn(`[NeoForge] Fichier alternatif invalide: ${neoForgePath} - ${e.message}`);
+      }
+    }
+  }
+  
+  console.log(`[NeoForge] Aucun NeoForge préinstallé trouvé pour la version ${neoforge}`);
+  console.log(`[NeoForge] Veuillez exécuter: node scripts\\install-neoforge.js`);
+  return null;
+}
+
 // NeoForge installer function (separate from Forge)
 async function ensureNeoForgeInstaller(mc, neoforge) {
-  const cacheDir = path.join(hiddenBase, 'cache');
-  ensureDir(cacheDir);
-  const dest = path.join(cacheDir, `neoforge-${mc}-${neoforge}-installer.jar`);
-  const isValidZip = (file) => {
-    try {
-      const zip = new AdmZip(file);
-      // Access entries to force zip parsing
-      const entries = zip.getEntries();
-      if (!entries || entries.length === 0) return false;
-      // NeoForge installer must contain these
-      const need1 = zip.getEntry('data/client.lzma');
-      const need2 = zip.getEntry('install_profile.json');
-      if (!need1 || !need2) return false;
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  // Utiliser uniquement le NeoForge préinstallé
+  console.log(`[NeoForge] Recherche du NeoForge préinstallé version ${neoforge}...`);
   
-  if (fs.existsSync(dest) && isValidZip(dest)) {
-    // Patch l'installateur pour forcer la bonne version
-    await patchNeoForgeInstaller(dest, neoforge);
-    return dest;
+  const preInstalled = await usePreInstalledNeoForge(mc, neoforge);
+  if (preInstalled) {
+    console.log(`[NeoForge] Utilisation du NeoForge préinstallé: ${preInstalled}`);
+    return preInstalled;
   }
-  try { fs.unlinkSync(dest); } catch {}
   
-  // NeoForge URLs (different from Forge)
-  const urls = [
-    `https://maven.neoforged.net/api/maven/redirect/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
-    `https://maven.neoforged.net/releases/net/neoforged/neoforge/${neoforge}/neoforge-${neoforge}-installer.jar`,
-    `https://github.com/neoforged/NeoForge/releases/download/${neoforge}/neoforge-${neoforge}-installer.jar`
-  ];
-  let lastErr;
-  for (const url of urls) {
-    try {
-      await aSYNC_GET(url, dest);
-      if (isValidZip(dest)) {
-        // Patch l'installateur après téléchargement
-        await patchNeoForgeInstaller(dest, neoforge);
-        return dest;
-      }
-      // Corrupted download → delete and try next mirror
-      try { fs.unlinkSync(dest); } catch {}
-      lastErr = new Error('NeoForge installer corrompu (zip invalide)');
-      continue;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw new Error(`Impossible de télécharger l'installeur NeoForge ${mc}-${neoforge}: ${lastErr?.message || lastErr}`);
+  // Si pas de préinstallé, erreur explicite
+  throw new Error(`NeoForge ${neoforge} préinstallé introuvable. Veuillez placer le fichier dans le dossier neoforge\\${neoforge}\\`);
 }
 
 // Patch l'installateur NeoForge pour forcer la bonne version
@@ -910,7 +936,7 @@ java %*`;
 
 // Client Axios keep-alive pour accélérer les téléchargements
 const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 16 });
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 16 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 16, rejectUnauthorized: false });
 const axiosClient = axios.create({
   timeout: 45000,
   httpAgent,
@@ -1590,7 +1616,7 @@ async function loginEminium(email, password, twoFactorCode) {
 }
 
 
-async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565, version = MC_VERSION, forgeVersion = FORGE_VERSION, useModpack = true, modpackUrl = MODPACK_URL } = {}) {
+async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', serverPort = 25565, version = MC_VERSION, forgeVersion = FORGE_VERSION, useModpack = true, modpackUrl = MODPACK_URL, serverName = 'Eminium' } = {}) {
 
   const profile = readUserProfile();
   if (!profile) {
@@ -1621,28 +1647,25 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
   await ensureVersionFilesBMCL(version, log);
 
   const installerPath = useModpack ? (forgeVersion.startsWith('21.') ? await ensureNeoForgeInstaller(version, forgeVersion) : await ensureForgeInstaller(version, forgeVersion)) : null;
+  console.log(`[Launch] Installateur préparé: ${installerPath ? 'OUI' : 'NON'}`);
+  
   // Validate installer again defensively (may have been corrupted externally)
   if (useModpack && installerPath) {
+    console.log(`[Launch] Validation de l'installateur NeoForge...`);
     try {
       const testZip = new AdmZip(installerPath);
       if (!testZip.getEntry('data/client.lzma') || !testZip.getEntry('install_profile.json')) {
-        try { fs.unlinkSync(installerPath); } catch {}
-        if (forgeVersion.startsWith('21.')) {
-          await ensureNeoForgeInstaller(version, forgeVersion);
-        } else {
-          await ensureForgeInstaller(version, forgeVersion);
-        }
+        throw new Error('Installateur NeoForge invalide - fichiers manquants');
       }
-    } catch {
-      try { fs.unlinkSync(installerPath); } catch {}
-      if (forgeVersion.startsWith('21.')) {
-        await ensureNeoForgeInstaller(version, forgeVersion);
-      } else {
-        await ensureForgeInstaller(version, forgeVersion);
-      }
+      console.log(`[Launch] Installateur NeoForge valide ✓`);
+    } catch (e) {
+      console.log(`[Launch] Erreur validation installateur: ${e.message}`);
+      throw new Error(`Installateur NeoForge corrompu: ${e.message}`);
     }
   }
   let javaPath = resolveJavaPath();
+  
+  console.log(`[Launch] Recherche Java...`);
   
   // Si le Java du launcher n'est pas trouvé, essayer le Java système
   if (!javaPath) {
@@ -1652,34 +1675,26 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
       javaPath = await checkAndInstallJava();
     }
   }
+  console.log(`[Launch] Java trouvé: ${javaPath}`);
+  
   // Validate Java by running -version; simple validation
   const tryCheck = async (exePath) => {
     try {
-      const res = spawnSync(exePath, ['-version'], { encoding: 'utf8', windowsHide: true });
-      if (res.error) throw res.error;
-      
-      const out = [res.stdout || '', res.stderr || ''].join('\n').trim();
-      const versionMatch = out.match(/version "(\d+)/);
-      
-      if (versionMatch) {
-        const majorVersion = parseInt(versionMatch[1]);
-        console.log(`[Java] Version ${majorVersion} détectée - OK`);
-        
-        if (majorVersion >= 17) {
-          console.log('[Java] Version compatible pour Minecraft');
-        } else {
-          console.warn(`[Java] Version ${majorVersion} détectée, peut avoir des problèmes avec les mods récents`);
-        }
-      } else {
-        console.warn('[Java] Impossible de déterminer la version, utilisation par défaut');
-      }
+      const { spawnSync } = require('child_process');
+      const result = spawnSync(exePath, ['-version'], { stdio: 'pipe', shell: true });
+      const output = result.stderr.toString() || result.stdout.toString();
+      console.log(`[Launch] Validation Java: ${output.split('\n')[0]}`);
+      return true;
     } catch (e) {
       console.warn('[Java] Échec de la validation Java:', e?.message || String(e));
       // Continuer quand même
+      return true;
     }
   };
   
   await tryCheck(javaPath);
+  console.log(`[Launch] Début du nettoyage du cache...`);
+  
   // Nettoyer tous les installers NeoForge pour forcer la bonne version
   try {
     const cacheDir = dirs.cache;
@@ -1735,7 +1750,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
     // Non bloquant: ForgeWrapper essaiera aussi, mais on log l'erreur
     try { console.warn('[BMCL] Pré-téléchargement blocklist échoué:', e?.message || String(e)); } catch {}
   }
-  try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `Java utilisé: ${javaPath}` }); } catch {}
+  try { if (globalThis.emitPlayProgress) globalThis.emitPlayProgress({ line: `Java utilisé pour ${serverName}: ${javaPath}` }); } catch {}
 
   const opts = {
     root: hiddenBase, // dossier "invisible" avec Forge et mods
@@ -1895,7 +1910,7 @@ async function launchMinecraft({ memoryMB = 2048, serverHost = '82.64.85.47', se
         FML_NEOFORM_VERSION: '20241203.161809'
       };
       
-      console.log(`[NeoForge] Lancement avec arguments personnalisés...`);
+      console.log(`[NeoForge] Lancement avec arguments personnalisés pour ${serverName}...`);
       console.log(`[NeoForge] --fml.neoForgeVersion ${forgeVersion}`);
       
       const child = spawn(launchOpts.javaPath || 'java', javaArgs, {

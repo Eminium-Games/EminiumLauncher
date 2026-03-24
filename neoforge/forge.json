@@ -1,0 +1,20 @@
+{
+  "1.21.1": {
+    "version": "21.4.121",
+    "minecraft": "1.21.1",
+    "type": "neoforge",
+    "installer": "neoforge-1.21.1-21.4.121-installer.jar",
+    "libraries": [
+      "net/neoforged/fancymodloader/earlydisplay/6.0.18/earlydisplay-6.0.18.jar",
+      "net/neoforged/fancymodloader/loader/6.0.18/loader-6.0.18.jar",
+      "net/neoforged/accesstransformers/at-modlauncher/11.0.2/at-modlauncher-11.0.2.jar",
+      "net/neoforged/accesstransformers/11.0.2/accesstransformers-11.0.2.jar",
+      "net/neoforged/bus/8.0.5/bus-8.0.5.jar",
+      "net/neoforged/coremods/7.0.3/coremods-7.0.3.jar",
+      "cpw/mods/modlauncher/11.0.4/modlauncher-11.0.4.jar",
+      "net/neoforged/JarJarSelector/0.4.1/JarJarSelector-0.4.1.jar",
+      "net/neoforged/JarJarMetadata/0.4.1/JarJarMetadata-0.4.1.jar",
+      "io/github/zekerzhayard/ForgeWrapper/1.6.0/ForgeWrapper-1.6.0.jar"
+    ]
+  }
+}

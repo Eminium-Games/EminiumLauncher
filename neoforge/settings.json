@@ -1,0 +1,20 @@
+{
+  "modpacks": [],
+  "hiddenMods": [],
+  "selectedModpack": null,
+  "hiddenConfigs": [],
+  "javaArgs": "-Xmx4G -Xms1G",
+  "customJavaPath": "",
+  "customMinecraftArgs": "",
+  "previewMods": false,
+  "enableHud": true,
+  "enableDiscordIntegration": true,
+  "discordClientID": "1484903800266293379",
+  "startMaximized": false,
+  "askClose": true,
+  "showNews": true,
+  "enableTrayIcon": true,
+  "dataDir": "./neoforge",
+  "closeLauncher": true,
+  "logLevel": "INFO"
+}

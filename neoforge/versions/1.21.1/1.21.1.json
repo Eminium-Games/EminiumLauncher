@@ -1,0 +1,35 @@
+{
+  "id": "1.21.1",
+  "inheritsFrom": "1.21.1",
+  "type": "release",
+  "time": "2026-03-24T11:19:27.615Z",
+  "releaseTime": "2024-08-07T12:43:37+00:00",
+  "minecraftArguments": "--width 854 --height 480 ${user_type} --uuid ${uuid} --accessToken ${access_token} --version ${version_name} --gameDir ${game_directory} --assetsDir ${assets_root} --assetIndex ${assets_index_name} --userProperties ${user_properties}",
+  "minimumLauncherVersion": 21,
+  "mainClass": "net.neoforged.fml.loading.FMLLoader",
+  "libraries": [
+    {
+      "name": "net.minecraft:client",
+      "downloads": {
+        "artifact": {
+          "path": "net/minecraft/client/1.21.1/client-1.21.1.jar",
+          "sha1": "a1d6e0b4d0b4a4d4a4d4a4d4a4d4a4d4a4d4a4d4",
+          "size": 0,
+          "url": "https://launcher.mojang.com/v1/objects/a1d6e0b4d0b4a4d4a4d4a4d4a4d4a4d4a4d4a4d4/client-1.21.1.jar"
+        }
+      }
+    }
+  ],
+  "logging": {
+    "client": {
+      "argument": "-Dlog4j.configurationFile=${path}",
+      "file": {
+        "id": "client",
+        "sha1": "c5ada5ff9123909dc8dd6aa7b663e6c4e8cee95a",
+        "size": 14691,
+        "url": "https://launcher.mojang.com/v1/objects/c5ada5ff9123909dc8dd6aa7b663e6c4e8cee95a/client.xml"
+      },
+      "type": "log4j2-xml"
+    }
+  }
+}

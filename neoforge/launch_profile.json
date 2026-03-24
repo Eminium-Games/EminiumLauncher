@@ -1,0 +1,19 @@
+{
+  "version": "1.21.1",
+  "profileName": "Eminium Factions",
+  "created": "2026-03-24T11:19:27.603Z",
+  "lastUsed": "2026-03-24T11:19:27.604Z",
+  "type": "release",
+  "logging": {
+    "client": {
+      "argument": "-Dlog4j.configurationFile=${path}",
+      "file": {
+        "id": "client",
+        "sha1": "c5ada5ff9123909dc8dd6aa7b663e6c4e8cee95a",
+        "size": 14691,
+        "url": "https://launcher.mojang.com/v1/objects/c5ada5ff9123909dc8dd6aa7b663e6c4e8cee95a/client.xml"
+      },
+      "type": "log4j2-xml"
+    }
+  }
+}

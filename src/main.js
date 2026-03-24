@@ -673,10 +673,12 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     // Enforce server availability before launching
     const host = (userOpts && userOpts.serverHost) ? String(userOpts.serverHost) : '82.64.85.47';
     const port = (userOpts && userOpts.serverPort) ? Number(userOpts.serverPort) : 25565; 
+    const serverName = (userOpts && userOpts.serverName) ? String(userOpts.serverName) : 'Eminium';
+    
     const serverStatus = await checkMinecraftServerStatus(host, port, 5000);
     
     if (!serverStatus.minecraftUp) {
-      let errorMsg = `Serveur ${host}:${port} hors ligne ou inaccessible. Lancement bloqué.`;
+      let errorMsg = `Serveur ${serverName} (${host}:${port}) hors ligne ou inaccessible. Lancement bloqué.`;
       if (serverStatus.error) {
         errorMsg += ` (${serverStatus.error})`;
       }
@@ -689,9 +691,6 @@ ipcMain.handle('launcher:play', async (_evt, userOpts) => {
     
     // RPC: Préparation du lancement
     try { setPresencePreparing(); } catch { }
-    
-    // Déterminer le nom du serveur pour le RPC
-    const serverName = userOpts?.serverName || 'Eminium';
     
     // RPC: Connexion au serveur
     try { setPresenceConnecting(serverName); } catch { }

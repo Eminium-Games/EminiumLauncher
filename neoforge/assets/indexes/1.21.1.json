@@ -1,0 +1,13 @@
+{
+  "objects": {
+    "minecraft/sounds.json": {
+      "hash": "6f7734385641c8da764c2a9a8e5e4a4d4a4d4a4d",
+      "size": 12345
+    },
+    "minecraft/texts/end.txt": {
+      "hash": "3768ef5d31cb6104c3557e2d5d5e4a4d4a4d4a4d",
+      "size": 2345
+    }
+  },
+  "virtual": false
+}

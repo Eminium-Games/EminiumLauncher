@@ -177,7 +177,6 @@
               <input type="text" id="javaPath" placeholder="Ex: C:\Program Files\Java\jdk-21\bin\javaw.exe" style="flex: 1;">
               <button class="btn sec" id="btnBrowseJava" style="padding: 8px 16px;">Parcourir</button>
             </div>
-            <div class="muted" style="margin-top:4px; font-size: 0.85rem;">Laissez vide pour utiliser la détection automatique</div>
           </div>
         </div>
         <div class="row toggles" style="margin-top:8px;">
@@ -434,11 +433,11 @@ async function handlePlayClick(serverId) {
     if (!config.useModpack) {
       versionInfo = `Vanilla ${config.version}`;
     } else if (config.forgeVersion && config.forgeVersion.startsWith('21.')) {
-      versionInfo = `NeoForge ${config.version}`;
+      versionInfo = `NeoForge ${config.version} (${config.forgeVersion})`;
     } else {
-      versionInfo = `Forge ${config.version}`;
+      versionInfo = `Forge ${config.version} (${config.forgeVersion})`;
     }
-    log(`Lancement de Minecraft... (RAM: ${memoryMB} Mo, ${versionInfo}, ${config.host}:${config.port})`);
+    log(`Lancement de ${config.name}... (RAM: ${memoryMB} Mo, ${versionInfo}, ${config.host}:${config.port})`);
     
     const launchOptions = {
       memoryMB,
@@ -447,12 +446,13 @@ async function handlePlayClick(serverId) {
       version: config.version,
       useModpack: config.useModpack,
       forgeVersion: config.forgeVersion,
-      modpackUrl: config.modpackUrl
+      modpackUrl: config.modpackUrl,
+      serverName: config.name
     };
     
     const res = await window.eminium.play(launchOptions);
     if (res?.ok) {
-      log('Client lancé ✓');
+      log(`Client lancé sur ${config.name} ✓`);
       progressUI.set(100);
       progressUI.enableClose();
     } else {
