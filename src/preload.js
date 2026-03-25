@@ -74,6 +74,17 @@ contextBridge.exposeInMainWorld('eminium', {
     ipcRenderer.invoke('showOpenDialog', options)
   ),
   
+  // NeoForge functionality
+  checkNeoForge: withLogging('neoforge:check', () => 
+    ipcRenderer.invoke('neoforge:check')
+  ),
+  ensureNeoForge: withLogging('neoforge:ensure', () => 
+    ipcRenderer.invoke('neoforge:ensure')
+  ),
+  getNeoForgeInfo: withLogging('neoforge:info', () => 
+    ipcRenderer.invoke('neoforge:info')
+  ),
+  
   // Maintenance
   getMaintenance: withLogging('maintenance:get', () => 
     ipcRenderer.invoke('maintenance:get')

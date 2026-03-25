@@ -10,7 +10,7 @@ let DiscordRPC;
 try { DiscordRPC = require('discord-rpc'); } catch { }
 const axios = require('axios');
 const net = require('net');
-const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame } = require('./setup');
+const { ensureAll, launchMinecraft, readUserProfile, logoutEminium, checkReady, prepareGame, NEOFORGE_INSTALL_DIR, NEOFORGE_INSTALLER_PATH, usePreInstalledNeoForge, ensureNeoForgeInstaller } = require('./setup');
 const discordRPC = require('./discord');
 
 let mainWindow;
@@ -783,6 +783,34 @@ ipcMain.handle('launcher:prepare', async () => {
     }
     return { ok: false, error: e?.message || String(e) };
   }
+});
+
+// NeoForge functionality handlers
+ipcMain.handle('neoforge:check', async () => {
+  try {
+    const installerPath = usePreInstalledNeoForge();
+    const exists = installerPath && fs.existsSync(installerPath);
+    return { exists, path: installerPath };
+  } catch (e) {
+    return { exists: false, error: e?.message || String(e) };
+  }
+});
+
+ipcMain.handle('neoforge:ensure', async () => {
+  try {
+    const installerPath = await ensureNeoForgeInstaller();
+    return { ok: true, path: installerPath };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+});
+
+ipcMain.handle('neoforge:info', async () => {
+  return {
+    installDir: NEOFORGE_INSTALL_DIR,
+    installerPath: NEOFORGE_INSTALLER_PATH,
+    version: '21.4.121'
+  };
 });
 
 // Enhanced Minecraft server status check using multiple methods

@@ -447,7 +447,8 @@ async function handlePlayClick(serverId) {
       useModpack: config.useModpack,
       forgeVersion: config.forgeVersion,
       modpackUrl: config.modpackUrl,
-      serverName: config.name
+      serverName: config.name,
+      serverId: serverId
     };
     
     const res = await window.eminium.play(launchOptions);
