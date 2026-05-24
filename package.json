@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
-    "axios": "^1.7.2",
+    "axios": "^1.13.5",
     "azuriom-auth": "^1.0.1",
     "discord-rpc": "^4.0.1",
     "dotenv": "^16.4.5",
